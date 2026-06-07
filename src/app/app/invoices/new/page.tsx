@@ -33,6 +33,7 @@ export default function NewInvoicePage() {
   const addItem = () => setSt((s) => ({ ...s, items: [...s.items, { description: "", unit: "adet", quantity: 1, unitPrice: 0, vatRate: 20 }] }));
   const delItem = (i: number) => setSt((s) => ({ ...s, items: s.items.filter((_, idx) => idx !== i) }));
 
+  // Kaydetme: server action'a gönderir (Supabase bağlanınca DB'ye yazar)
   const save = async () => {
     setBusy("save");
     const res = await saveInvoice({
@@ -79,6 +80,7 @@ export default function NewInvoicePage() {
 
   return (
     <div className="max-w-[1400px] mx-auto">
+      {/* Kayıt başarılı bildirimi */}
       {saved && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-xl bg-emerald-600 text-white px-5 py-3 shadow-lg">
           <CheckCircle2 className="h-5 w-5" />
@@ -105,7 +107,9 @@ export default function NewInvoicePage() {
       </div>
 
       <div className="grid lg:grid-cols-[1fr_480px] gap-6 items-start">
+        {/* SOL: FORM */}
         <div className="space-y-5">
+          {/* Şablon seçici */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-medium text-sm mb-3">{L("Şablon", "Template")}</p>
             <div className="flex items-center gap-3 flex-wrap">
@@ -124,6 +128,7 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
+          {/* Alıcı */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-medium text-sm mb-3">{L("Alıcı (Müşteri)", "Bill To (Client)")}</p>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -133,6 +138,7 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
+          {/* Fatura bilgileri */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-medium text-sm mb-3">{L("Fatura Bilgileri", "Invoice Details")}</p>
             <div className="grid sm:grid-cols-3 gap-3">
@@ -161,6 +167,7 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
+          {/* Kalemler */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="font-medium text-sm">{L("Kalemler", "Line Items")}</p>
@@ -177,6 +184,7 @@ export default function NewInvoicePage() {
                 </div>
               ))}
             </div>
+            {/* Toplamlar */}
             <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
               <div className="w-56 space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-500"><span>{L("Ara Toplam", "Subtotal")}</span><span>{formatMoney(totals.subtotal, st.currency)}</span></div>
@@ -187,12 +195,14 @@ export default function NewInvoicePage() {
           </div>
         </div>
 
+        {/* SAĞ: CANLI ÖNİZLEME (masaüstü) */}
         <div className="hidden lg:block sticky top-24">
           <p className="text-xs font-medium text-slate-500 mb-2">{L("Canlı Önizleme", "Live Preview")}</p>
           <div className="bg-white rounded-lg shadow-2xl overflow-hidden" style={{ aspectRatio: "1/1.414" }} dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       </div>
 
+      {/* Mobil önizleme modalı */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 lg:hidden" onClick={() => setShowPreview(false)}>
           <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>

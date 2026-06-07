@@ -27,8 +27,18 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+  const host = request.headers.get("host") || "";
+  const isAppDomain = host.startsWith("app."); // app.invoyca.com
   const isAppRoute = path.startsWith("/app");
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
+
+  // app.invoyca.com'a gelen biri landing'e (/) düşerse → uygulamaya yönlendir.
+  // Giriş yapmışsa dashboard, yapmamışsa login.
+  if (isAppDomain && path === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/app/dashboard" : "/login";
+    return NextResponse.redirect(url);
+  }
 
   // Giriş yapmadan app'e girmeye çalışırsa → login'e yönlendir
   if (isAppRoute && !user) {

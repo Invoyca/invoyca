@@ -18,16 +18,19 @@ export default function DashboardPage() {
   const t = (s: string) => appT(lang, s);
   const [name, setName] = useState("");
 
+  // Giriş yapan kullanıcının adını/e-postasını al
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       const u = data.user;
       if (!u) return;
+      // Önce isim (varsa), yoksa e-postanın @ öncesi kısmı
       const display = u.user_metadata?.name || (u.email ? u.email.split("@")[0] : "");
       setName(display);
     });
   }, []);
 
+  // Saate göre selamlama
   const hour = new Date().getHours();
   const greeting =
     hour < 6 ? t("İyi geceler") :
@@ -37,6 +40,7 @@ export default function DashboardPage() {
 
   return (
     <div>
+      {/* Karşılama */}
       <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white mb-6">
         <h1 className="text-xl font-semibold">
           {greeting}{name ? `, ${name}` : ""}
@@ -46,6 +50,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Metrikler */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {METRICS.map((m) => (
           <div key={m.key} className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -59,6 +64,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Son faturalar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">{t("Son Faturalar")}</h2>
