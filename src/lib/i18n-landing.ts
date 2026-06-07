@@ -1,0 +1,138 @@
+// Landing (ana sayfa) çevirileri — 7 dil
+import { Lang } from "./i18n";
+
+type LDict = {
+  nav_features: string; nav_pricing: string; nav_faq: string; cta_start: string;
+  hero_badge: string; hero_title_1: string; hero_title_hl: string; hero_desc: string;
+  hero_cta: string; hero_pricing: string; hero_f1: string; hero_f2: string; hero_f3: string;
+  features_title: string; features_sub: string;
+  f_lang_t: string; f_lang_d: string; f_cur_t: string; f_cur_d: string;
+  f_tpl_t: string; f_tpl_d: string; f_law_t: string; f_law_d: string;
+  f_auto_t: string; f_auto_d: string; f_any_t: string; f_any_d: string;
+  promo_badge: string; promo_title_1: string; promo_title_hl: string;
+  promo_desc: string; promo_note: string; promo_cta: string;
+  promo_b1: string; promo_b2: string; promo_b3: string; promo_b4: string;
+  final_title: string; final_desc: string; final_cta: string;
+};
+
+export const LANDING: Record<Lang, LDict> = {
+  TR: {
+    nav_features: "Özellikler", nav_pricing: "Fiyatlar", nav_faq: "SSS", cta_start: "Ücretsiz Başla",
+    hero_badge: "Dünyaya fatura kesmenin en kolay yolu", hero_title_1: "Uluslararası faturalama,", hero_title_hl: "tek yerde", hero_desc: "7 dil, 4 para birimi, 25 profesyonel şablon. KDV, reverse charge ve e-arşiv uyumlu. Dünyanın her yerindeki müşterilerine saniyeler içinde fatura kes.",
+    hero_cta: "Ücretsiz Başla", hero_pricing: "Detayları Gör", hero_f1: "Kredi kartı gerekmez", hero_f2: "7 dil", hero_f3: "İstediğin an iptal",
+    features_title: "Neden Invoyca?", features_sub: "Sınır tanımayan faturalama için ihtiyacın olan her şey.",
+    f_lang_t: "7 Dil", f_lang_d: "Faturanı müşterinin dilinde kes: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Para Birimi", f_cur_d: "EUR, USD, GBP, TRY ile fatura kes, ödeme al.",
+    f_tpl_t: "25 Şablon", f_tpl_d: "5 aile, 25 varyant. Markana uyan tasarımı seç.",
+    f_law_t: "Yasal Uyum", f_law_d: "KDV, reverse charge, e-arşiv ve GİB QR desteği.",
+    f_auto_t: "Otomasyon", f_auto_d: "Tekrar eden faturalar otomatik kesilsin.",
+    f_any_t: "Her Yerden", f_any_d: "Bulut tabanlı, her cihazdan eriş.",
+    promo_badge: "Lansman Kampanyası", promo_title_1: "2026 boyunca", promo_title_hl: "tamamen ücretsiz",
+    promo_desc: "Tüm özellikler, sınırsız fatura, 25 şablon, 7 dil — hepsi açık, hiçbir ücret yok.",
+    promo_note: "Kredi kartı gerekmez. Abonelik planları 2027'de başlayacak; mevcut kullanıcılara önceden haber verilecek.",
+    promo_cta: "Ücretsiz Başla", promo_b1: "Sınırsız fatura", promo_b2: "25 şablon", promo_b3: "7 dil, 4 para birimi", promo_b4: "PDF & e-posta",
+    final_title: "Bugün ücretsiz başla", final_desc: "Dünyanın her yerine fatura kesmeye saniyeler içinde başla. Kredi kartı gerekmez.", final_cta: "Ücretsiz Başla",
+  },
+  EN: {
+    nav_features: "Features", nav_pricing: "Pricing", nav_faq: "FAQ", cta_start: "Start Free",
+    hero_badge: "Invoicing without borders", hero_title_1: "International invoicing,", hero_title_hl: "all in one place", hero_desc: "7 languages, 4 currencies, 25 professional templates. VAT, reverse charge and e-archive compliant. Invoice clients anywhere in the world in seconds.",
+    hero_cta: "Start Free", hero_pricing: "See Details", hero_f1: "No credit card", hero_f2: "7 languages", hero_f3: "Cancel anytime",
+    features_title: "Why Invoyca?", features_sub: "Everything you need for borderless invoicing.",
+    f_lang_t: "7 Languages", f_lang_d: "Invoice in your client's language: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Currencies", f_cur_d: "Invoice and get paid in EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Templates", f_tpl_d: "5 families, 25 variants. Pick the design that fits your brand.",
+    f_law_t: "Legal Compliance", f_law_d: "VAT, reverse charge, e-archive and QR support.",
+    f_auto_t: "Automation", f_auto_d: "Let recurring invoices send themselves.",
+    f_any_t: "Anywhere", f_any_d: "Cloud-based, access from any device.",
+    promo_badge: "Launch Offer", promo_title_1: "Completely free", promo_title_hl: "throughout 2026",
+    promo_desc: "All features, unlimited invoices, 25 templates, 7 languages — everything unlocked, no charge.",
+    promo_note: "No credit card required. Subscription plans start in 2027; existing users will be notified in advance.",
+    promo_cta: "Start Free", promo_b1: "Unlimited invoices", promo_b2: "25 templates", promo_b3: "7 languages, 4 currencies", promo_b4: "PDF & email",
+    final_title: "Start free today", final_desc: "Start invoicing worldwide in seconds. No credit card required.", final_cta: "Start Free",
+  },
+  DE: {
+    nav_features: "Funktionen", nav_pricing: "Preise", nav_faq: "FAQ", cta_start: "Kostenlos starten",
+    hero_badge: "Rechnungen, die jede Sprache sprechen", hero_title_1: "Internationale Rechnungen,", hero_title_hl: "alles an einem Ort", hero_desc: "7 Sprachen, 4 Währungen, 25 professionelle Vorlagen. MwSt., Reverse Charge und E-Archiv-konform. Stelle Kunden weltweit in Sekunden Rechnungen.",
+    hero_cta: "Kostenlos starten", hero_pricing: "Details ansehen", hero_f1: "Keine Kreditkarte", hero_f2: "7 Sprachen", hero_f3: "Jederzeit kündbar",
+    features_title: "Warum Invoyca?", features_sub: "Alles für grenzenloses Rechnungsstellen.",
+    f_lang_t: "7 Sprachen", f_lang_d: "Rechne in der Sprache deines Kunden: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Währungen", f_cur_d: "Rechne und kassiere in EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Vorlagen", f_tpl_d: "5 Familien, 25 Varianten. Wähle dein Design.",
+    f_law_t: "Rechtskonform", f_law_d: "MwSt., Reverse Charge, E-Archiv und QR.",
+    f_auto_t: "Automatisierung", f_auto_d: "Wiederkehrende Rechnungen automatisch.",
+    f_any_t: "Überall", f_any_d: "Cloudbasiert, von jedem Gerät.",
+    promo_badge: "Launch-Angebot", promo_title_1: "Komplett kostenlos", promo_title_hl: "das ganze Jahr 2026",
+    promo_desc: "Alle Funktionen, unbegrenzte Rechnungen, 25 Vorlagen, 7 Sprachen — alles frei, kostenlos.",
+    promo_note: "Keine Kreditkarte. Abo-Pläne starten 2027; Nutzer werden vorab informiert.",
+    promo_cta: "Kostenlos starten", promo_b1: "Unbegrenzte Rechnungen", promo_b2: "25 Vorlagen", promo_b3: "7 Sprachen, 4 Währungen", promo_b4: "PDF & E-Mail",
+    final_title: "Starte heute kostenlos", final_desc: "Stelle weltweit Rechnungen in Sekunden. Keine Kreditkarte.", final_cta: "Kostenlos starten",
+  },
+  NL: {
+    nav_features: "Functies", nav_pricing: "Prijzen", nav_faq: "FAQ", cta_start: "Gratis starten",
+    hero_badge: "Factureren zonder grenzen", hero_title_1: "Internationaal factureren,", hero_title_hl: "alles op één plek", hero_desc: "7 talen, 4 valuta, 25 professionele sjablonen. Btw, verlegging en e-archief conform. Factureer klanten wereldwijd in seconden.",
+    hero_cta: "Gratis starten", hero_pricing: "Details bekijken", hero_f1: "Geen creditcard", hero_f2: "7 talen", hero_f3: "Altijd opzegbaar",
+    features_title: "Waarom Invoyca?", features_sub: "Alles voor grenzeloos factureren.",
+    f_lang_t: "7 Talen", f_lang_d: "Factureer in de taal van je klant: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Valuta", f_cur_d: "Factureer en word betaald in EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Sjablonen", f_tpl_d: "5 families, 25 varianten. Kies jouw ontwerp.",
+    f_law_t: "Wettelijk conform", f_law_d: "Btw, verlegging, e-archief en QR.",
+    f_auto_t: "Automatisering", f_auto_d: "Terugkerende facturen automatisch.",
+    f_any_t: "Overal", f_any_d: "Cloud, vanaf elk apparaat.",
+    promo_badge: "Lanceeractie", promo_title_1: "Volledig gratis", promo_title_hl: "heel 2026",
+    promo_desc: "Alle functies, onbeperkte facturen, 25 sjablonen, 7 talen — alles vrij, gratis.",
+    promo_note: "Geen creditcard. Abonnementen starten in 2027; gebruikers worden vooraf geïnformeerd.",
+    promo_cta: "Gratis starten", promo_b1: "Onbeperkte facturen", promo_b2: "25 sjablonen", promo_b3: "7 talen, 4 valuta", promo_b4: "PDF & e-mail",
+    final_title: "Begin vandaag gratis", final_desc: "Factureer wereldwijd in seconden. Geen creditcard.", final_cta: "Gratis starten",
+  },
+  FR: {
+    nav_features: "Fonctions", nav_pricing: "Tarifs", nav_faq: "FAQ", cta_start: "Commencer gratuitement",
+    hero_badge: "La facture qui parle toutes les langues", hero_title_1: "Facturation internationale,", hero_title_hl: "au même endroit", hero_desc: "7 langues, 4 devises, 25 modèles professionnels. Conforme TVA, autoliquidation et e-archivage. Facturez vos clients partout en quelques secondes.",
+    hero_cta: "Commencer", hero_pricing: "Voir les détails", hero_f1: "Sans carte bancaire", hero_f2: "7 langues", hero_f3: "Annulable à tout moment",
+    features_title: "Pourquoi Invoyca ?", features_sub: "Tout pour facturer sans frontières.",
+    f_lang_t: "7 Langues", f_lang_d: "Facturez dans la langue de votre client : TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Devises", f_cur_d: "Facturez et encaissez en EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Modèles", f_tpl_d: "5 familles, 25 variantes. Choisissez votre design.",
+    f_law_t: "Conformité légale", f_law_d: "TVA, autoliquidation, e-archivage et QR.",
+    f_auto_t: "Automatisation", f_auto_d: "Factures récurrentes automatiques.",
+    f_any_t: "Partout", f_any_d: "Cloud, depuis tout appareil.",
+    promo_badge: "Offre de lancement", promo_title_1: "Entièrement gratuit", promo_title_hl: "pendant toute 2026",
+    promo_desc: "Toutes les fonctions, factures illimitées, 25 modèles, 7 langues — tout débloqué, sans frais.",
+    promo_note: "Sans carte bancaire. Les abonnements démarrent en 2027 ; les utilisateurs seront prévenus à l'avance.",
+    promo_cta: "Commencer", promo_b1: "Factures illimitées", promo_b2: "25 modèles", promo_b3: "7 langues, 4 devises", promo_b4: "PDF & e-mail",
+    final_title: "Commencez gratuitement", final_desc: "Facturez dans le monde entier en quelques secondes. Sans carte bancaire.", final_cta: "Commencer",
+  },
+  ES: {
+    nav_features: "Funciones", nav_pricing: "Precios", nav_faq: "FAQ", cta_start: "Empezar gratis",
+    hero_badge: "Facturas que hablan el idioma de tu cliente", hero_title_1: "Facturación internacional,", hero_title_hl: "todo en un lugar", hero_desc: "7 idiomas, 4 monedas, 25 plantillas profesionales. Compatible con IVA, inversión del sujeto pasivo y archivo electrónico. Factura a clientes de todo el mundo en segundos.",
+    hero_cta: "Empezar gratis", hero_pricing: "Ver detalles", hero_f1: "Sin tarjeta", hero_f2: "7 idiomas", hero_f3: "Cancela cuando quieras",
+    features_title: "¿Por qué Invoyca?", features_sub: "Todo para facturar sin fronteras.",
+    f_lang_t: "7 Idiomas", f_lang_d: "Factura en el idioma de tu cliente: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Monedas", f_cur_d: "Factura y cobra en EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Plantillas", f_tpl_d: "5 familias, 25 variantes. Elige tu diseño.",
+    f_law_t: "Cumplimiento legal", f_law_d: "IVA, inversión sujeto pasivo, archivo y QR.",
+    f_auto_t: "Automatización", f_auto_d: "Facturas recurrentes automáticas.",
+    f_any_t: "En todas partes", f_any_d: "En la nube, desde cualquier dispositivo.",
+    promo_badge: "Oferta de lanzamiento", promo_title_1: "Totalmente gratis", promo_title_hl: "durante todo 2026",
+    promo_desc: "Todas las funciones, facturas ilimitadas, 25 plantillas, 7 idiomas — todo desbloqueado, sin coste.",
+    promo_note: "Sin tarjeta. Los planes comienzan en 2027; se avisará con antelación a los usuarios.",
+    promo_cta: "Empezar gratis", promo_b1: "Facturas ilimitadas", promo_b2: "25 plantillas", promo_b3: "7 idiomas, 4 monedas", promo_b4: "PDF y correo",
+    final_title: "Empieza gratis hoy", final_desc: "Factura en todo el mundo en segundos. Sin tarjeta.", final_cta: "Empezar gratis",
+  },
+  IT: {
+    nav_features: "Funzioni", nav_pricing: "Prezzi", nav_faq: "FAQ", cta_start: "Inizia gratis",
+    hero_badge: "Fatture senza confini", hero_title_1: "Fatturazione internazionale,", hero_title_hl: "tutto in un posto", hero_desc: "7 lingue, 4 valute, 25 modelli professionali. Conforme a IVA, inversione contabile e archiviazione elettronica. Fattura clienti ovunque in pochi secondi.",
+    hero_cta: "Inizia gratis", hero_pricing: "Vedi dettagli", hero_f1: "Nessuna carta", hero_f2: "7 lingue", hero_f3: "Disdici quando vuoi",
+    features_title: "Perché Invoyca?", features_sub: "Tutto per fatturare senza confini.",
+    f_lang_t: "7 Lingue", f_lang_d: "Fattura nella lingua del cliente: TR, EN, DE, NL, FR, ES, IT.",
+    f_cur_t: "4 Valute", f_cur_d: "Fattura e incassa in EUR, USD, GBP, TRY.",
+    f_tpl_t: "25 Modelli", f_tpl_d: "5 famiglie, 25 varianti. Scegli il tuo design.",
+    f_law_t: "Conformità legale", f_law_d: "IVA, inversione contabile, archivio e QR.",
+    f_auto_t: "Automazione", f_auto_d: "Fatture ricorrenti automatiche.",
+    f_any_t: "Ovunque", f_any_d: "Cloud, da qualsiasi dispositivo.",
+    promo_badge: "Offerta di lancio", promo_title_1: "Completamente gratis", promo_title_hl: "per tutto il 2026",
+    promo_desc: "Tutte le funzioni, fatture illimitate, 25 modelli, 7 lingue — tutto sbloccato, gratis.",
+    promo_note: "Nessuna carta. Gli abbonamenti partono nel 2027; gli utenti saranno avvisati in anticipo.",
+    promo_cta: "Inizia gratis", promo_b1: "Fatture illimitate", promo_b2: "25 modelli", promo_b3: "7 lingue, 4 valute", promo_b4: "PDF ed e-mail",
+    final_title: "Inizia gratis oggi", final_desc: "Fattura in tutto il mondo in pochi secondi. Nessuna carta.", final_cta: "Inizia gratis",
+  },
+};
