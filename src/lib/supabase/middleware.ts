@@ -27,17 +27,23 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+  const host = request.headers.get("host") || "";
+  const isAppDomain = host.startsWith("app.");
   const isAppRoute = path.startsWith("/app");
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
 
-  // Giriş yapmadan app'e girmeye çalışırsa → login'e yönlendir
+  if (isAppDomain && path === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/app/dashboard" : "/login";
+    return NextResponse.redirect(url);
+  }
+
   if (isAppRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // Giriş yapmışken login/signup'a giderse → dashboard'a yönlendir
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/app/dashboard";
