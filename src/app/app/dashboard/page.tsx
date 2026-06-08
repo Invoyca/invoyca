@@ -47,20 +47,36 @@ export default function DashboardPage() {
     hour < 18 ? t("İyi günler") :
     t("İyi akşamlar");
 
-  // Metrikleri gerçek faturalardan hesapla
-  const totalRevenue = invoices.reduce((s, inv) => s + Number(inv.total || 0), 0);
+  // Para birimi simgeleri
+  const curSym: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
+
+  // Faturaları para birimine göre grupla
+  const byCurrency: Record<string, { total: number; paid: number; pending: number; count: number }> = {};
+  for (const inv of invoices) {
+    const cur = inv.currency || "EUR";
+    if (!byCurrency[cur]) byCurrency[cur] = { total: 0, paid: 0, pending: 0, count: 0 };
+    const amt = Number(inv.total || 0);
+    byCurrency[cur].total += amt;
+    byCurrency[cur].count += 1;
+    if (inv.status === "PAID") byCurrency[cur].paid += amt;
+    else byCurrency[cur].pending += amt;
+  }
+  const currencies = Object.keys(byCurrency);
+  // Ana para birimi = en çok faturası olan
+  const mainCur = currencies.sort((a, b) => byCurrency[b].count - byCurrency[a].count)[0] || "EUR";
+  const multiCurrency = currencies.length > 1;
+
   const paidInvoices = invoices.filter((i) => i.status === "PAID");
   const pendingInvoices = invoices.filter((i) => i.status !== "PAID");
-  const paidTotal = paidInvoices.reduce((s, inv) => s + Number(inv.total || 0), 0);
-  const pendingTotal = pendingInvoices.reduce((s, inv) => s + Number(inv.total || 0), 0);
   const clientCount = new Set(invoices.map((i) => i.clientId).filter(Boolean)).size;
 
-  const fmt = (n: number) => "€" + n.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const fmt = (n: number, cur: string) => (curSym[cur] || "€") + n.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
+  const m = byCurrency[mainCur] || { total: 0, paid: 0, pending: 0, count: 0 };
   const metrics = [
-    { key: "total", label: t("Toplam Gelir"), value: fmt(totalRevenue), sub: `${invoices.length} ${t("fatura")}`, icon: TrendingUp, color: "text-emerald-600 bg-emerald-50" },
-    { key: "pending", label: t("Bekleyen"), value: fmt(pendingTotal), sub: `${pendingInvoices.length} ${t("fatura")}`, icon: Clock, color: "text-amber-600 bg-amber-50" },
-    { key: "paid", label: t("Ödenen"), value: fmt(paidTotal), sub: `${paidInvoices.length} ${t("fatura")}`, icon: CheckCircle2, color: "text-blue-600 bg-blue-50" },
+    { key: "total", label: t("Toplam Gelir"), value: fmt(m.total, mainCur), sub: `${invoices.length} ${t("fatura")}`, icon: TrendingUp, color: "text-emerald-600 bg-emerald-50" },
+    { key: "pending", label: t("Bekleyen"), value: fmt(m.pending, mainCur), sub: `${pendingInvoices.length} ${t("fatura")}`, icon: Clock, color: "text-amber-600 bg-amber-50" },
+    { key: "paid", label: t("Ödenen"), value: fmt(m.paid, mainCur), sub: `${paidInvoices.length} ${t("fatura")}`, icon: CheckCircle2, color: "text-blue-600 bg-blue-50" },
     { key: "clients", label: t("Müşteriler"), value: String(clientCount), sub: "", icon: Users, color: "text-violet-600 bg-violet-50" },
   ];
 
@@ -97,6 +113,15 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Çoklu para birimi uyarısı */}
+      {multiCurrency && (
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-6 text-sm text-amber-800">
+          {t("Birden fazla para birimi kullanıyorsun. Yukarıdaki tutarlar yalnızca")} {mainCur} {t("faturalarını gösterir.")}
+          {" "}
+          {currencies.filter((c) => c !== mainCur).map((c) => `${curSym[c] || c}${byCurrency[c].total.toLocaleString("de-DE", { maximumFractionDigits: 0 })}`).join(" · ")} {t("diğer para birimlerinde mevcut.")}
+        </div>
+      )}
+
       {/* Son faturalar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between mb-4">
@@ -117,7 +142,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium truncate">{inv.client?.name || t("Müşteri")}</p>
                   <p className="text-xs text-slate-400">{inv.number}</p>
                 </div>
-                <span className="text-sm font-medium">{fmt(Number(inv.total || 0))}</span>
+                <span className="text-sm font-medium">{fmt(Number(inv.total || 0), inv.currency || "EUR")}</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${
                   inv.status === "PAID" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                 }`}>

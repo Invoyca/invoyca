@@ -7,13 +7,22 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
 import { Plus, Search, FileText, Check, ChevronDown } from "lucide-react";
 import { listInvoices, updateInvoiceStatus } from "./actions";
+import { useGuest } from "@/lib/guest-context";
 
 export default function InvoicesPage() {
   const { lang } = useLang();
+  const { requireAuth } = useGuest();
   const [filter, setFilter] = useState("all");
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Topbar'dan gelen arama terimini al (?q=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q) setSearch(q);
+  }, []);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const L = (tr: string, _en?: string) => appT(lang, tr);
 
@@ -24,6 +33,14 @@ export default function InvoicesPage() {
     }).catch(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
+
+  // Açık durum menüsü varken dışarı tıklayınca kapat
+  useEffect(() => {
+    if (!openMenu) return;
+    const close = () => setOpenMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [openMenu]);
 
   const tabs = [
     { id: "all", label: L("Tümü", "All") },
@@ -40,7 +57,8 @@ export default function InvoicesPage() {
   const badgeStatus = (s: string) =>
     ({ PAID: "paid", SENT: "sent", OVERDUE: "overdue", DRAFT: "draft", CANCELLED: "draft" }[s] || "draft");
 
-  const fmt = (n: number) => "€" + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const curSym: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
+  const fmt = (n: number, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("tr-TR") : "—";
 
   let rows = filter === "all" ? invoices : invoices.filter((i) => i.status === filter);
@@ -53,6 +71,7 @@ export default function InvoicesPage() {
   }
 
   const changeStatus = async (id: string, status: string) => {
+    if (!requireAuth()) { setOpenMenu(null); return; }
     setOpenMenu(null);
     // İyimser güncelleme: önce ekranda değiştir
     setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status } : i));
@@ -68,7 +87,7 @@ export default function InvoicesPage() {
         title={L("Faturalar", "Invoices")}
         subtitle={L("Tüm faturalarını yönet.", "Manage all your invoices.")}
         action={
-          <Link href="/app/invoices/new" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+          <Link href="/app/invoices/new" onClick={(e) => { if (!requireAuth()) e.preventDefault(); }} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
             <Plus className="h-4 w-4" /> {L("Yeni Fatura", "New Invoice")}
           </Link>
         }
@@ -83,7 +102,7 @@ export default function InvoicesPage() {
             </div>
             <p className="font-medium text-slate-900 mb-1">{L("Henüz faturan yok", "No invoices yet")}</p>
             <p className="text-sm text-slate-500 mb-5">{L("İlk faturanı oluşturarak başla.", "Start by creating your first invoice.")}</p>
-            <Link href="/app/invoices/new" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+            <Link href="/app/invoices/new" onClick={(e) => { if (!requireAuth()) e.preventDefault(); }} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
               <Plus className="h-4 w-4" /> {L("Yeni Fatura", "New Invoice")}
             </Link>
           </div>
@@ -133,13 +152,13 @@ export default function InvoicesPage() {
                       <td className="px-5 py-3">
                         {/* Tıklanabilir durum menüsü */}
                         <div className="relative">
-                          <button onClick={() => setOpenMenu(openMenu === inv.id ? null : inv.id)}
+                          <button onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === inv.id ? null : inv.id); }}
                             className="inline-flex items-center gap-1 hover:opacity-80">
                             <StatusBadge status={badgeStatus(inv.status)} label={statusLabel(inv.status)} />
                             <ChevronDown className="h-3 w-3 text-slate-400" />
                           </button>
                           {openMenu === inv.id && (
-                            <div className="absolute z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+                            <div className="absolute z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg py-1" onClick={(e) => e.stopPropagation()}>
                               {statusOptions.map((s) => (
                                 <button key={s} onClick={() => changeStatus(inv.id, s)}
                                   className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 text-left">
@@ -151,7 +170,7 @@ export default function InvoicesPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-right font-medium">{fmt(inv.total)}</td>
+                      <td className="px-5 py-3 text-right font-medium">{fmt(inv.total, inv.currency)}</td>
                     </tr>
                   ))}
                   {rows.length === 0 && (

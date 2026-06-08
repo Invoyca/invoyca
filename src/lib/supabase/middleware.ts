@@ -31,7 +31,10 @@ export async function updateSession(request: NextRequest) {
   const isAppDomain = host.startsWith("app."); // app.invoyca.com
   const isAppRoute = path.startsWith("/app");
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
-  const isGuest = request.nextUrl.searchParams.get("guest") === "1";
+  // Ziyaretçi: ya URL'de ?guest=1 var, ya da daha önce set edilmiş guest cookie'si var
+  const guestParam = request.nextUrl.searchParams.get("guest") === "1";
+  const guestCookie = request.cookies.get("invoyca_guest")?.value === "1";
+  const isGuest = guestParam || guestCookie;
 
   // app.invoyca.com'a gelen biri landing'e (/) düşerse → uygulamaya yönlendir.
   // Giriş yapmışsa dashboard, yapmamışsa login.
@@ -42,11 +45,20 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Giriş yapmadan app'e girmeye çalışırsa → login'e yönlendir
-  // İSTİSNA: ziyaretçi (?guest=1) salt-görüntü olarak girebilir
+  // İSTİSNA: ziyaretçi (?guest=1 veya guest cookie) salt-görüntü olarak girebilir
   if (isAppRoute && !user && !isGuest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // Ziyaretçi parametresi ilk kez geldiyse cookie'ye yaz (tüm alt sayfalarda gezebilsin)
+  if (guestParam && !user) {
+    response.cookies.set("invoyca_guest", "1", { path: "/", maxAge: 60 * 60 * 24 });
+  }
+  // Üye girişi yapılmışsa ziyaretçi cookie'sini temizle
+  if (user && guestCookie) {
+    response.cookies.set("invoyca_guest", "", { path: "/", maxAge: 0 });
   }
 
   // Giriş yapmışken login/signup'a giderse → dashboard'a yönlendir

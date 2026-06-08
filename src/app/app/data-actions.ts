@@ -115,3 +115,101 @@ export async function deleteProduct(id: string) {
   if (result.count === 0) return { ok: false, error: "Ürün bulunamadı." };
   return { ok: true };
 }
+
+// ---------- HESAP / ŞİRKET AYARLARI ----------
+
+// Mevcut kullanıcı + şirket bilgisini getir
+export async function getAccountInfo() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+
+  const company = await getCompany();
+  return {
+    ok: true,
+    email: user.email || "",
+    name: user.user_metadata?.name || "",
+    company: company ? {
+      name: company.name || "",
+      email: company.email || "",
+      address: company.address || "",
+      city: company.city || "",
+      country: company.country || "",
+      taxId: company.taxId || "",
+      vatId: company.vatId || "",
+    } : null,
+  };
+}
+
+// Kullanıcının adını güncelle (Supabase auth metadata)
+export async function updateUserName(name: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+  if (!name.trim()) return { ok: false, error: "İsim boş olamaz." };
+
+  const { error } = await supabase.auth.updateUser({ data: { name: name.trim() } });
+  if (error) return { ok: false, error: error.message };
+
+  // User tablosuna da yaz
+  await prisma.user.upsert({
+    where: { id: user.id },
+    update: { name: name.trim() },
+    create: { id: user.id, email: user.email ?? "", name: name.trim() },
+  });
+  return { ok: true };
+}
+
+// Şifre değiştir
+export async function updatePassword(newPassword: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+  if (newPassword.length < 6) return { ok: false, error: "Şifre en az 6 karakter olmalı." };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// Şirket bilgilerini güncelle
+export async function updateCompany(input: {
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string;
+}) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+
+  await prisma.company.update({
+    where: { id: company.id },
+    data: {
+      name: input.name?.trim() || company.name,
+      email: input.email || null,
+      address: input.address || null,
+      city: input.city || null,
+      country: input.country || null,
+      taxId: input.taxId || null,
+      vatId: input.vatId || null,
+    },
+  });
+  return { ok: true };
+}
+
+// ---------- ŞABLON / VARSAYILAN AYARLAR ----------
+
+// Varsayılan şablonu kaydet (örn. "classic-standard")
+export async function setDefaultTemplate(template: string) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+  await prisma.company.update({
+    where: { id: company.id },
+    data: { defaultTemplate: template },
+  });
+  return { ok: true };
+}
+
+// Varsayılan şablonu getir
+export async function getDefaultTemplate() {
+  const company = await getCompany();
+  if (!company) return { ok: false, template: "classic-standard" };
+  return { ok: true, template: company.defaultTemplate || "classic-standard" };
+}

@@ -25,6 +25,7 @@ export type SaveInvoiceInput = {
   vatTotal: number;
   total: number;
   notes?: string;
+  docType?: "INVOICE" | "QUOTE";   // teklif mi fatura mı
 };
 
 // "07.06.2026" / "2026-06-07" / boş → Date
@@ -88,6 +89,7 @@ export async function saveInvoice(input: SaveInvoiceInput) {
         companyId: company.id,
         clientId: client?.id ?? null,
         number: input.number,
+        type: (input.docType ?? "INVOICE") as any,
         currency: (input.currency as any) ?? "EUR",
         taxMode: TAX_MAP[input.taxMode] ?? "NORMAL",
         qrMode: QR_MAP[input.qrMode ?? "verify"] ?? "VERIFY",
@@ -122,7 +124,7 @@ export async function saveInvoice(input: SaveInvoiceInput) {
 }
 
 // Oturum sahibinin faturalarını listeler — GÜVENLİK: sadece kendi company'si.
-export async function listInvoices() {
+export async function listInvoices(docType: "INVOICE" | "QUOTE" = "INVOICE") {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Oturum bulunamadı.", invoices: [] };
@@ -130,13 +132,35 @@ export async function listInvoices() {
   const company = await prisma.company.findUnique({ where: { userId: user.id } });
   if (!company) return { ok: true, invoices: [] };
 
+  // INVOICE türü için QUOTE dışındaki hepsi (INVOICE/PROFORMA/COMMERCIAL), QUOTE için sadece teklifler
+  const typeFilter = docType === "QUOTE"
+    ? { type: "QUOTE" as any }
+    : { type: { not: "QUOTE" as any } };
+
   const invoices = await prisma.invoice.findMany({
-    where: { companyId: company.id },          // <-- yatay yetki koruması
+    where: { companyId: company.id, ...typeFilter },  // <-- yatay yetki + tür filtresi
     orderBy: { createdAt: "desc" },
     include: { client: true },
     take: 100,
   });
   return { ok: true, invoices };
+}
+
+// Teklifi faturaya dönüştür (type: QUOTE → INVOICE)
+export async function convertQuoteToInvoice(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, error: "Şirket bulunamadı." };
+
+  const result = await prisma.invoice.updateMany({
+    where: { id, companyId: company.id, type: "QUOTE" as any },
+    data: { type: "INVOICE" as any, status: "DRAFT" as any },
+  });
+  if (result.count === 0) return { ok: false, error: "Teklif bulunamadı." };
+  return { ok: true };
 }
 
 // Fatura durumunu değiştirir (Ödendi/Bekliyor vb.) — sadece kendi faturası.

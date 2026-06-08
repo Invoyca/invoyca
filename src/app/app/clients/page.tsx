@@ -6,14 +6,18 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import { Plus, Search, Mail, Users, X, Loader2, Trash2 } from "lucide-react";
 import { listClients, createClientRecord, deleteClient } from "../data-actions";
+import { useGuest } from "@/lib/guest-context";
 
 export default function ClientsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
+  const { requireAuth } = useGuest();
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  const openForm = () => { if (requireAuth()) setShowForm(true); };
 
   const load = () => {
     listClients().then((res) => {
@@ -43,7 +47,7 @@ export default function ClientsPage() {
         title={L("Müşteriler", "Clients")}
         subtitle={L("Müşteri bilgilerini yönet.", "Manage your client records.")}
         action={
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+          <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
             <Plus className="h-4 w-4" /> {L("Yeni Müşteri", "New Client")}
           </button>
         }
@@ -57,7 +61,7 @@ export default function ClientsPage() {
             </div>
             <p className="font-medium text-slate-900 mb-1">{L("Henüz müşterin yok", "No clients yet")}</p>
             <p className="text-sm text-slate-500 mb-5">{L("İlk müşterini ekleyerek başla.", "Add your first client to get started.")}</p>
-            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+            <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
               <Plus className="h-4 w-4" /> {L("Yeni Müşteri", "New Client")}
             </button>
           </div>

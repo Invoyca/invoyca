@@ -6,14 +6,18 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import { Plus, Search, Package, X, Loader2, Trash2 } from "lucide-react";
 import { listProducts, createProduct, deleteProduct } from "../data-actions";
+import { useGuest } from "@/lib/guest-context";
 
 export default function ProductsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
+  const { requireAuth } = useGuest();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  const openForm = () => { if (requireAuth()) setShowForm(true); };
 
   const load = () => {
     listProducts().then((res) => {
@@ -47,7 +51,7 @@ export default function ProductsPage() {
         title={L("Ürünler", "Products")}
         subtitle={L("Ürün ve hizmet kataloğun.", "Your product & service catalog.")}
         action={
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+          <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
             <Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}
           </button>
         }
@@ -61,7 +65,7 @@ export default function ProductsPage() {
             </div>
             <p className="font-medium text-slate-900 mb-1">{L("Henüz ürünün yok", "No products yet")}</p>
             <p className="text-sm text-slate-500 mb-5">{L("Sık kullandığın ürün/hizmetleri ekle, faturada hızlı seç.", "Add products you use often for quick invoicing.")}</p>
-            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+            <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
               <Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}
             </button>
           </div>

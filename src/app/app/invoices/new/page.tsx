@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { renderInvoiceHTML } from "@/lib/templates/render";
@@ -9,6 +9,7 @@ import { EditorState, emptyEditorState, toInvoiceData } from "@/lib/invoice-data
 import { calcTotals, formatMoney } from "@/lib/invoice-calc";
 import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { saveInvoice } from "../actions";
+import { listClients, listProducts } from "../../data-actions";
 import { printInvoicePdf } from "@/lib/pdf-print";
 
 export default function NewInvoicePage() {
@@ -22,11 +23,51 @@ export default function NewInvoicePage() {
   const [showPreview, setShowPreview] = useState(false);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState("");
+  const [savedClients, setSavedClients] = useState<any[]>([]);
+  const [savedProducts, setSavedProducts] = useState<any[]>([]);
+  // URL'de ?type=quote varsa teklif modu
+  const [isQuote, setIsQuote] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsQuote(params.get("type") === "quote");
+  }, []);
+
+  // Kayıtlı müşteri ve ürünleri yükle (faturada seçim için)
+  useEffect(() => {
+    listClients().then((r) => { if (r.ok) setSavedClients(r.clients || []); }).catch(() => {});
+    listProducts().then((r) => { if (r.ok) setSavedProducts(r.products || []); }).catch(() => {});
+  }, []);
+
+  // Kayıtlı müşteri seçilince alanları doldur
+  const pickClient = (id: string) => {
+    const c = savedClients.find((x) => x.id === id);
+    if (!c) return;
+    setSt((s) => ({ ...s, client: {
+      ...s.client,
+      name: c.name || "",
+      vat: c.vatId || "",
+      addr: [c.address, c.city, c.country].filter(Boolean).join(", "),
+      email: c.email || "",
+    } }));
+  };
+
+  // Kayıtlı ürün bir satıra eklenir
+  const pickProduct = (id: string) => {
+    const p = savedProducts.find((x) => x.id === id);
+    if (!p) return;
+    setSt((s) => ({ ...s, items: [...s.items, {
+      description: p.name + (p.description ? ` — ${p.description}` : ""),
+      unit: p.unit || "adet",
+      quantity: 1,
+      unitPrice: Number(p.unitPrice) || 0,
+      vatRate: Number(p.vatRate) || 20,
+    }] }));
+  };
 
   const family = (Object.keys(FAMILIES) as FamilyId[]).find((f) => FAMILIES[f].variants.includes(variant)) || "classic";
   const totals = calcTotals(st.items, st.discount, st.taxMode);
   const data = toInvoiceData(st);
-  const html = renderInvoiceHTML({ variant, theme, lang, docType: "invoice", qrMode, taxMode: st.taxMode, data });
+  const html = renderInvoiceHTML({ variant, theme, lang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
 
   const upItem = (i: number, field: string, val: any) =>
     setSt((s) => ({ ...s, items: s.items.map((it, idx) => (idx === i ? { ...it, [field]: val } : it)) }));
@@ -42,13 +83,14 @@ export default function NewInvoicePage() {
       currency: st.currency, taxMode: st.taxMode, qrMode, template: variant, themeColor: theme,
       issueDate: st.meta.issue, dueDate: st.meta.due,
       items: st.items, subtotal: totals.subtotal, vatTotal: totals.vatTotal, total: totals.total,
+      docType: isQuote ? "QUOTE" : "INVOICE",
     });
     setBusy("");
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3500); }
     else alert((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
   };
 
-  const renderOpts = () => ({ variant, theme, lang, docType: "invoice", qrMode, taxMode: st.taxMode, data });
+  const renderOpts = () => ({ variant, theme, lang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
 
   const downloadPdf = () => {
     printInvoicePdf(html, st.meta.no || "fatura");
@@ -88,7 +130,7 @@ export default function NewInvoicePage() {
         </div>
       )}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">{L("Yeni Fatura", "New Invoice")}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{isQuote ? L("Yeni Teklif", "New Quote") : L("Yeni Fatura", "New Invoice")}</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowPreview(true)} className="lg:hidden inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">
             <Eye className="h-4 w-4" /> {L("Önizle", "Preview")}
@@ -131,6 +173,20 @@ export default function NewInvoicePage() {
           {/* Alıcı */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-medium text-sm mb-3">{L("Alıcı (Müşteri)", "Bill To (Client)")}</p>
+
+            {/* Kayıtlı müşteriden seç (varsa) */}
+            {savedClients.length > 0 && (
+              <div className="mb-3">
+                <label className={lbl}>{L("Kayıtlı müşteriden seç", "Pick saved client")}</label>
+                <select className={field} defaultValue="" onChange={(e) => { pickClient(e.target.value); e.target.value = ""; }}>
+                  <option value="" disabled>{L("Seç...", "Select...")}</option>
+                  {savedClients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid sm:grid-cols-2 gap-3">
               <div><label className={lbl}>{L("Şirket adı", "Company name")}</label><input className={field} value={st.client.name} onChange={(e) => setSt((s) => ({ ...s, client: { ...s.client, name: e.target.value } }))} /></div>
               <div><label className={lbl}>{L("VAT No", "VAT No")}</label><input className={field} value={st.client.vat} onChange={(e) => setSt((s) => ({ ...s, client: { ...s.client, vat: e.target.value } }))} /></div>
@@ -169,9 +225,19 @@ export default function NewInvoicePage() {
 
           {/* Kalemler */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
               <p className="font-medium text-sm">{L("Kalemler", "Line Items")}</p>
-              <button onClick={addItem} className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:underline"><Plus className="h-4 w-4" /> {L("Kalem ekle", "Add item")}</button>
+              <div className="flex items-center gap-2">
+                {savedProducts.length > 0 && (
+                  <select className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" defaultValue="" onChange={(e) => { pickProduct(e.target.value); e.target.value = ""; }}>
+                    <option value="" disabled>{L("Üründen ekle", "Add from product")}</option>
+                    {savedProducts.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
+                <button onClick={addItem} className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:underline"><Plus className="h-4 w-4" /> {L("Kalem ekle", "Add item")}</button>
+              </div>
             </div>
             <div className="space-y-2">
               {st.items.map((it, i) => (

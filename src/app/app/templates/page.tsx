@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader } from "@/components/ui";
@@ -8,6 +8,8 @@ import { renderInvoiceHTML } from "@/lib/templates/render";
 import { thumbSchema } from "@/lib/templates/schema";
 import { FAMILIES, THEMES, VARIANT_NAMES, FamilyId } from "@/lib/templates/data";
 import { Check } from "lucide-react";
+import { setDefaultTemplate, getDefaultTemplate } from "../data-actions";
+import { useGuest } from "@/lib/guest-context";
 
 const VD: Record<string, { TR: string; EN: string }> = {
   standard: { TR: "Dengeli ve tanıdık. Üstte logo, klasik tablo, sağda toplamlar.", EN: "Balanced and familiar." },
@@ -48,6 +50,25 @@ export default function TemplatesPage() {
   const [qrMode, setQrMode] = useState("verify");
   const [taxMode, setTaxMode] = useState("normal");
   const [defaultVariant, setDefaultVariant] = useState("standard");
+  const { requireAuth } = useGuest();
+  const [savedMsg, setSavedMsg] = useState(false);
+
+  // Kayıtlı varsayılan şablonu yükle (örn "classic-standard" → variant "standard")
+  useEffect(() => {
+    getDefaultTemplate().then((r) => {
+      if (r.ok && r.template) {
+        const parts = r.template.split("-");
+        if (parts.length === 2) setDefaultVariant(parts[1]);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const makeDefault = async () => {
+    if (!requireAuth()) return;
+    setDefaultVariant(variant);
+    const res = await setDefaultTemplate(`${family}-${variant}`);
+    if (res.ok) { setSavedMsg(true); setTimeout(() => setSavedMsg(false), 2500); }
+  };
 
   const themeObj = THEMES.find((t) => t.id === theme)!;
   const html = renderInvoiceHTML({ variant, theme, lang, docType, qrMode, taxMode });
@@ -122,11 +143,12 @@ export default function TemplatesPage() {
             <h3 className="font-semibold text-slate-900 text-sm mb-1">{VARIANT_NAMES[variant]}</h3>
             <p className="text-xs text-slate-500 leading-relaxed">{L(VD[variant]?.TR || "", VD[variant]?.EN || "")}</p>
           </div>
-          <button onClick={() => setDefaultVariant(variant)}
+          <button onClick={makeDefault}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl text-white text-sm font-semibold py-3 transition-colors"
             style={{ background: isDef ? "#059669" : themeObj.color }}>
             <Check className="h-4 w-4" /> {isDef ? L("Varsayılan ✓", "Default ✓") : L("Varsayılan yap", "Make default")}
           </button>
+          {savedMsg && <p className="text-xs text-emerald-600 text-center">{L("Kaydedildi ✓", "Saved ✓")}</p>}
           <p className="text-xs text-slate-400 text-center leading-relaxed">
             {L("Yeni faturalar bu şablonla başlar. Fatura oluştururken değiştirebilirsin.", "New invoices start with this template.")}
           </p>
