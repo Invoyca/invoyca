@@ -31,6 +31,7 @@ export async function updateSession(request: NextRequest) {
   const isAppDomain = host.startsWith("app."); // app.invoyca.com
   const isAppRoute = path.startsWith("/app");
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup");
+  const isGuest = request.nextUrl.searchParams.get("guest") === "1";
 
   // app.invoyca.com'a gelen biri landing'e (/) düşerse → uygulamaya yönlendir.
   // Giriş yapmışsa dashboard, yapmamışsa login.
@@ -41,7 +42,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Giriş yapmadan app'e girmeye çalışırsa → login'e yönlendir
-  if (isAppRoute && !user) {
+  // İSTİSNA: ziyaretçi (?guest=1) salt-görüntü olarak girebilir
+  if (isAppRoute && !user && !isGuest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

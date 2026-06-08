@@ -173,6 +173,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </p>
         </div>
 
+        {isLogin && (
+          <p className="text-center text-sm mt-5">
+            <Link href="/app/dashboard?guest=1" className="text-slate-500 hover:text-blue-600">
+              {"Üye olmadan göz at →"}
+            </Link>
+          </p>
+        )}
+
         <p className="text-center text-xs text-slate-400 mt-6">
           <Link href="/" className="hover:text-slate-600">← Ana sayfaya dön</Link>
         </p>

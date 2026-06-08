@@ -132,6 +132,13 @@ const T: Record<string, [string, string, string, string, string, string]> = {
   "4 fatura": ["4 invoices", "4 Rechnungen", "4 facturen", "4 factures", "4 facturas", "4 fatture"],
   "18 fatura": ["18 invoices", "18 Rechnungen", "18 facturen", "18 factures", "18 facturas", "18 fatture"],
   "+3 bu ay": ["+3 this month", "+3 diesen Monat", "+3 deze maand", "+3 ce mois", "+3 este mes", "+3 questo mese"],
+  "Hoş geldiniz": ["Welcome", "Willkommen", "Welkom", "Bienvenue", "Bienvenido", "Benvenuto"],
+  "Invoyca'yı keşfediyorsun. Kendi faturalarını oluşturmak için üye ol.": ["You're exploring Invoyca. Sign up to create your own invoices.", "Du erkundest Invoyca. Registriere dich, um eigene Rechnungen zu erstellen.", "Je verkent Invoyca. Meld je aan om eigen facturen te maken.", "Vous explorez Invoyca. Inscrivez-vous pour créer vos factures.", "Estás explorando Invoyca. Regístrate para crear tus facturas.", "Stai esplorando Invoyca. Registrati per creare le tue fatture."],
+  "İşte güncel durumun.": ["Here's your current status.", "Hier ist dein aktueller Stand.", "Dit is je huidige status.", "Voici votre situation actuelle.", "Aquí está tu estado actual.", "Ecco la tua situazione attuale."],
+  "Başlamak için ilk faturanı oluştur.": ["Create your first invoice to get started.", "Erstelle deine erste Rechnung, um zu starten.", "Maak je eerste factuur om te beginnen.", "Créez votre première facture pour commencer.", "Crea tu primera factura para empezar.", "Crea la tua prima fattura per iniziare."],
+  "Henüz faturan yok.": ["You don't have any invoices yet.", "Du hast noch keine Rechnungen.", "Je hebt nog geen facturen.", "Vous n'avez pas encore de factures.", "Aún no tienes facturas.", "Non hai ancora fatture."],
+  "İlk Faturanı Oluştur": ["Create Your First Invoice", "Erste Rechnung erstellen", "Eerste factuur maken", "Créer votre première facture", "Crea tu primera factura", "Crea la tua prima fattura"],
+  "Üye olmadan göz at →": ["Browse without signing up →", "Ohne Anmeldung ansehen →", "Bekijk zonder aanmelden →", "Parcourir sans inscription →", "Explorar sin registrarse →", "Sfoglia senza registrarti →"],
 };
 
 const LANG_INDEX: Record<Lang, number> = { EN: 0, DE: 1, NL: 2, FR: 3, ES: 4, IT: 5 } as any;
