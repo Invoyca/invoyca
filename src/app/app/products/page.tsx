@@ -1,47 +1,166 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
-import { Plus, Search } from "lucide-react";
-
-const PRODUCTS = [
-  { name: "Web Tasarım", unit: "proje", price: "€2.000,00", vat: "%20" },
-  { name: "Aylık Bakım", unit: "ay", price: "€150,00", vat: "%20" },
-  { name: "Logo Tasarımı", unit: "proje", price: "€500,00", vat: "%20" },
-  { name: "Danışmanlık", unit: "saat", price: "€120,00", vat: "%20" },
-];
+import { Plus, Search, Package, X, Loader2, Trash2 } from "lucide-react";
+import { listProducts, createProduct, deleteProduct } from "../data-actions";
 
 export default function ProductsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  const load = () => {
+    listProducts().then((res) => {
+      if (res.ok) setProducts(res.products || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
+
+  const fmt = (n: number, cur: string) => {
+    const sym: any = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
+    return (sym[cur] || "") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  let rows = products;
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    rows = rows.filter((p) => (p.name || "").toLowerCase().includes(q));
+  }
+
+  const del = async (id: string) => {
+    if (!confirm(L("Bu ürünü silmek istediğine emin misin?", "Delete this product?"))) return;
+    setProducts((p) => p.filter((x) => x.id !== id));
+    const res = await deleteProduct(id);
+    if (!res.ok) { alert(res.error); load(); }
+  };
+
   return (
     <div>
-      <PageHeader title={L("Ürünler", "Products")} subtitle={L("Ürün ve hizmet kataloğun.", "Your product & service catalog.")}
-        action={<button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700"><Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}</button>} />
-      <div className="relative mb-4 max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input placeholder={L("Ara...", "Search...")} className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
-      </div>
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-slate-400 border-b border-slate-100"><tr>
-              <th className="font-medium px-5 py-3">{L("Ürün / Hizmet", "Product / Service")}</th>
-              <th className="font-medium px-5 py-3 hidden md:table-cell">{L("Birim", "Unit")}</th>
-              <th className="font-medium px-5 py-3 hidden lg:table-cell">{L("KDV", "VAT")}</th>
-              <th className="font-medium px-5 py-3 text-right">{L("Fiyat", "Price")}</th>
-            </tr></thead>
-            <tbody>{PRODUCTS.map((p) => (
-              <tr key={p.name} className="border-b border-slate-50 hover:bg-slate-50">
-                <td className="px-5 py-3 font-medium">{p.name}</td>
-                <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{p.unit}</td>
-                <td className="px-5 py-3 text-slate-500 hidden lg:table-cell">{p.vat}</td>
-                <td className="px-5 py-3 text-right font-medium">{p.price}</td>
-              </tr>))}
-            </tbody>
-          </table>
+      <PageHeader
+        title={L("Ürünler", "Products")}
+        subtitle={L("Ürün ve hizmet kataloğun.", "Your product & service catalog.")}
+        action={
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+            <Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}
+          </button>
+        }
+      />
+
+      {!loading && products.length === 0 ? (
+        <Card>
+          <div className="py-16 text-center">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mb-4">
+              <Package className="h-7 w-7 text-slate-400" />
+            </div>
+            <p className="font-medium text-slate-900 mb-1">{L("Henüz ürünün yok", "No products yet")}</p>
+            <p className="text-sm text-slate-500 mb-5">{L("Sık kullandığın ürün/hizmetleri ekle, faturada hızlı seç.", "Add products you use often for quick invoicing.")}</p>
+            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+              <Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}
+            </button>
+          </div>
+        </Card>
+      ) : (
+        <>
+          <div className="relative mb-4 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={L("Ara...", "Search...")}
+              className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+          </div>
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-slate-400 border-b border-slate-100">
+                  <tr>
+                    <th className="font-medium px-5 py-3">{L("Ürün / Hizmet", "Product / Service")}</th>
+                    <th className="font-medium px-5 py-3 hidden md:table-cell">{L("Birim", "Unit")}</th>
+                    <th className="font-medium px-5 py-3 hidden lg:table-cell">{L("KDV", "VAT")}</th>
+                    <th className="font-medium px-5 py-3 text-right">{L("Fiyat", "Price")}</th>
+                    <th className="font-medium px-5 py-3 text-right">{L("İşlem", "Action")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((p) => (
+                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      <td className="px-5 py-3">
+                        <p className="font-medium">{p.name}</p>
+                        {p.description && <p className="text-xs text-slate-400">{p.description}</p>}
+                      </td>
+                      <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{p.unit || "—"}</td>
+                      <td className="px-5 py-3 text-slate-500 hidden lg:table-cell">%{Number(p.vatRate)}</td>
+                      <td className="px-5 py-3 text-right font-medium">{fmt(Number(p.unitPrice), p.currency)}</td>
+                      <td className="px-5 py-3 text-right">
+                        <button onClick={() => del(p.id)} className="text-slate-400 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                  {rows.length === 0 && (
+                    <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-400">{L("Sonuç yok.", "No results.")}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {showForm && <ProductForm L={L} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+    </div>
+  );
+}
+
+function ProductForm({ L, onClose, onSaved }: { L: (tr: string, en?: string) => string; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({ name: "", description: "", unit: "adet", unitPrice: 0, vatRate: 20, currency: "EUR" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const save = async () => {
+    if (!form.name.trim()) { setError(L("Ürün adı gerekli.", "Product name required.")); return; }
+    setBusy(true); setError("");
+    const res = await createProduct(form);
+    setBusy(false);
+    if (res.ok) onSaved();
+    else setError(res.error || "Hata");
+  };
+
+  const field = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30";
+  const lbl = "text-xs font-medium text-slate-500";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-lg">{L("Yeni Ürün", "New Product")}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
         </div>
-      </Card>
+        <div className="space-y-3">
+          <div><label className={lbl}>{L("Ürün / Hizmet", "Product / Service")} *</label><input className={field} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+          <div><label className={lbl}>{L("Açıklama", "Description")}</label><input className={field} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><label className={lbl}>{L("Birim", "Unit")}</label><input className={field} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} /></div>
+            <div><label className={lbl}>{L("Fiyat", "Price")}</label><input type="number" className={field} value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })} /></div>
+            <div><label className={lbl}>{L("KDV", "VAT")} %</label><input type="number" className={field} value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: Number(e.target.value) })} /></div>
+          </div>
+          <div><label className={lbl}>{L("Para birimi", "Currency")}</label>
+            <select className={field} value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}>
+              <option>EUR</option><option>USD</option><option>GBP</option><option>TRY</option>
+            </select>
+          </div>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+        </div>
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-medium hover:bg-slate-50">{L("İptal", "Cancel")}</button>
+          <button onClick={save} disabled={busy} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}{L("Kaydet", "Save")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

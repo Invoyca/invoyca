@@ -138,3 +138,40 @@ export async function listInvoices() {
   });
   return { ok: true, invoices };
 }
+
+// Fatura durumunu değiştirir (Ödendi/Bekliyor vb.) — sadece kendi faturası.
+export async function updateInvoiceStatus(invoiceId: string, status: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, error: "Şirket bulunamadı." };
+
+  const valid = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
+  if (!valid.includes(status)) return { ok: false, error: "Geçersiz durum." };
+
+  // GÜVENLİK: updateMany + companyId filtresi → başkasının faturasını değiştiremez
+  const result = await prisma.invoice.updateMany({
+    where: { id: invoiceId, companyId: company.id },
+    data: { status: status as any },
+  });
+  if (result.count === 0) return { ok: false, error: "Fatura bulunamadı." };
+  return { ok: true };
+}
+
+// Fatura siler — sadece kendi faturası.
+export async function deleteInvoice(invoiceId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, error: "Şirket bulunamadı." };
+
+  const result = await prisma.invoice.deleteMany({
+    where: { id: invoiceId, companyId: company.id },
+  });
+  if (result.count === 0) return { ok: false, error: "Fatura bulunamadı." };
+  return { ok: true };
+}

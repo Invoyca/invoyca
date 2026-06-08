@@ -139,6 +139,23 @@ const T: Record<string, [string, string, string, string, string, string]> = {
   "Henüz faturan yok.": ["You don't have any invoices yet.", "Du hast noch keine Rechnungen.", "Je hebt nog geen facturen.", "Vous n'avez pas encore de factures.", "Aún no tienes facturas.", "Non hai ancora fatture."],
   "İlk Faturanı Oluştur": ["Create Your First Invoice", "Erste Rechnung erstellen", "Eerste factuur maken", "Créer votre première facture", "Crea tu primera factura", "Crea la tua prima fattura"],
   "Üye olmadan göz at →": ["Browse without signing up →", "Ohne Anmeldung ansehen →", "Bekijk zonder aanmelden →", "Parcourir sans inscription →", "Explorar sin registrarse →", "Sfoglia senza registrarti →"],
+  "İptal": ["Cancelled", "Storniert", "Geannuleerd", "Annulée", "Cancelada", "Annullata"],
+  "Henüz faturan yok": ["No invoices yet", "Noch keine Rechnungen", "Nog geen facturen", "Aucune facture", "Aún no hay facturas", "Nessuna fattura"],
+  "İlk faturanı oluşturarak başla.": ["Start by creating your first invoice.", "Beginne mit deiner ersten Rechnung.", "Begin met je eerste factuur.", "Commencez par créer votre première facture.", "Empieza creando tu primera factura.", "Inizia creando la tua prima fattura."],
+  "Bu filtrede fatura yok.": ["No invoices in this filter.", "Keine Rechnungen in diesem Filter.", "Geen facturen in dit filter.", "Aucune facture dans ce filtre.", "No hay facturas en este filtro.", "Nessuna fattura in questo filtro."],
+  "Henüz müşterin yok": ["No clients yet", "Noch keine Kunden", "Nog geen klanten", "Aucun client", "Aún no hay clientes", "Nessun cliente"],
+  "İlk müşterini ekleyerek başla.": ["Add your first client to get started.", "Füge deinen ersten Kunden hinzu.", "Voeg je eerste klant toe.", "Ajoutez votre premier client.", "Añade tu primer cliente.", "Aggiungi il tuo primo cliente."],
+  "İşlem": ["Action", "Aktion", "Actie", "Action", "Acción", "Azione"],
+  "Sonuç yok.": ["No results.", "Keine Ergebnisse.", "Geen resultaten.", "Aucun résultat.", "Sin resultados.", "Nessun risultato."],
+  "Bu müşteriyi silmek istediğine emin misin?": ["Delete this client?", "Diesen Kunden löschen?", "Deze klant verwijderen?", "Supprimer ce client ?", "¿Eliminar este cliente?", "Eliminare questo cliente?"],
+  "Müşteri adı gerekli.": ["Client name required.", "Kundenname erforderlich.", "Klantnaam vereist.", "Nom du client requis.", "Nombre del cliente requerido.", "Nome cliente richiesto."],
+  "Şehir": ["City", "Stadt", "Stad", "Ville", "Ciudad", "Città"],
+  "Ülke": ["Country", "Land", "Land", "Pays", "País", "Paese"],
+  "İptal et": ["Cancel", "Abbrechen", "Annuleren", "Annuler", "Cancelar", "Annulla"],
+  "Henüz ürünün yok": ["No products yet", "Noch keine Produkte", "Nog geen producten", "Aucun produit", "Aún no hay productos", "Nessun prodotto"],
+  "Sık kullandığın ürün/hizmetleri ekle, faturada hızlı seç.": ["Add products you use often for quick invoicing.", "Füge häufig genutzte Produkte hinzu.", "Voeg veelgebruikte producten toe.", "Ajoutez vos produits fréquents.", "Añade tus productos frecuentes.", "Aggiungi i prodotti che usi spesso."],
+  "Bu ürünü silmek istediğine emin misin?": ["Delete this product?", "Dieses Produkt löschen?", "Dit product verwijderen?", "Supprimer ce produit ?", "¿Eliminar este producto?", "Eliminare questo prodotto?"],
+  "Ürün adı gerekli.": ["Product name required.", "Produktname erforderlich.", "Productnaam vereist.", "Nom du produit requis.", "Nombre del producto requerido.", "Nome prodotto richiesto."],
 };
 
 const LANG_INDEX: Record<Lang, number> = { EN: 0, DE: 1, NL: 2, FR: 3, ES: 4, IT: 5 } as any;
