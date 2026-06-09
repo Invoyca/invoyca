@@ -7,11 +7,14 @@ import { PageHeader, Card } from "@/components/ui";
 import { Plus, Search, Mail, Users, X, Loader2, Trash2 } from "lucide-react";
 import { listClients, createClientRecord, deleteClient } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
+import { useConfirm } from "@/lib/confirm-context";
+import { getCountries } from "@/lib/countries";
 
 export default function ClientsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
+  const confirm = useConfirm();
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -35,7 +38,14 @@ export default function ClientsPage() {
   }
 
   const del = async (id: string) => {
-    if (!confirm(L("Bu müşteriyi silmek istediğine emin misin?", "Delete this client?"))) return;
+    const ok = await confirm({
+      title: L("Müşteriyi sil", "Delete client"),
+      message: L("Bu müşteriyi silmek istediğine emin misin? Bu işlem geri alınamaz.", "Delete this client? This cannot be undone."),
+      confirmText: L("Sil", "Delete"),
+      cancelText: L("İptal", "Cancel"),
+      danger: true,
+    });
+    if (!ok) return;
     setClients((p) => p.filter((c) => c.id !== id));
     const res = await deleteClient(id);
     if (!res.ok) { alert(res.error); load(); }
@@ -117,20 +127,23 @@ export default function ClientsPage() {
         </>
       )}
 
-      {showForm && <ClientForm L={L} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+      {showForm && <ClientForm L={L} lang={lang} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
     </div>
   );
 }
 
-function ClientForm({ L, onClose, onSaved }: { L: (tr: string, en?: string) => string; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState({ name: "", email: "", vatId: "", city: "", country: "", phone: "" });
+function ClientForm({ L, lang, onClose, onSaved }: { L: (tr: string, en?: string) => string; lang: string; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", vatId: "", address: "", city: "", postalCode: "", country: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const countries = getCountries(lang);
 
   const save = async () => {
     if (!form.name.trim()) { setError(L("Müşteri adı gerekli.", "Client name required.")); return; }
     setBusy(true); setError("");
-    const res = await createClientRecord(form);
+    // adres + posta kodunu birleştir
+    const fullAddress = [form.address, form.postalCode].filter(Boolean).join(", ");
+    const res = await createClientRecord({ ...form, address: fullAddress });
     setBusy(false);
     if (res.ok) onSaved();
     else setError(res.error || "Hata");
@@ -141,19 +154,30 @@ function ClientForm({ L, onClose, onSaved }: { L: (tr: string, en?: string) => s
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-lg">{L("Yeni Müşteri", "New Client")}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3">
-          <div><label className={lbl}>{L("Şirket adı", "Company name")} *</label><input className={field} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label className={lbl}>{L("E-posta", "Email")}</label><input className={field} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+          <div><label className={lbl}>{L("Şirket / Müşteri adı", "Company / Client name")} *</label><input className={field} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>{L("Şehir", "City")}</label><input className={field} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label className={lbl}>{L("Ülke", "Country")}</label><input className={field} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></div>
+            <div><label className={lbl}>{L("E-posta", "Email")}</label><input className={field} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><label className={lbl}>{L("Telefon", "Phone")}</label><input className={field} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
-          <div><label className={lbl}>{L("VAT No", "VAT No")}</label><input className={field} value={form.vatId} onChange={(e) => setForm({ ...form, vatId: e.target.value })} /></div>
+          <div><label className={lbl}>{L("Adres", "Address")}</label><input className={field} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div><label className={lbl}>{L("Posta Kodu", "Postal Code")}</label><input className={field} value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} /></div>
+            <div><label className={lbl}>{L("Şehir", "City")}</label><input className={field} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
+            <div>
+              <label className={lbl}>{L("Ülke", "Country")}</label>
+              <select className={field} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
+                <option value="">{L("Seç...", "Select...")}</option>
+                {countries.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div><label className={lbl}>{L("Vergi / VAT No", "Tax / VAT No")}</label><input className={field} value={form.vatId} onChange={(e) => setForm({ ...form, vatId: e.target.value })} /></div>
           {error && <p className="text-sm text-rose-600">{error}</p>}
         </div>
         <div className="flex gap-2 mt-5">

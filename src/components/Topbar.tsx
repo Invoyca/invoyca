@@ -37,15 +37,18 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
   // Kullanıcının baş harflerini hesapla
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
       if (!u) { setInitials(""); return; }
-      const full = u.user_metadata?.name || (u.email ? u.email.split("@")[0] : "");
-      const parts = full.trim().split(" ").filter(Boolean);
-      const ini = parts.length >= 2
-        ? (parts[0][0] + parts[1][0])
-        : full.slice(0, 2);
-      setInitials(ini.toUpperCase());
+      const full = (u.user_metadata?.name || "").trim();
+      if (full) {
+        const parts = full.split(" ").filter(Boolean);
+        const ini = parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]) : full.slice(0, 2);
+        setInitials(ini.toUpperCase());
+      } else if (u.email) {
+        // İsim yoksa e-postadan iki harf
+        setInitials(u.email.slice(0, 2).toUpperCase());
+      }
     });
   }, []);
 

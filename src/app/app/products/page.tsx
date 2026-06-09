@@ -7,11 +7,13 @@ import { PageHeader, Card } from "@/components/ui";
 import { Plus, Search, Package, X, Loader2, Trash2 } from "lucide-react";
 import { listProducts, createProduct, deleteProduct } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
+import { useConfirm } from "@/lib/confirm-context";
 
 export default function ProductsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
+  const confirm = useConfirm();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,7 +41,14 @@ export default function ProductsPage() {
   }
 
   const del = async (id: string) => {
-    if (!confirm(L("Bu ürünü silmek istediğine emin misin?", "Delete this product?"))) return;
+    const ok = await confirm({
+      title: L("Ürünü sil", "Delete product"),
+      message: L("Bu ürünü silmek istediğine emin misin? Bu işlem geri alınamaz.", "Delete this product? This cannot be undone."),
+      confirmText: L("Sil", "Delete"),
+      cancelText: L("İptal", "Cancel"),
+      danger: true,
+    });
+    if (!ok) return;
     setProducts((p) => p.filter((x) => x.id !== id));
     const res = await deleteProduct(id);
     if (!res.ok) { alert(res.error); load(); }

@@ -33,8 +33,9 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setIsGuest(!data.user);
+    // getSession() yerel/anında; getUser() ağ beklemesi yapar (yavaş)
+    supabase.auth.getSession().then(({ data }) => {
+      setIsGuest(!data.session?.user);
       setLoading(false);
     });
   }, []);

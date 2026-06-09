@@ -18,14 +18,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
+    // getSession() yereldir, anında döner (getUser ağ beklemesi yapar → yavaş)
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
       if (!u) {
-        // Ziyaretçi (üyeliksiz)
         setIsGuest(true);
         setName("");
       } else {
-        // İlk ismi al (Ad Soyad'ın ilk kelimesi), yoksa e-posta öncesi
         const full = u.user_metadata?.name || (u.email ? u.email.split("@")[0] : "");
         const firstName = full.split(" ")[0];
         setName(firstName);
@@ -93,9 +92,11 @@ export default function DashboardPage() {
         <p className="text-blue-100 text-sm mt-1">
           {isGuest
             ? t("Invoyca'yı keşfediyorsun. Kendi faturalarını oluşturmak için üye ol.")
-            : hasData
-              ? t("İşte güncel durumun.")
-              : t("Başlamak için ilk faturanı oluştur.")}
+            : loading
+              ? "\u00A0"
+              : hasData
+                ? t("İşte güncel durumun.")
+                : t("Başlamak için ilk faturanı oluştur.")}
         </p>
       </div>
 

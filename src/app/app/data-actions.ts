@@ -129,6 +129,8 @@ export async function getAccountInfo() {
     ok: true,
     email: user.email || "",
     name: user.user_metadata?.name || "",
+    phone: user.user_metadata?.phone || "",
+    title: user.user_metadata?.title || "",
     company: company ? {
       name: company.name || "",
       email: company.email || "",
@@ -151,11 +153,30 @@ export async function updateUserName(name: string) {
   const { error } = await supabase.auth.updateUser({ data: { name: name.trim() } });
   if (error) return { ok: false, error: error.message };
 
-  // User tablosuna da yaz
   await prisma.user.upsert({
     where: { id: user.id },
     update: { name: name.trim() },
     create: { id: user.id, email: user.email ?? "", name: name.trim() },
+  });
+  return { ok: true };
+}
+
+// Kullanıcı profilini güncelle (ad, telefon, ünvan) — metadata'da saklanır
+export async function updateProfile(input: { name: string; phone?: string; title?: string }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+  if (!input.name.trim()) return { ok: false, error: "İsim boş olamaz." };
+
+  const { error } = await supabase.auth.updateUser({
+    data: { name: input.name.trim(), phone: input.phone || "", title: input.title || "" },
+  });
+  if (error) return { ok: false, error: error.message };
+
+  await prisma.user.upsert({
+    where: { id: user.id },
+    update: { name: input.name.trim() },
+    create: { id: user.id, email: user.email ?? "", name: input.name.trim() },
   });
   return { ok: true };
 }

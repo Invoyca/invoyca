@@ -7,11 +7,13 @@ import { PageHeader, Card, StatusBadge } from "@/components/ui";
 import { Plus, FileText, ArrowRight, Loader2 } from "lucide-react";
 import { listInvoices, convertQuoteToInvoice } from "../invoices/actions";
 import { useGuest } from "@/lib/guest-context";
+import { useConfirm } from "@/lib/confirm-context";
 
 export default function QuotesPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
+  const confirm = useConfirm();
   const [quotes, setQuotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [converting, setConverting] = useState<string | null>(null);
@@ -32,11 +34,17 @@ export default function QuotesPage() {
 
   const convert = async (id: string) => {
     if (!requireAuth()) return;
-    if (!confirm(L("Bu teklifi faturaya dönüştürmek istiyor musun?", "Convert this quote to an invoice?"))) return;
+    const ok = await confirm({
+      title: L("Faturaya dönüştür", "Convert to invoice"),
+      message: L("Bu teklifi faturaya dönüştürmek istiyor musun?", "Convert this quote to an invoice?"),
+      confirmText: L("Dönüştür", "Convert"),
+      cancelText: L("İptal", "Cancel"),
+    });
+    if (!ok) return;
     setConverting(id);
     const res = await convertQuoteToInvoice(id);
     setConverting(null);
-    if (res.ok) { load(); alert(L("Faturaya dönüştürüldü. Faturalar sayfasında görebilirsin.", "Converted. See it in Invoices.")); }
+    if (res.ok) { load(); }
     else alert(res.error || "Hata");
   };
 

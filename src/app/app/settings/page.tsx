@@ -5,7 +5,7 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import Link from "next/link";
 import { LayoutTemplate, ArrowRight, Check, Loader2, User, Lock } from "lucide-react";
-import { getAccountInfo, updateUserName, updatePassword, updateCompany } from "../data-actions";
+import { getAccountInfo, updateUserName, updateProfile, updatePassword, updateCompany } from "../data-actions";
 
 export default function SettingsPage() {
   const { lang } = useLang();
@@ -53,6 +53,8 @@ export default function SettingsPage() {
 
 function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [title, setTitle] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -60,14 +62,19 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
   const [nameMsg, setNameMsg] = useState("");
   const [pwMsg, setPwMsg] = useState("");
 
-  useEffect(() => { if (info?.name) setName(info.name); }, [info]);
+  useEffect(() => {
+    if (info?.name) setName(info.name);
+    if (info?.phone) setPhone(info.phone);
+    if (info?.title) setTitle(info.title);
+  }, [info]);
 
   const field = "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30";
   const lbl = "text-xs font-medium text-slate-500";
 
   const saveName = async () => {
+    if (!name.trim()) { setNameMsg(L("İsim boş olamaz.", "Name required.")); return; }
     setSavingName(true); setNameMsg("");
-    const res = await updateUserName(name);
+    const res = await updateProfile({ name, phone, title });
     setSavingName(false);
     setNameMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || "Hata"));
   };
@@ -93,13 +100,21 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={lbl}>{L("Ad Soyad", "Full Name")}</label>
+            <label className={lbl}>{L("Ad Soyad", "Full Name")} *</label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={L("Adınız Soyadınız", "Your name")} className={field} />
           </div>
           <div>
             <label className={lbl}>{L("E-posta", "Email")}</label>
             <input value={info?.email || ""} disabled className={field + " bg-slate-50 text-slate-400"} />
             <p className="text-xs text-slate-400 mt-1">{L("E-posta değiştirilemez.", "Email cannot be changed.")}</p>
+          </div>
+          <div>
+            <label className={lbl}>{L("Telefon", "Phone")}</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={field} />
+          </div>
+          <div>
+            <label className={lbl}>{L("Ünvan / Görev", "Title / Role")}</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={L("ör. Kurucu, Muhasebeci", "e.g. Founder, Accountant")} className={field} />
           </div>
         </div>
         <div className="flex items-center gap-3 mt-4">

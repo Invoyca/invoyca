@@ -190,6 +190,19 @@ const T: Record<string, [string, string, string, string, string, string]> = {
   "İlk teklifini oluştur, kabul edilince tek tıkla faturaya dönüştür.": ["Create your first quote, convert to invoice in one click.", "Erstelle dein erstes Angebot, in einem Klick zur Rechnung.", "Maak je eerste offerte, met één klik naar factuur.", "Créez votre premier devis, convertissez en un clic.", "Crea tu primer presupuesto, conviértelo en un clic.", "Crea il tuo primo preventivo, converti in un clic."],
   "Bu teklifi faturaya dönüştürmek istiyor musun?": ["Convert this quote to an invoice?", "Dieses Angebot in Rechnung umwandeln?", "Deze offerte naar factuur omzetten?", "Convertir ce devis en facture ?", "¿Convertir este presupuesto en factura?", "Convertire questo preventivo in fattura?"],
   "Faturaya dönüştürüldü. Faturalar sayfasında görebilirsin.": ["Converted. See it in Invoices.", "Umgewandelt. Siehe Rechnungen.", "Omgezet. Zie Facturen.", "Converti. Voir dans Factures.", "Convertido. Míralo en Facturas.", "Convertito. Vedi in Fatture."],
+  "Şirket / Müşteri adı": ["Company / Client name", "Firma / Kundenname", "Bedrijf / Klantnaam", "Entreprise / Client", "Empresa / Cliente", "Azienda / Cliente"],
+  "Telefon": ["Phone", "Telefon", "Telefoon", "Téléphone", "Teléfono", "Telefono"],
+  "Posta Kodu": ["Postal Code", "PLZ", "Postcode", "Code postal", "Código postal", "CAP"],
+  "Vergi / VAT No": ["Tax / VAT No", "Steuer / USt-IdNr.", "Btw-nr.", "N° fiscal / TVA", "NIF / IVA", "Cod. Fisc. / P.IVA"],
+  "Müşteriyi sil": ["Delete client", "Kunde löschen", "Klant verwijderen", "Supprimer le client", "Eliminar cliente", "Elimina cliente"],
+  "Bu müşteriyi silmek istediğine emin misin? Bu işlem geri alınamaz.": ["Delete this client? This cannot be undone.", "Diesen Kunden löschen? Nicht rückgängig machbar.", "Deze klant verwijderen? Kan niet ongedaan worden.", "Supprimer ce client ? Irréversible.", "¿Eliminar este cliente? Irreversible.", "Eliminare questo cliente? Irreversibile."],
+  "Ürünü sil": ["Delete product", "Produkt löschen", "Product verwijderen", "Supprimer le produit", "Eliminar producto", "Elimina prodotto"],
+  "Bu ürünü silmek istediğine emin misin? Bu işlem geri alınamaz.": ["Delete this product? This cannot be undone.", "Dieses Produkt löschen? Nicht rückgängig machbar.", "Dit product verwijderen? Kan niet ongedaan.", "Supprimer ce produit ? Irréversible.", "¿Eliminar este producto? Irreversible.", "Eliminare questo prodotto? Irreversibile."],
+  "Sil": ["Delete", "Löschen", "Verwijderen", "Supprimer", "Eliminar", "Elimina"],
+  "Dönüştür": ["Convert", "Umwandeln", "Omzetten", "Convertir", "Convertir", "Converti"],
+  "Ünvan / Görev": ["Title / Role", "Titel / Rolle", "Titel / Rol", "Titre / Rôle", "Cargo / Rol", "Titolo / Ruolo"],
+  "ör. Kurucu, Muhasebeci": ["e.g. Founder, Accountant", "z.B. Gründer, Buchhalter", "bijv. Oprichter", "ex. Fondateur", "ej. Fundador", "es. Fondatore"],
+  "İsim boş olamaz.": ["Name required.", "Name erforderlich.", "Naam vereist.", "Nom requis.", "Nombre requerido.", "Nome richiesto."],
 };
 
 const LANG_INDEX: Record<Lang, number> = { EN: 0, DE: 1, NL: 2, FR: 3, ES: 4, IT: 5 } as any;
