@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { renderInvoiceHTML } from "@/lib/templates/render";
@@ -8,12 +8,14 @@ import { FAMILIES, THEMES, VARIANT_NAMES, FamilyId } from "@/lib/templates/data"
 import { EditorState, emptyEditorState, toInvoiceData } from "@/lib/invoice-data";
 import { calcTotals, formatMoney } from "@/lib/invoice-calc";
 import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } from "lucide-react";
-import { saveInvoice } from "../actions";
+import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
 import { listClients, listProducts } from "../../data-actions";
+import { useGuest } from "@/lib/guest-context";
 import { printInvoicePdf } from "@/lib/pdf-print";
 
 export default function NewInvoicePage() {
   const { lang } = useLang();
+  const { requireAuth } = useGuest();
   const L = (tr: string, _en?: string) => appT(lang, tr);
 
   const [st, setSt] = useState<EditorState>(emptyEditorState);
@@ -25,17 +27,57 @@ export default function NewInvoicePage() {
   const [busy, setBusy] = useState("");
   const [savedClients, setSavedClients] = useState<any[]>([]);
   const [savedProducts, setSavedProducts] = useState<any[]>([]);
-  // URL'de ?type=quote varsa teklif modu
+  // URL'de ?type=quote varsa teklif modu, ?id=... varsa düzenleme modu
   const [isQuote, setIsQuote] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setIsQuote(params.get("type") === "quote");
+    setEditId(params.get("id"));
   }, []);
 
   // Kayıtlı müşteri ve ürünleri yükle (faturada seçim için)
   useEffect(() => {
     listClients().then((r) => { if (r.ok) setSavedClients(r.clients || []); }).catch(() => {});
     listProducts().then((r) => { if (r.ok) setSavedProducts(r.products || []); }).catch(() => {});
+  }, []);
+
+  // Düzenleme mi yeni mi? id varsa faturayı yükle; yoksa sıradaki numarayı al.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    if (id) {
+      getInvoice(id).then((r) => {
+        if (r.ok && r.invoice) {
+          const inv: any = r.invoice;
+          setSt((s) => ({
+            ...s,
+            client: {
+              name: inv.client?.name || "",
+              addr: inv.client?.address || "",
+              vat: inv.client?.vatId || "",
+              email: inv.client?.email || "",
+            },
+            meta: {
+              no: inv.number || s.meta.no,
+              issue: inv.issueDate ? new Date(inv.issueDate).toLocaleDateString("tr-TR") : s.meta.issue,
+              due: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("tr-TR") : "",
+              ref: s.meta.ref,
+            },
+            items: (inv.items || []).map((it: any) => ({
+              description: it.description, unit: it.unit, quantity: Number(it.quantity),
+              unitPrice: Number(it.unitPrice), vatRate: Number(it.vatRate),
+            })),
+            currency: inv.currency || "EUR",
+            taxMode: (inv.taxMode || "NORMAL").toLowerCase(),
+          }));
+        }
+      }).catch(() => {});
+    } else {
+      getNextInvoiceNumber().then((r) => {
+        if (r.ok && r.number) setSt((s) => ({ ...s, meta: { ...s.meta, no: r.number } }));
+      }).catch(() => {});
+    }
   }, []);
 
   // Kayıtlı müşteri seçilince alanları doldur
@@ -76,8 +118,10 @@ export default function NewInvoicePage() {
 
   // Kaydetme: server action'a gönderir (Supabase bağlanınca DB'ye yazar)
   const save = async () => {
+    if (!requireAuth()) return;
     setBusy("save");
     const res = await saveInvoice({
+      id: editId || undefined,
       number: st.meta.no, clientName: st.client.name, clientVat: st.client.vat,
       clientAddr: st.client.addr, clientEmail: st.client.email,
       currency: st.currency, taxMode: st.taxMode, qrMode, template: variant, themeColor: theme,
@@ -97,6 +141,7 @@ export default function NewInvoicePage() {
   };
 
   const sendEmail = async () => {
+    if (!requireAuth()) return;
     const to = st.client.email || window.prompt(L("Müşteri e-postası:", "Client email:")) || "";
     if (!to) return;
     setBusy("email");
@@ -130,7 +175,7 @@ export default function NewInvoicePage() {
         </div>
       )}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">{isQuote ? L("Yeni Teklif", "New Quote") : L("Yeni Fatura", "New Invoice")}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{editId ? L("Faturayı Düzenle", "Edit Invoice") : isQuote ? L("Yeni Teklif", "New Quote") : L("Yeni Fatura", "New Invoice")}</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowPreview(true)} className="lg:hidden inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">
             <Eye className="h-4 w-4" /> {L("Önizle", "Preview")}
@@ -213,11 +258,11 @@ export default function NewInvoicePage() {
                   <option value="exempt">{L("Muaf", "Exempt")}</option>
                 </select>
               </div>
-              <div><label className={lbl}>QR</label>
+              <div><label className={lbl}>{L("QR Kod", "QR Code")}</label>
                 <select className={field} value={qrMode} onChange={(e) => setQrMode(e.target.value)}>
-                  <option value="verify">{L("Doğrulama", "Verify")}</option>
-                  <option value="pay">{L("Ödeme", "Pay")}</option>
-                  <option value="off">{L("Kapalı", "Off")}</option>
+                  <option value="verify">{L("Türkiye e-Arşiv (GİB/ETTN)", "Türkiye e-Archive (GİB/ETTN)")}</option>
+                  <option value="pay">{L("Ödeme QR (IBAN)", "Payment QR (IBAN)")}</option>
+                  <option value="off">{L("QR Yok (Uluslararası)", "No QR (International)")}</option>
                 </select>
               </div>
             </div>
@@ -264,17 +309,47 @@ export default function NewInvoicePage() {
         {/* SAĞ: CANLI ÖNİZLEME (masaüstü) */}
         <div className="hidden lg:block sticky top-24">
           <p className="text-xs font-medium text-slate-500 mb-2">{L("Canlı Önizleme", "Live Preview")}</p>
-          <div className="bg-white rounded-lg shadow-2xl overflow-hidden" style={{ aspectRatio: "1/1.414" }} dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="bg-white rounded-lg shadow-2xl overflow-hidden mx-auto" style={{ width: 480, height: 480 * 1.414 }}>
+            <div style={{ width: 794, height: 794 * 1.414, transform: `scale(${480/794})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
         </div>
       </div>
 
       {/* Mobil önizleme modalı */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4 lg:hidden" onClick={() => setShowPreview(false)}>
-          <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-[88vw] max-w-sm" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowPreview(false)} className="absolute -top-10 right-0 text-white"><X className="h-6 w-6" /></button>
-            <div className="bg-white rounded-lg shadow-2xl overflow-hidden" style={{ aspectRatio: "1/1.414" }} dangerouslySetInnerHTML={{ __html: html }} />
+            <MobilePreview html={html} />
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Mobil önizleme: container genişliğini ölçüp A4'ü (794px) tam oturacak şekilde küçültür.
+// transform:scale görsel küçültür ama yer kaplamayı düzeltmek için dış kutu boyutu da ayarlanır → taşma olmaz.
+function MobilePreview({ html }: { html: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      const w = wrapRef.current?.clientWidth || 0;
+      if (w > 0) setScale(w / 794);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    // Dış sarmalayıcı: genişliği ekrana göre (%100). Bunu ölçüyoruz.
+    <div ref={wrapRef} className="w-full">
+      {scale > 0 && (
+        // Görünen kutu: scale'li A4 yüksekliği kadar yer kaplar (taşma/boşluk yok)
+        <div className="bg-white rounded-lg shadow-2xl overflow-hidden" style={{ height: 794 * 1.414 * scale }}>
+          <div style={{ width: 794, height: 794 * 1.414, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       )}
     </div>

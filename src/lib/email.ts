@@ -27,20 +27,28 @@ const BODIES: Record<string, (c: string, no: string, amt: string) => string> = {
 export async function sendInvoiceEmail(input: SendInvoiceEmailInput) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const lang = SUBJECTS[input.lang] ? input.lang : "EN";
+
+  // XSS koruması: kullanıcı verisi e-posta HTML'ine girmeden önce escape edilir.
+  const esc = (v: unknown) => String(v ?? "")
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  const clientName = esc(input.clientName);
+  const invoiceNo = esc(input.invoiceNo);
+  const senderName = esc(input.senderName);
+  const amount = esc(input.amount);
+
   const attachments = input.pdfBase64
-    ? [{ filename: `${input.invoiceNo}.pdf`, content: input.pdfBase64 }]
+    ? [{ filename: `${invoiceNo}.pdf`, content: input.pdfBase64 }]
     : undefined;
 
-  // Gönderen adresi doğrulanmış domainden gelmeli. .env'de FROM tanımlı değilse
-  // Resend'in test adresi kullanılır (sadece test için).
   const from = process.env.INVOICE_FROM_EMAIL || "Invoyca <onboarding@resend.dev>";
 
   return await resend.emails.send({
     from,
     to: input.to,
-    replyTo: input.replyTo || undefined, // müşteri yanıtı kullanıcıya gitsin
-    subject: SUBJECTS[lang](input.invoiceNo, input.senderName),
-    html: BODIES[lang](input.clientName, input.invoiceNo, input.amount),
+    replyTo: input.replyTo || undefined,
+    subject: SUBJECTS[lang](invoiceNo, senderName),
+    html: BODIES[lang](clientName, invoiceNo, amount),
     attachments,
   });
 }

@@ -12,31 +12,36 @@ import { setDefaultTemplate, getDefaultTemplate } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 
 const VD: Record<string, { TR: string; EN: string }> = {
-  standard: { TR: "Dengeli ve tanıdık. Üstte logo, klasik tablo, sağda toplamlar.", EN: "Balanced and familiar." },
-  bordered: { TR: "İnce çerçeveli kurumsal görünüm.", EN: "Thin-bordered corporate look." },
-  centered: { TR: "Ortalanmış başlık, simetrik resmi düzen.", EN: "Centered, symmetric formal layout." },
-  letterhead: { TR: "Antetli kağıt hissi, renkli şerit ve footer.", EN: "Letterhead feel." },
-  detailed: { TR: "Proje/referans no ve ek alanlar; karmaşık işler için.", EN: "Project ref and extra fields." },
-  band: { TR: "Geniş gradient üst bant, büyük başlık. Çağdaş.", EN: "Wide gradient band, large heading." },
-  sidebar: { TR: "Sol renkli dikey şerit, modern ve dengeli.", EN: "Left colored strip, modern." },
-  split: { TR: "Üst renkli blok, gölgeli kartlar; güçlü etki.", EN: "Top color block, shadowed cards." },
-  card: { TR: "Yuvarlak köşeli kartlar, dijital ürün hissi.", EN: "Rounded cards, digital feel." },
-  accent: { TR: "Beyaz zemin, ince renkli vurgu çizgileri.", EN: "White canvas, accent lines." },
-  mono: { TR: "Neredeyse tek renk, ultra sade.", EN: "Almost single-color, ultra clean." },
-  wide: { TR: "Geniş harf aralıkları, bol boşluk; editöryal.", EN: "Wide spacing, editorial." },
-  line: { TR: "Yalnızca ince çizgiler, kutu yok; en hafif.", EN: "Only thin lines, lightest." },
-  corner: { TR: "Bilgiler köşelerde, merkez ferah.", EN: "Info in corners, airy center." },
-  serif: { TR: "Zarif serif başlık, dergi inceliği.", EN: "Elegant serif heading." },
-  dense: { TR: "En sıkı, çok kalemli faturalar için.", EN: "Tightest, for many line items." },
-  grid: { TR: "Zebra çizgili ızgara tablo; okunaklı.", EN: "Zebra grid table; legible." },
-  header: { TR: "Üstte renkli özet bar, toplam öne çıkar.", EN: "Colored summary bar." },
-  twin: { TR: "Gönderen/alıcı tek satırda dar; tabloya yer.", EN: "Sender/recipient on one row." },
-  receipt: { TR: "Fiş/makbuz hissi, dar ve uzun.", EN: "Receipt feel, narrow and tall." },
-  block: { TR: "Kocaman renkli blok, dev başlık; güçlü izlenim.", EN: "Huge color block, giant heading." },
-  dark: { TR: "Koyu tema, renkli vurgular; premium.", EN: "Dark theme, color accents." },
-  diagonal: { TR: "Açılı renkli kesim; dinamik, yaratıcı.", EN: "Angled color cut; dynamic." },
-  stamp: { TR: "Dev renkli toplam rozeti; tutar öne çıkar.", EN: "Giant total badge." },
-  frame: { TR: "Kalın renkli çerçeve; poster gibi.", EN: "Thick color frame." },
+  // Classic
+  standard: { TR: "Geleneksel şirketler, danışmanlık, B2B — en güvenli seçim.", EN: "Traditional companies, consulting, B2B — the safe choice." },
+  bordered: { TR: "Hukuk, mühendislik, mimarlık — resmi çerçeveli belge.", EN: "Legal, engineering, architecture — formal framed document." },
+  letterhead: { TR: "Orta ölçekli şirketler, üreticiler — güçlü kurumsal başlık.", EN: "Mid-size companies, manufacturers — strong corporate header." },
+  detailed: { TR: "Muhasebe odaklı, çok KDV oranlı, tevkifatlı detaylı faturalar.", EN: "Accounting-focused, multi-VAT, withholding." },
+  centered: { TR: "Uluslararası B2B, AB sınır ötesi, reverse charge KDV.", EN: "International B2B, EU cross-border, reverse charge." },
+  // Modern
+  band: { TR: "Startup, SaaS, yazılım — hafif, modern, kart-tabanlı.", EN: "Startup, SaaS, software — light, modern, card-based." },
+  sidebar: { TR: "Yaratıcı ajanslar, stüdyolar — dikey kenar çubuğu.", EN: "Creative agencies, studios — vertical sidebar." },
+  split: { TR: "Danışman, mühendis, yazılımcı — saatlik/hizmet bazlı.", EN: "Consultants, engineers — hourly/service-based." },
+  card: { TR: "Abonelik, retainer, hosting — dönem ve ödenecek tutar belirgin.", EN: "Subscriptions, retainers — billing period & amount due." },
+  accent: { TR: "Freelancer, online hizmet — hızlı ödeme odaklı.", EN: "Freelancers, online services — payment-focused." },
+  // Minimal
+  line: { TR: "Freelancer, danışman, tasarımcı — en dengeli minimal.", EN: "Freelancers, consultants — most balanced minimal." },
+  wide: { TR: "Butik stüdyo, premium danışman — bol boşluk, editoryal.", EN: "Boutique studios, premium — generous whitespace." },
+  mono: { TR: "Küçük şirket, ürün satıcısı — tablo merkezli, pratik.", EN: "Small companies — table-centric, practical." },
+  corner: { TR: "Danışman, küçük stüdyo — imza/onay alanı içeren.", EN: "Consultants, studios — with signature area." },
+  serif: { TR: "Hukuk, finans — neredeyse renksiz, siyah-beyaz baskıya ideal.", EN: "Legal, finance — nearly color-free, print-ready." },
+  // Compact
+  dense: { TR: "Perakende, toptan, ürün satışı — çok satırlı faturalar.", EN: "Retail, wholesale — many line items." },
+  grid: { TR: "Danışman, ajans, bakım ekibi — çok hizmet satırı.", EN: "Consultants, agencies — many service rows." },
+  header: { TR: "Küçük dükkan, esnaf, yerel hizmet — basit ve anlaşılır.", EN: "Small shops, local services — simple and clear." },
+  twin: { TR: "Stok bazlı işletme, yedek parça, depo — SKU/kod odaklı.", EN: "Inventory businesses — SKU/code focused." },
+  receipt: { TR: "Büyük faturalar, çok kalemli dökümler — maksimum yoğunluk.", EN: "Large invoices — maximum density." },
+  // Bold
+  block: { TR: "Premium ajanslar, danışmanlar — güçlü hiyerarşi.", EN: "Premium agencies — strong hierarchy." },
+  dark: { TR: "Freelancer, küçük işletme — ödenecek tutar ana odak.", EN: "Freelancers — amount due is the focus." },
+  diagonal: { TR: "Ajanslar, güçlü marka kimliği olan modern şirketler.", EN: "Agencies, brand-forward companies." },
+  stamp: { TR: "Modern işletmeler — temiz durum rozeti, büyük tutar.", EN: "Modern businesses — clean badge, large total." },
+  frame: { TR: "Yönetim danışmanları, yüksek değerli B2B — ciddi, üst düzey.", EN: "Management consultants, high-value B2B — executive." },
 };
 
 export default function TemplatesPage() {
@@ -135,8 +140,9 @@ export default function TemplatesPage() {
           ))}
         </div>
         <div className="flex justify-center">
-          <div className="w-full max-w-[560px] bg-white rounded-lg shadow-2xl overflow-hidden" style={{ aspectRatio: "1/1.414" }}
-            dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="bg-white rounded-lg shadow-2xl overflow-hidden mx-auto" style={{ width: 440, maxWidth: "100%", height: 440 * 1.414 }}>
+            <div style={{ width: 794, height: 794 * 1.414, transform: `scale(${440/794})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
         </div>
         <div className="space-y-3 md:col-span-2 lg:col-span-1 lg:sticky lg:top-24">
           <div className="rounded-xl border border-slate-200 bg-white p-4">

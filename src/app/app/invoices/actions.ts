@@ -6,8 +6,73 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+// Sunucu tarafı doğrulama şeması — client'tan gelen veriye GÜVENMEYİZ.
+const itemSchema = z.object({
+  description: z.string().min(1).max(500),
+  unit: z.string().max(50).optional().default(""),
+  quantity: z.number().finite().min(0).max(1_000_000),
+  unitPrice: z.number().finite().min(0).max(100_000_000),
+  vatRate: z.number().finite().min(0).max(100),
+});
+const saveSchema = z.object({
+  id: z.string().optional(),
+  number: z.string().min(1).max(50),
+  clientName: z.string().max(200).optional().default(""),
+  clientVat: z.string().max(100).optional().default(""),
+  clientAddr: z.string().max(500).optional().default(""),
+  clientEmail: z.string().max(200).optional().default(""),
+  currency: z.enum(["EUR", "USD", "GBP", "TRY"]).optional().default("EUR"),
+  taxMode: z.enum(["normal", "reverse", "exempt"]).optional().default("normal"),
+  qrMode: z.string().optional(),
+  template: z.string().max(50),
+  themeColor: z.string().max(50),
+  issueDate: z.string().max(40),
+  dueDate: z.string().max(40).optional().default(""),
+  items: z.array(itemSchema).min(1).max(200),
+  docType: z.enum(["INVOICE", "QUOTE"]).optional().default("INVOICE"),
+  notes: z.string().max(2000).optional(),
+});
+
+// Sıradaki fatura numarasını üret (şirket bazlı). Format: 2026-0001
+export async function getNextInvoiceNumber() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, number: "" };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) {
+    const year = new Date().getFullYear();
+    return { ok: true, number: `${year}-0001` };
+  }
+
+  // Bu şirketin en son faturasını bul
+  const last = await prisma.invoice.findFirst({
+    where: { companyId: company.id },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const year = new Date().getFullYear();
+  if (!last || !last.number) return { ok: true, number: `${year}-0001` };
+
+  // Son numaradan sıradakini türet (YYYY-NNNN formatı varsayımı)
+  const m = String(last.number).match(/(\d{4})-(\d+)/);
+  if (m) {
+    const lastYear = parseInt(m[1], 10);
+    const seq = parseInt(m[2], 10);
+    if (lastYear === year) {
+      return { ok: true, number: `${year}-${String(seq + 1).padStart(4, "0")}` };
+    }
+    return { ok: true, number: `${year}-0001` }; // yeni yıl → sıfırla
+  }
+  // Format tanınmazsa güvenli varsayılan
+  return { ok: true, number: `${year}-0001` };
+}
+
 
 export type SaveInvoiceInput = {
+  id?: string;
   number: string;
   clientName: string;
   clientVat: string;
@@ -49,6 +114,27 @@ export async function saveInvoice(input: SaveInvoiceInput) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Oturum bulunamadı." };
 
+  // 0) GÜVENLİK: Gelen veriyi doğrula. Geçersizse reddet.
+  const parsed = saveSchema.safeParse(input);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { ok: false, error: `Geçersiz veri: ${first?.path.join(".")} — ${first?.message}` };
+  }
+  const v = parsed.data;
+
+  // 0b) GÜVENLİK: Toplamları SUNUCU hesaplar. Client'ın gönderdiği toplama GÜVENMEYİZ.
+  let calcSubtotal = 0, calcVat = 0;
+  for (const it of v.items) {
+    const line = it.quantity * it.unitPrice;
+    calcSubtotal += line;
+    // Tevkifat/muaf modunda KDV 0; normalde satır KDV'si
+    if (v.taxMode === "normal") calcVat += line * (it.vatRate / 100);
+  }
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const serverSubtotal = round2(calcSubtotal);
+  const serverVat = round2(calcVat);
+  const serverTotal = round2(calcSubtotal + calcVat);
+
   try {
     // 1) Kullanıcının User + Company kaydını bul/oluştur (ilk kullanımda yoksa).
     let company = await prisma.company.findUnique({ where: { userId: user.id } });
@@ -66,58 +152,66 @@ export async function saveInvoice(input: SaveInvoiceInput) {
 
     // 2) Müşteriyi bul/oluştur (aynı isimde varsa tekrar kullan).
     let client = null;
-    if (input.clientName) {
+    if (v.clientName) {
       client = await prisma.client.findFirst({
-        where: { companyId: company.id, name: input.clientName },
+        where: { companyId: company.id, name: v.clientName },
       });
       if (!client) {
         client = await prisma.client.create({
           data: {
             companyId: company.id,
-            name: input.clientName,
-            vatId: input.clientVat || null,
-            address: input.clientAddr || null,
-            email: input.clientEmail || null,
+            name: v.clientName,
+            vatId: v.clientVat || null,
+            address: v.clientAddr || null,
+            email: v.clientEmail || null,
           },
         });
       }
     }
 
-    // 3) Faturayı oluştur (kalemlerle birlikte). companyId daima oturum sahibinin.
-    const invoice = await prisma.invoice.create({
-      data: {
-        companyId: company.id,
-        clientId: client?.id ?? null,
-        number: input.number,
-        type: (input.docType ?? "INVOICE") as any,
-        currency: (input.currency as any) ?? "EUR",
-        taxMode: TAX_MAP[input.taxMode] ?? "NORMAL",
-        qrMode: QR_MAP[input.qrMode ?? "verify"] ?? "VERIFY",
-        template: input.template,
-        themeColor: input.themeColor,
-        issueDate: parseDate(input.issueDate),
-        dueDate: input.dueDate ? parseDate(input.dueDate) : null,
-        subtotal: input.subtotal,
-        vatTotal: input.vatTotal,
-        total: input.total,
-        notes: input.notes ?? null,
-        items: {
-          create: input.items.map((it, i) => ({
-            description: it.description,
-            unit: it.unit,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            vatRate: it.vatRate,
-            amount: it.quantity * it.unitPrice,
-            order: i,
-          })),
-        },
-      },
-    });
+    // 3) Faturayı oluştur VEYA güncelle (id varsa düzenleme).
+    const invoiceData = {
+      clientId: client?.id ?? null,
+      number: v.number,
+      type: (v.docType ?? "INVOICE") as any,
+      currency: (v.currency as any) ?? "EUR",
+      taxMode: TAX_MAP[v.taxMode] ?? "NORMAL",
+      qrMode: QR_MAP[v.qrMode ?? "verify"] ?? "VERIFY",
+      template: v.template,
+      themeColor: v.themeColor,
+      issueDate: parseDate(v.issueDate),
+      dueDate: v.dueDate ? parseDate(v.dueDate) : null,
+      subtotal: serverSubtotal,
+      vatTotal: serverVat,
+      total: serverTotal,
+      notes: v.notes ?? null,
+    };
+    const itemsCreate = v.items.map((it, i) => ({
+      description: it.description, unit: it.unit, quantity: it.quantity,
+      unitPrice: it.unitPrice, vatRate: it.vatRate,
+      amount: round2(it.quantity * it.unitPrice), order: i,
+    }));
+
+    let invoice;
+    if (v.id) {
+      // DÜZENLEME: sadece kendi faturası mı doğrula, sonra güncelle.
+      const existing = await prisma.invoice.findFirst({ where: { id: v.id, companyId: company.id } });
+      if (!existing) return { ok: false, error: "Fatura bulunamadı." };
+      // Eski kalemleri sil, yenilerini yaz (en temiz yöntem)
+      await prisma.invoiceItem.deleteMany({ where: { invoiceId: v.id } });
+      invoice = await prisma.invoice.update({
+        where: { id: v.id },
+        data: { ...invoiceData, items: { create: itemsCreate } },
+      });
+    } else {
+      // YENİ KAYIT
+      invoice = await prisma.invoice.create({
+        data: { companyId: company.id, ...invoiceData, items: { create: itemsCreate } },
+      });
+    }
 
     return { ok: true, id: invoice.id };
   } catch (err: any) {
-    // number+companyId benzersiz; aynı no tekrar girilirse anlamlı mesaj
     if (err?.code === "P2002") return { ok: false, error: "Bu fatura numarası zaten kullanılmış." };
     return { ok: false, error: err?.message || "Kayıt başarısız." };
   }
@@ -185,6 +279,23 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
 }
 
 // Fatura siler — sadece kendi faturası.
+// Tek faturayı kalemleriyle getir (detay + düzenleme için)
+export async function getInvoice(invoiceId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı.", invoice: null };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, error: "Şirket bulunamadı.", invoice: null };
+
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, companyId: company.id },   // yatay yetki koruması
+    include: { client: true, items: { orderBy: { order: "asc" } } },
+  });
+  if (!invoice) return { ok: false, error: "Fatura bulunamadı.", invoice: null };
+  return { ok: true, invoice };
+}
+
 export async function deleteInvoice(invoiceId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

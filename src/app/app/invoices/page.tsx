@@ -5,23 +5,29 @@ import Link from "next/link";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
-import { Plus, Search, FileText, Check, ChevronDown } from "lucide-react";
-import { listInvoices, updateInvoiceStatus } from "./actions";
+import { Plus, Search, FileText, Check, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { listInvoices, updateInvoiceStatus, deleteInvoice } from "./actions";
 import { useGuest } from "@/lib/guest-context";
+import { useConfirm } from "@/lib/confirm-context";
 
 export default function InvoicesPage() {
   const { lang } = useLang();
   const { requireAuth } = useGuest();
+  const confirm = useConfirm();
   const [filter, setFilter] = useState("all");
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("date_desc");   // sıralama
+  const [dateRange, setDateRange] = useState("all");    // tarih aralığı
 
-  // Topbar'dan gelen arama terimini al (?q=...)
+  // Topbar'dan gelen arama terimini al (?q=...) ve dashboard'dan gelen durum filtresini (?status=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("q");
     if (q) setSearch(q);
+    const status = params.get("status");
+    if (status) setFilter(status);
   }, []);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const L = (tr: string, _en?: string) => appT(lang, tr);
@@ -44,10 +50,11 @@ export default function InvoicesPage() {
 
   const tabs = [
     { id: "all", label: L("Tümü", "All") },
-    { id: "PAID", label: L("Ödenen", "Paid") },
-    { id: "SENT", label: L("Gönderildi", "Sent") },
-    { id: "OVERDUE", label: L("Gecikmiş", "Overdue") },
     { id: "DRAFT", label: L("Taslak", "Draft") },
+    { id: "SENT", label: L("Gönderildi", "Sent") },
+    { id: "PAID", label: L("Ödenen", "Paid") },
+    { id: "OVERDUE", label: L("Gecikmiş", "Overdue") },
+    { id: "CANCELLED", label: L("İptal", "Cancelled") },
   ];
 
   const statusLabel = (s: string) =>
@@ -61,13 +68,54 @@ export default function InvoicesPage() {
   const fmt = (n: number, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("tr-TR") : "—";
 
+  // 1) Durum filtresi
   let rows = filter === "all" ? invoices : invoices.filter((i) => i.status === filter);
+
+  // 2) Arama
   if (search.trim()) {
     const q = search.toLowerCase();
     rows = rows.filter((i) =>
       (i.number || "").toLowerCase().includes(q) ||
       (i.client?.name || "").toLowerCase().includes(q)
     );
+  }
+
+  // 3) Tarih aralığı filtresi
+  if (dateRange !== "all") {
+    const now = new Date();
+    rows = rows.filter((i) => {
+      const d = i.issueDate ? new Date(i.issueDate) : null;
+      if (!d) return false;
+      if (dateRange === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (dateRange === "quarter") {
+        const q = Math.floor(now.getMonth() / 3);
+        return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear();
+      }
+      if (dateRange === "year") return d.getFullYear() === now.getFullYear();
+      return true;
+    });
+  }
+
+  // 4) Sıralama
+  const statusOrder: Record<string, number> = { DRAFT: 0, SENT: 1, OVERDUE: 2, PAID: 3, CANCELLED: 4 };
+  rows = [...rows].sort((a, b) => {
+    switch (sortBy) {
+      case "date_asc": return new Date(a.issueDate || 0).getTime() - new Date(b.issueDate || 0).getTime();
+      case "date_desc": return new Date(b.issueDate || 0).getTime() - new Date(a.issueDate || 0).getTime();
+      case "amount_desc": return Number(b.total || 0) - Number(a.total || 0);
+      case "amount_asc": return Number(a.total || 0) - Number(b.total || 0);
+      case "status": return (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+      case "client": return (a.client?.name || "").localeCompare(b.client?.name || "");
+      default: return 0;
+    }
+  });
+
+  // Filtrelenmiş sonucun özeti (sayı + para birimine göre toplam)
+  const resultCount = rows.length;
+  const totalsByCurrency: Record<string, number> = {};
+  for (const r of rows) {
+    const c = r.currency || "EUR";
+    totalsByCurrency[c] = (totalsByCurrency[c] || 0) + Number(r.total || 0);
   }
 
   const changeStatus = async (id: string, status: string) => {
@@ -80,6 +128,21 @@ export default function InvoicesPage() {
   };
 
   const statusOptions = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
+
+  const delInvoice = async (id: string, number: string) => {
+    if (!requireAuth()) return;
+    const ok = await confirm({
+      title: L("Faturayı sil", "Delete invoice"),
+      message: L(`${number} numaralı fatura silinecek. Bu işlem geri alınamaz.`, `Invoice ${number} will be deleted. This cannot be undone.`),
+      confirmText: L("Sil", "Delete"),
+      cancelText: L("İptal", "Cancel"),
+      danger: true,
+    });
+    if (!ok) return;
+    setInvoices((prev) => prev.filter((i) => i.id !== id));
+    const res = await deleteInvoice(id);
+    if (!res.ok) { alert(res.error || "Silinemedi"); load(); }
+  };
 
   return (
     <div>
@@ -121,11 +184,41 @@ export default function InvoicesPage() {
                 </button>
               ))}
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={L("Ara...", "Search...")}
-                className="rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Tarih aralığı */}
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                <option value="all">{L("Tüm tarihler", "All dates")}</option>
+                <option value="month">{L("Bu ay", "This month")}</option>
+                <option value="quarter">{L("Bu çeyrek", "This quarter")}</option>
+                <option value="year">{L("Bu yıl", "This year")}</option>
+              </select>
+              {/* Sıralama */}
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                <option value="date_desc">{L("Tarih (yeni → eski)", "Date (new → old)")}</option>
+                <option value="date_asc">{L("Tarih (eski → yeni)", "Date (old → new)")}</option>
+                <option value="amount_desc">{L("Tutar (yüksek → düşük)", "Amount (high → low)")}</option>
+                <option value="amount_asc">{L("Tutar (düşük → yüksek)", "Amount (low → high)")}</option>
+                <option value="status">{L("Duruma göre", "By status")}</option>
+                <option value="client">{L("Müşteri adı", "Client name")}</option>
+              </select>
+              {/* Arama */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={L("Ara...", "Search...")}
+                  className="rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+              </div>
             </div>
+          </div>
+
+          {/* Sonuç özeti */}
+          <div className="flex items-center gap-3 text-sm text-slate-500 mb-3 px-1 flex-wrap">
+            <span>{resultCount} {L("fatura", "invoices")}</span>
+            {Object.keys(totalsByCurrency).length > 0 && <span className="text-slate-300">·</span>}
+            {Object.entries(totalsByCurrency).map(([cur, sum]) => (
+              <span key={cur} className="font-medium text-slate-700">{fmt(sum, cur)}</span>
+            ))}
           </div>
 
           {/* Tablo */}
@@ -140,6 +233,7 @@ export default function InvoicesPage() {
                     <th className="font-medium px-5 py-3 hidden lg:table-cell">{L("Vade", "Due")}</th>
                     <th className="font-medium px-5 py-3">{L("Durum", "Status")}</th>
                     <th className="font-medium px-5 py-3 text-right">{L("Tutar", "Amount")}</th>
+                    <th className="px-3 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,10 +265,20 @@ export default function InvoicesPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right font-medium">{fmt(inv.total, inv.currency)}</td>
+                      <td className="px-3 py-3 text-right whitespace-nowrap">
+                        <Link href={`/app/invoices/new?id=${inv.id}`} onClick={(e) => { if (!requireAuth()) e.preventDefault(); }}
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500" title={L("Düzenle", "Edit")}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                        <button onClick={() => delInvoice(inv.id, inv.number)}
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600" title={L("Sil", "Delete")}>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {rows.length === 0 && (
-                    <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-400">{L("Bu filtrede fatura yok.", "No invoices in this filter.")}</td></tr>
+                    <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-400">{L("Bu filtrede fatura yok.", "No invoices in this filter.")}</td></tr>
                   )}
                 </tbody>
               </table>

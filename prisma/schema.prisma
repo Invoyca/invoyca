@@ -157,7 +157,7 @@ model Invoice {
   companyId   String
   company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   clientId    String?
-  client      Client?       @relation(fields: [clientId], references: [id])
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   number      String        // 2026-0042
   type        DocumentType  @default(INVOICE)

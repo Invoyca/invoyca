@@ -66,9 +66,14 @@ export async function createClientRecord(input: {
 export async function deleteClient(id: string) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  const result = await prisma.client.deleteMany({ where: { id, companyId: company.id } });
-  if (result.count === 0) return { ok: false, error: "Müşteri bulunamadı." };
-  return { ok: true };
+  try {
+    const result = await prisma.client.deleteMany({ where: { id, companyId: company.id } });
+    if (result.count === 0) return { ok: false, error: "Müşteri bulunamadı." };
+    return { ok: true };
+  } catch (e: any) {
+    // Müşterinin bağlı faturaları varsa ve DB onDelete:SetNull değilse buraya düşebilir
+    return { ok: false, error: "Müşteri silinemedi. Bağlı faturalar olabilir." };
+  }
 }
 
 // ---------- ÜRÜNLER ----------

@@ -67,6 +67,15 @@ export default function DashboardPage() {
 
   const paidInvoices = invoices.filter((i) => i.status === "PAID");
   const pendingInvoices = invoices.filter((i) => i.status !== "PAID");
+
+  // Gecikmiş faturalar: vadesi geçmiş ama ödenmemiş (veya OVERDUE durumlu)
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const overdueInvoices = invoices.filter((i) => {
+    if (i.status === "PAID" || i.status === "CANCELLED") return false;
+    if (i.status === "OVERDUE") return true;
+    if (!i.dueDate) return false;
+    return new Date(i.dueDate) < today;
+  });
   const clientCount = new Set(invoices.map((i) => i.clientId).filter(Boolean)).size;
 
   const fmt = (n: number, cur: string) => (curSym[cur] || "€") + n.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -113,6 +122,13 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Gecikmiş fatura uyarısı */}
+      {overdueInvoices.length > 0 && (
+        <Link href="/app/invoices?status=OVERDUE" className="block rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 mb-4 text-sm text-rose-800 hover:bg-rose-100 transition-colors">
+          <span className="font-semibold">{overdueInvoices.length} {t("fatura")}</span> {t("vadesi geçti ve hâlâ ödenmedi.")} {t("Görüntüle →")}
+        </Link>
+      )}
 
       {/* Çoklu para birimi uyarısı */}
       {multiCurrency && (
