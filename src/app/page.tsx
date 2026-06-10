@@ -127,6 +127,28 @@ export default function Landing() {
       </section>
 
       {/* Son CTA */}
+      {/* SSS */}
+      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+        <h2 className="text-3xl font-bold text-center mb-10 text-slate-900">{t.faq_title}</h2>
+        <div className="space-y-3">
+          {[
+            { q: t.faq_q1, a: t.faq_a1 },
+            { q: t.faq_q2, a: t.faq_a2 },
+            { q: t.faq_q3, a: t.faq_a3 },
+            { q: t.faq_q4, a: t.faq_a4 },
+            { q: t.faq_q5, a: t.faq_a5 },
+          ].map((item, i) => (
+            <details key={i} className="group rounded-xl border border-slate-200 bg-white p-5 [&_summary]:cursor-pointer">
+              <summary className="flex items-center justify-between font-semibold text-slate-900 list-none">
+                {item.q}
+                <span className="ml-4 text-slate-400 transition-transform group-open:rotate-45 text-xl leading-none">+</span>
+              </summary>
+              <p className="mt-3 text-slate-600 text-sm leading-relaxed">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
         <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-blue-700 p-10 sm:p-16 text-center text-white">
           <h2 className="text-3xl font-bold mb-3">{t.final_title}</h2>

@@ -13,6 +13,10 @@ type LDict = {
   promo_desc: string; promo_note: string; promo_cta: string;
   promo_b1: string; promo_b2: string; promo_b3: string; promo_b4: string;
   final_title: string; final_desc: string; final_cta: string;
+  faq_title: string;
+  faq_q1: string; faq_a1: string; faq_q2: string; faq_a2: string;
+  faq_q3: string; faq_a3: string; faq_q4: string; faq_a4: string;
+  faq_q5: string; faq_a5: string;
 };
 
 export const LANDING: Record<Lang, LDict> = {
@@ -32,6 +36,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Kredi kartı gerekmez. Abonelik planları 2027'de başlayacak; mevcut kullanıcılara önceden haber verilecek.",
     promo_cta: "Ücretsiz Başla", promo_b1: "Sınırsız fatura", promo_b2: "25 şablon", promo_b3: "7 dil, 4 para birimi", promo_b4: "PDF & e-posta",
     final_title: "Bugün ücretsiz başla", final_desc: "Dünyanın her yerine fatura kesmeye saniyeler içinde başla. Kredi kartı gerekmez.", final_cta: "Ücretsiz Başla",
+    faq_title: "Sıkça Sorulan Sorular",
+    faq_q1: "Invoyca gerçekten ücretsiz mi?", faq_a1: "2026 boyunca tüm özellikler ücretsiz ve sınırsız. Kredi kartı gerekmez. Ücretli planlar 2027'de başlayacak.",
+    faq_q2: "Hangi para birimleri ve diller destekleniyor?", faq_a2: "EUR, USD, GBP ve TRY ile fatura kesebilir; arayüzü ve faturaları 7 dilde (Türkçe, İngilizce, Almanca, Felemenkçe, Fransızca, İspanyolca, İtalyanca) kullanabilirsin.",
+    faq_q3: "Uluslararası fatura kesebilir miyim?", faq_a3: "Evet. AB sınır ötesi (reverse charge / KDV tevkifatı) ve uluslararası senaryolar için özel şablonlar var. Türkiye e-Arşiv (GİB/ETTN) modu da mevcut.",
+    faq_q4: "Faturalarımı PDF olarak alabilir miyim?", faq_a4: "Evet. Her faturayı PDF olarak indirebilir, yazdırabilir veya müşterine e-posta ile gönderebilirsin. 25 farklı profesyonel şablon arasından seçim yaparsın.",
+    faq_q5: "Verilerim güvende mi?", faq_a5: "Verilerin şifreli olarak saklanır ve yalnızca senin hesabına bağlıdır. Faturalarına istediğin zaman erişebilir, düzenleyebilir veya silebilirsin.",
   },
   EN: {
     nav_features: "Features", nav_pricing: "Pricing", nav_faq: "FAQ", cta_start: "Start Free",
@@ -49,6 +59,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "No credit card required. Subscription plans start in 2027; existing users will be notified in advance.",
     promo_cta: "Start Free", promo_b1: "Unlimited invoices", promo_b2: "25 templates", promo_b3: "7 languages, 4 currencies", promo_b4: "PDF & email",
     final_title: "Start free today", final_desc: "Start invoicing worldwide in seconds. No credit card required.", final_cta: "Start Free",
+    faq_title: "Frequently Asked Questions",
+    faq_q1: "Is Invoyca really free?", faq_a1: "All features are free and unlimited throughout 2026. No credit card required. Paid plans start in 2027.",
+    faq_q2: "Which currencies and languages are supported?", faq_a2: "Invoice in EUR, USD, GBP and TRY; use the interface and invoices in 7 languages (Turkish, English, German, Dutch, French, Spanish, Italian).",
+    faq_q3: "Can I invoice internationally?", faq_a3: "Yes. There are dedicated templates for EU cross-border (reverse charge) and international scenarios. A Türkiye e-Archive (GİB/ETTN) mode is also available.",
+    faq_q4: "Can I export my invoices as PDF?", faq_a4: "Yes. Download any invoice as PDF, print it, or email it to your client. Choose from 25 professional templates.",
+    faq_q5: "Is my data safe?", faq_a5: "Your data is stored encrypted and tied only to your account. You can access, edit or delete your invoices anytime.",
   },
   DE: {
     nav_features: "Funktionen", nav_pricing: "Preise", nav_faq: "FAQ", cta_start: "Kostenlos starten",
@@ -66,6 +82,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Keine Kreditkarte. Abo-Pläne starten 2027; Nutzer werden vorab informiert.",
     promo_cta: "Kostenlos starten", promo_b1: "Unbegrenzte Rechnungen", promo_b2: "25 Vorlagen", promo_b3: "7 Sprachen, 4 Währungen", promo_b4: "PDF & E-Mail",
     final_title: "Starte heute kostenlos", final_desc: "Stelle weltweit Rechnungen in Sekunden. Keine Kreditkarte.", final_cta: "Kostenlos starten",
+    faq_title: "Häufige Fragen",
+    faq_q1: "Ist Invoyca wirklich kostenlos?", faq_a1: "Alle Funktionen sind 2026 kostenlos und unbegrenzt. Keine Kreditkarte nötig. Bezahlpläne starten 2027.",
+    faq_q2: "Welche Währungen und Sprachen werden unterstützt?", faq_a2: "Rechnungen in EUR, USD, GBP und TRY; Oberfläche und Rechnungen in 7 Sprachen.",
+    faq_q3: "Kann ich international Rechnungen stellen?", faq_a3: "Ja. Es gibt eigene Vorlagen für EU-grenzüberschreitend (Reverse Charge) und internationale Szenarien.",
+    faq_q4: "Kann ich Rechnungen als PDF exportieren?", faq_a4: "Ja. Lade jede Rechnung als PDF herunter, drucke sie oder sende sie per E-Mail. 25 professionelle Vorlagen.",
+    faq_q5: "Sind meine Daten sicher?", faq_a5: "Deine Daten werden verschlüsselt gespeichert und sind nur mit deinem Konto verknüpft.",
   },
   NL: {
     nav_features: "Functies", nav_pricing: "Prijzen", nav_faq: "FAQ", cta_start: "Gratis starten",
@@ -83,6 +105,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Geen creditcard. Abonnementen starten in 2027; gebruikers worden vooraf geïnformeerd.",
     promo_cta: "Gratis starten", promo_b1: "Onbeperkte facturen", promo_b2: "25 sjablonen", promo_b3: "7 talen, 4 valuta", promo_b4: "PDF & e-mail",
     final_title: "Begin vandaag gratis", final_desc: "Factureer wereldwijd in seconden. Geen creditcard.", final_cta: "Gratis starten",
+    faq_title: "Veelgestelde vragen",
+    faq_q1: "Is Invoyca echt gratis?", faq_a1: "Alle functies zijn gratis en onbeperkt in 2026. Geen creditcard nodig. Betaalde plannen starten in 2027.",
+    faq_q2: "Welke valuta's en talen worden ondersteund?", faq_a2: "Factureer in EUR, USD, GBP en TRY; interface en facturen in 7 talen.",
+    faq_q3: "Kan ik internationaal factureren?", faq_a3: "Ja. Er zijn speciale sjablonen voor EU grensoverschrijdend (reverse charge) en internationale scenario's.",
+    faq_q4: "Kan ik facturen als PDF exporteren?", faq_a4: "Ja. Download elke factuur als PDF, print of e-mail ze. 25 professionele sjablonen.",
+    faq_q5: "Zijn mijn gegevens veilig?", faq_a5: "Je gegevens worden versleuteld opgeslagen en alleen aan je account gekoppeld.",
   },
   FR: {
     nav_features: "Fonctions", nav_pricing: "Tarifs", nav_faq: "FAQ", cta_start: "Commencer gratuitement",
@@ -100,6 +128,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Sans carte bancaire. Les abonnements démarrent en 2027 ; les utilisateurs seront prévenus à l'avance.",
     promo_cta: "Commencer", promo_b1: "Factures illimitées", promo_b2: "25 modèles", promo_b3: "7 langues, 4 devises", promo_b4: "PDF & e-mail",
     final_title: "Commencez gratuitement", final_desc: "Facturez dans le monde entier en quelques secondes. Sans carte bancaire.", final_cta: "Commencer",
+    faq_title: "Questions fréquentes",
+    faq_q1: "Invoyca est-il vraiment gratuit ?", faq_a1: "Toutes les fonctions sont gratuites et illimitées en 2026. Sans carte bancaire. Les offres payantes arrivent en 2027.",
+    faq_q2: "Quelles devises et langues sont prises en charge ?", faq_a2: "Facturez en EUR, USD, GBP et TRY ; interface et factures en 7 langues.",
+    faq_q3: "Puis-je facturer à l'international ?", faq_a3: "Oui. Des modèles dédiés existent pour l'UE transfrontalier (autoliquidation) et les scénarios internationaux.",
+    faq_q4: "Puis-je exporter mes factures en PDF ?", faq_a4: "Oui. Téléchargez chaque facture en PDF, imprimez-la ou envoyez-la par e-mail. 25 modèles professionnels.",
+    faq_q5: "Mes données sont-elles en sécurité ?", faq_a5: "Vos données sont chiffrées et liées uniquement à votre compte.",
   },
   ES: {
     nav_features: "Funciones", nav_pricing: "Precios", nav_faq: "FAQ", cta_start: "Empezar gratis",
@@ -117,6 +151,12 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Sin tarjeta. Los planes comienzan en 2027; se avisará con antelación a los usuarios.",
     promo_cta: "Empezar gratis", promo_b1: "Facturas ilimitadas", promo_b2: "25 plantillas", promo_b3: "7 idiomas, 4 monedas", promo_b4: "PDF y correo",
     final_title: "Empieza gratis hoy", final_desc: "Factura en todo el mundo en segundos. Sin tarjeta.", final_cta: "Empezar gratis",
+    faq_title: "Preguntas frecuentes",
+    faq_q1: "¿Invoyca es realmente gratis?", faq_a1: "Todas las funciones son gratuitas e ilimitadas durante 2026. Sin tarjeta. Los planes de pago llegan en 2027.",
+    faq_q2: "¿Qué monedas e idiomas se admiten?", faq_a2: "Factura en EUR, USD, GBP y TRY; interfaz y facturas en 7 idiomas.",
+    faq_q3: "¿Puedo facturar internacionalmente?", faq_a3: "Sí. Hay plantillas dedicadas para la UE transfronteriza (inversión del sujeto pasivo) y escenarios internacionales.",
+    faq_q4: "¿Puedo exportar mis facturas en PDF?", faq_a4: "Sí. Descarga cada factura en PDF, imprímela o envíala por correo. 25 plantillas profesionales.",
+    faq_q5: "¿Mis datos están seguros?", faq_a5: "Tus datos se almacenan cifrados y vinculados solo a tu cuenta.",
   },
   IT: {
     nav_features: "Funzioni", nav_pricing: "Prezzi", nav_faq: "FAQ", cta_start: "Inizia gratis",
@@ -134,5 +174,11 @@ export const LANDING: Record<Lang, LDict> = {
     promo_note: "Nessuna carta. Gli abbonamenti partono nel 2027; gli utenti saranno avvisati in anticipo.",
     promo_cta: "Inizia gratis", promo_b1: "Fatture illimitate", promo_b2: "25 modelli", promo_b3: "7 lingue, 4 valute", promo_b4: "PDF ed e-mail",
     final_title: "Inizia gratis oggi", final_desc: "Fattura in tutto il mondo in pochi secondi. Nessuna carta.", final_cta: "Inizia gratis",
+    faq_title: "Domande frequenti",
+    faq_q1: "Invoyca è davvero gratis?", faq_a1: "Tutte le funzioni sono gratuite e illimitate per il 2026. Nessuna carta. I piani a pagamento partono nel 2027.",
+    faq_q2: "Quali valute e lingue sono supportate?", faq_a2: "Fattura in EUR, USD, GBP e TRY; interfaccia e fatture in 7 lingue.",
+    faq_q3: "Posso fatturare a livello internazionale?", faq_a3: "Sì. Ci sono modelli dedicati per l'UE transfrontaliera (reverse charge) e scenari internazionali.",
+    faq_q4: "Posso esportare le fatture in PDF?", faq_a4: "Sì. Scarica ogni fattura in PDF, stampala o inviala via e-mail. 25 modelli professionali.",
+    faq_q5: "I miei dati sono al sicuro?", faq_a5: "I tuoi dati sono archiviati cifrati e collegati solo al tuo account.",
   },
 };
