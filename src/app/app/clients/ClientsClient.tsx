@@ -20,6 +20,7 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
+  const [detailClient, setDetailClient] = useState<any>(null);
 
   const openForm = () => { if (requireAuth()) { setEditingClient(null); setShowForm(true); } };
   const openEdit = (c: any) => { if (requireAuth()) { setEditingClient(c); setShowForm(true); } };
@@ -103,7 +104,7 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
                             {(c.name || "?").slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium">{c.name}</p>
+                            <button onClick={() => setDetailClient(c)} className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left">{c.name}</button>
                             <p className="text-xs text-slate-400">{fmtCountry(c)}</p>
                           </div>
                         </div>
@@ -129,6 +130,59 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
       )}
 
       {showForm && <ClientForm L={L} lang={lang} editClient={editingClient} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+
+      {/* Müşteri detay penceresi */}
+      {detailClient && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={() => setDetailClient(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-base font-semibold">
+                  {(detailClient.name || "?").slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="font-semibold text-lg text-slate-900">{detailClient.name}</h2>
+                  <p className="text-xs text-slate-400">{fmtCountry(detailClient)}</p>
+                </div>
+              </div>
+              <button onClick={() => setDetailClient(null)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              {detailClient.email && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("E-posta", "Email")}</span><span className="text-slate-700 text-right">{detailClient.email}</span></div>
+              )}
+              {detailClient.phone && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Telefon", "Phone")}</span><span className="text-slate-700 text-right">{detailClient.phone}</span></div>
+              )}
+              {detailClient.vatId && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Vergi / VAT No", "Tax / VAT No")}</span><span className="text-slate-700 text-right">{detailClient.vatId}</span></div>
+              )}
+              {detailClient.address && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Adres", "Address")}</span><span className="text-slate-700 text-right">{detailClient.address}</span></div>
+              )}
+              {detailClient.city && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Şehir", "City")}</span><span className="text-slate-700 text-right">{detailClient.city}</span></div>
+              )}
+              {detailClient.country && (
+                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Ülke", "Country")}</span><span className="text-slate-700 text-right">{detailClient.country}</span></div>
+              )}
+              <div className="flex justify-between gap-4 pt-2 border-t border-slate-100"><span className="text-slate-400">{L("Fatura sayısı", "Invoices")}</span><span className="text-slate-700 font-medium">{detailClient._count?.invoices ?? 0}</span></div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button onClick={() => { const c = detailClient; setDetailClient(null); openEdit(c); }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+                <Pencil className="h-4 w-4" /> {L("Düzenle", "Edit")}
+              </button>
+              <button onClick={() => setDetailClient(null)}
+                className="rounded-lg border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 hover:bg-slate-50">
+                {L("Kapat", "Close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

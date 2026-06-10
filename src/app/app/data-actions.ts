@@ -202,6 +202,7 @@ export async function getAccountInfo() {
       country: company.country || "",
       taxId: company.taxId || "",
       vatId: company.vatId || "",
+      defaultLanguage: company.defaultLanguage || "TR",
     } : null,
   };
 }
@@ -258,11 +259,12 @@ export async function updatePassword(newPassword: string) {
 
 // Şirket bilgilerini güncelle
 export async function updateCompany(input: {
-  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string;
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string;
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
 
+  const validLangs = ["TR", "EN", "DE", "NL", "FR", "ES", "IT"];
   await prisma.company.update({
     where: { id: company.id },
     data: {
@@ -273,6 +275,9 @@ export async function updateCompany(input: {
       country: input.country || null,
       taxId: input.taxId || null,
       vatId: input.vatId || null,
+      ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
+        ? { defaultLanguage: input.defaultLanguage as any }
+        : {}),
     },
   });
   return { ok: true };

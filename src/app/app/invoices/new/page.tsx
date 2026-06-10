@@ -9,7 +9,7 @@ import { EditorState, emptyEditorState, toInvoiceData } from "@/lib/invoice-data
 import { calcTotals, formatMoney } from "@/lib/invoice-calc";
 import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
-import { listClients, listProducts } from "../../data-actions";
+import { listClients, listProducts, getAccountInfo } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { printInvoicePdf } from "@/lib/pdf-print";
 
@@ -30,6 +30,9 @@ export default function NewInvoicePage() {
   // URL'de ?type=quote varsa teklif modu, ?id=... varsa düzenleme modu
   const [isQuote, setIsQuote] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  // Fatura dili — program dilinden BAĞIMSIZ. Öncelik: müşteri dili > ayar varsayılanı > program dili
+  const [invoiceLang, setInvoiceLang] = useState<string>(lang);
+  const [companyDefaultLang, setCompanyDefaultLang] = useState<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setIsQuote(params.get("type") === "quote");
@@ -40,6 +43,16 @@ export default function NewInvoicePage() {
   useEffect(() => {
     listClients().then((r) => { if (r.ok) setSavedClients(r.clients || []); }).catch(() => {});
     listProducts().then((r) => { if (r.ok) setSavedProducts(r.products || []); }).catch(() => {});
+    // Şirketin varsayılan fatura dilini al (yeni faturada başlangıç dili)
+    getAccountInfo().then((r) => {
+      if (r.ok && r.company?.defaultLanguage) {
+        setCompanyDefaultLang(r.company.defaultLanguage);
+        // Düzenleme/müşteri seçimi henüz olmadıysa varsayılanı uygula
+        setInvoiceLang((cur) => cur);
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get("id")) setInvoiceLang(r.company.defaultLanguage);
+      }
+    }).catch(() => {});
   }, []);
 
   // Düzenleme mi yeni mi? id varsa faturayı yükle; yoksa sıradaki numarayı al.
@@ -71,6 +84,8 @@ export default function NewInvoicePage() {
             currency: inv.currency || "EUR",
             taxMode: (inv.taxMode || "NORMAL").toLowerCase(),
           }));
+          // Faturanın kayıtlı dilini yükle
+          if (inv.language) setInvoiceLang(inv.language);
         }
       }).catch(() => {});
     } else {
@@ -91,6 +106,8 @@ export default function NewInvoicePage() {
       addr: [c.address, c.city, c.country].filter(Boolean).join(", "),
       email: c.email || "",
     } }));
+    // Bu müşteriye daha önce hangi dilde fatura kesildiyse onu kullan (hatırlanır)
+    if (c.preferredLanguage) setInvoiceLang(c.preferredLanguage);
   };
 
   // Kayıtlı ürün bir satıra eklenir
@@ -109,7 +126,7 @@ export default function NewInvoicePage() {
   const family = (Object.keys(FAMILIES) as FamilyId[]).find((f) => FAMILIES[f].variants.includes(variant)) || "classic";
   const totals = calcTotals(st.items, st.discount, st.taxMode);
   const data = toInvoiceData(st);
-  const html = renderInvoiceHTML({ variant, theme, lang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
+  const html = renderInvoiceHTML({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
 
   const upItem = (i: number, field: string, val: any) =>
     setSt((s) => ({ ...s, items: s.items.map((it, idx) => (idx === i ? { ...it, [field]: val } : it)) }));
@@ -128,13 +145,14 @@ export default function NewInvoicePage() {
       issueDate: st.meta.issue, dueDate: st.meta.due,
       items: st.items, subtotal: totals.subtotal, vatTotal: totals.vatTotal, total: totals.total,
       docType: isQuote ? "QUOTE" : "INVOICE",
+      language: invoiceLang,
     });
     setBusy("");
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3500); }
     else alert((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
   };
 
-  const renderOpts = () => ({ variant, theme, lang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
+  const renderOpts = () => ({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
 
   const downloadPdf = () => {
     printInvoicePdf(html, st.meta.no || "fatura");
@@ -149,7 +167,7 @@ export default function NewInvoicePage() {
       const res = await fetch("/api/send-invoice", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to, lang,
+          to, lang: invoiceLang,
           clientName: st.client.name, invoiceNo: st.meta.no,
           senderName: st.sender.name, amount: formatMoney(totals.total, st.currency),
           replyTo: st.sender.email,
@@ -246,6 +264,17 @@ export default function NewInvoicePage() {
               <div><label className={lbl}>{L("Fatura No", "Invoice No")}</label><input className={field} value={st.meta.no} onChange={(e) => setSt((s) => ({ ...s, meta: { ...s.meta, no: e.target.value } }))} /></div>
               <div><label className={lbl}>{L("Tarih", "Date")}</label><input className={field} value={st.meta.issue} onChange={(e) => setSt((s) => ({ ...s, meta: { ...s.meta, issue: e.target.value } }))} /></div>
               <div><label className={lbl}>{L("Vade", "Due")}</label><input className={field} value={st.meta.due} onChange={(e) => setSt((s) => ({ ...s, meta: { ...s.meta, due: e.target.value } }))} /></div>
+              <div><label className={lbl}>{L("Fatura dili", "Invoice language")}</label>
+                <select className={field} value={invoiceLang} onChange={(e) => setInvoiceLang(e.target.value)}>
+                  <option value="TR">Türkçe</option>
+                  <option value="EN">English</option>
+                  <option value="DE">Deutsch</option>
+                  <option value="NL">Nederlands</option>
+                  <option value="FR">Français</option>
+                  <option value="ES">Español</option>
+                  <option value="IT">Italiano</option>
+                </select>
+              </div>
               <div><label className={lbl}>{L("Para birimi", "Currency")}</label>
                 <select className={field} value={st.currency} onChange={(e) => setSt((s) => ({ ...s, currency: e.target.value }))}>
                   <option>EUR</option><option>USD</option><option>GBP</option><option>TRY</option>

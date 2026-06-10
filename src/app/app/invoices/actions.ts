@@ -32,6 +32,7 @@ const saveSchema = z.object({
   dueDate: z.string().max(40).optional().default(""),
   items: z.array(itemSchema).min(1).max(200),
   docType: z.enum(["INVOICE", "QUOTE"]).optional().default("INVOICE"),
+  language: z.enum(["TR", "EN", "DE", "NL", "FR", "ES", "IT"]).optional().default("TR"),
   notes: z.string().max(2000).optional(),
 });
 
@@ -91,6 +92,7 @@ export type SaveInvoiceInput = {
   total: number;
   notes?: string;
   docType?: "INVOICE" | "QUOTE";   // teklif mi fatura mı
+  language?: string;
 };
 
 // "07.06.2026" / "2026-06-07" / boş → Date
@@ -164,7 +166,14 @@ export async function saveInvoice(input: SaveInvoiceInput) {
             vatId: v.clientVat || null,
             address: v.clientAddr || null,
             email: v.clientEmail || null,
+            preferredLanguage: (v.language as any) || null,
           },
+        });
+      } else {
+        // Mevcut müşteriye bu fatura dilini hatırlat (sonraki faturalar bu dilde gelsin)
+        await prisma.client.update({
+          where: { id: client.id },
+          data: { preferredLanguage: (v.language as any) || null },
         });
       }
     }
@@ -179,6 +188,7 @@ export async function saveInvoice(input: SaveInvoiceInput) {
       qrMode: QR_MAP[v.qrMode ?? "verify"] ?? "VERIFY",
       template: v.template,
       themeColor: v.themeColor,
+      language: (v.language as any) || "TR",
       issueDate: parseDate(v.issueDate),
       dueDate: v.dueDate ? parseDate(v.dueDate) : null,
       subtotal: serverSubtotal,

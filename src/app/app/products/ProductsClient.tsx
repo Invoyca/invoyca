@@ -20,6 +20,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
   const [showForm, setShowForm] = useState(false);
 
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [detailProduct, setDetailProduct] = useState<any>(null);
   const openForm = () => { if (requireAuth()) { setEditingProduct(null); setShowForm(true); } };
   const openEdit = (p: any) => { if (requireAuth()) { setEditingProduct(p); setShowForm(true); } };
 
@@ -102,7 +103,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
                   {rows.map((p) => (
                     <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
                       <td className="px-5 py-3">
-                        <p className="font-medium">{p.name}</p>
+                        <button onClick={() => setDetailProduct(p)} className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left">{p.name}</button>
                         {p.description && <p className="text-xs text-slate-400">{p.description}</p>}
                       </td>
                       <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{p.unit || "—"}</td>
@@ -125,6 +126,42 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
       )}
 
       {showForm && <ProductForm L={L} editProduct={editingProduct} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+
+      {/* Ürün detay penceresi */}
+      {detailProduct && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={() => setDetailProduct(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Package className="h-6 w-6" /></div>
+                <div>
+                  <h2 className="font-semibold text-lg text-slate-900">{detailProduct.name}</h2>
+                  {detailProduct.description && <p className="text-xs text-slate-400">{detailProduct.description}</p>}
+                </div>
+              </div>
+              <button onClick={() => setDetailProduct(null)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Birim Fiyat", "Unit Price")}</span><span className="text-slate-900 font-medium text-right">{fmt(Number(detailProduct.unitPrice), detailProduct.currency)}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Birim", "Unit")}</span><span className="text-slate-700 text-right">{detailProduct.unit || "—"}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-400">{L("KDV Oranı", "VAT Rate")}</span><span className="text-slate-700 text-right">%{Number(detailProduct.vatRate)}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Para Birimi", "Currency")}</span><span className="text-slate-700 text-right">{detailProduct.currency || "EUR"}</span></div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button onClick={() => { const p = detailProduct; setDetailProduct(null); openEdit(p); }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+                <Pencil className="h-4 w-4" /> {L("Düzenle", "Edit")}
+              </button>
+              <button onClick={() => setDetailProduct(null)}
+                className="rounded-lg border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 hover:bg-slate-50">
+                {L("Kapat", "Close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

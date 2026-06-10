@@ -4,7 +4,7 @@ import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import Link from "next/link";
-import { LayoutTemplate, ArrowRight, Check, Loader2, User, Lock } from "lucide-react";
+import { LayoutTemplate, ArrowRight, Check, Loader2, User, Lock, Mail } from "lucide-react";
 import { getAccountInfo, updateUserName, updateProfile, updatePassword, updateCompany } from "../data-actions";
 
 export default function SettingsPage() {
@@ -47,6 +47,20 @@ export default function SettingsPage() {
           <p className="text-sm text-slate-500 mt-1">{L("Tüm özellikler açık. Abonelik planları 2027'de başlayacak; önceden bilgilendirileceksin.", "All features unlocked. Subscription plans start in 2027; you'll be notified in advance.")}</p>
         </Card>
       )}
+
+      {/* Destek / iletişim — tüm sekmelerde görünür */}
+      <Card className="p-6 mt-4">
+        <div className="flex items-start gap-4">
+          <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><Mail className="h-5 w-5" /></div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-900">{L("Destek & İletişim", "Support & Contact")}</h3>
+            <p className="text-sm text-slate-500 mt-0.5 mb-3">{L("Bir sorun, soru veya öneri için bize her zaman yazabilirsin. En kısa sürede dönüş yaparız.", "Reach out anytime with a problem, question or suggestion. We'll get back to you soon.")}</p>
+            <a href="mailto:contact@invoyca.com" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+              <Mail className="h-4 w-4" /> contact@invoyca.com
+            </a>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -153,7 +167,7 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
 }
 
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
-  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "" });
+  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -161,6 +175,7 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
     if (info?.company) setForm({
       name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
       city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
+      defaultLanguage: info.company.defaultLanguage || "TR",
     });
   }, [info]);
 
@@ -196,6 +211,20 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
               <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} />
             </div>
           ))}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <label className={lbl}>{L("Varsayılan Fatura Dili", "Default Invoice Language")}</label>
+          <p className="text-xs text-slate-400 mt-0.5 mb-2">{L("Yeni faturalar bu dilde oluşturulur. Fatura ekranında değiştirebilirsin.", "New invoices are created in this language. You can change it on the invoice screen.")}</p>
+          <select value={form.defaultLanguage} onChange={(e) => setForm({ ...form, defaultLanguage: e.target.value })} className={field + " sm:max-w-xs"}>
+            <option value="TR">Türkçe</option>
+            <option value="EN">English</option>
+            <option value="DE">Deutsch</option>
+            <option value="NL">Nederlands</option>
+            <option value="FR">Français</option>
+            <option value="ES">Español</option>
+            <option value="IT">Italiano</option>
+          </select>
         </div>
         <div className="flex items-center gap-3 mt-4">
           <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Logo } from "@/components/Logo";
 import { LANDING } from "@/lib/i18n-landing";
 import { LANGS, Lang } from "@/lib/i18n";
-import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown } from "lucide-react";
+import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail } from "lucide-react";
 
 const APP_URL = "https://app.invoyca.com";
 
@@ -161,13 +161,22 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Logo size={28} />
-            <span className="font-semibold text-sm">Invoyca</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <Logo size={28} />
+              <span className="font-semibold text-sm">Invoyca</span>
+            </div>
+            <div className="flex flex-col items-center sm:items-end gap-1">
+              <a href="mailto:contact@invoyca.com" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-blue-600">
+                <Mail className="h-4 w-4" /> contact@invoyca.com
+              </a>
+              <p className="text-xs text-slate-400">{lang === "TR" ? "Soruların için buradayız." : "We're here for your questions."}</p>
+            </div>
           </div>
-          <p className="text-xs text-slate-400">© 2026 Invoyca. {lang === "TR" ? "Tüm hakları saklıdır." : "All rights reserved."}</p>
-          <a href="mailto:hello@invoyca.com" className="text-xs text-slate-500 hover:text-slate-900">hello@invoyca.com</a>
+          <div className="border-t border-slate-100 mt-6 pt-6 text-center">
+            <p className="text-xs text-slate-400">© 2026 Invoyca. {lang === "TR" ? "Tüm hakları saklıdır." : "All rights reserved."}</p>
+          </div>
         </div>
       </footer>
     </div>

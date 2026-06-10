@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui";
 import { renderInvoiceHTML } from "@/lib/templates/render";
 import { thumbSchema } from "@/lib/templates/schema";
 import { FAMILIES, THEMES, VARIANT_NAMES, FamilyId } from "@/lib/templates/data";
-import { Check } from "lucide-react";
+import { Check, Mail } from "lucide-react";
 import { setDefaultTemplate, getDefaultTemplate } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 
@@ -100,9 +100,9 @@ export default function TemplatesPage() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 flex-wrap text-xs">
+        <div className="flex items-center gap-4 flex-wrap text-xs bg-white border border-slate-200 rounded-xl px-4 py-2.5">
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500">{L("Renk:", "Color:")}</span>
+            <span className="text-slate-500 font-medium">{L("Renk:", "Color:")}</span>
             <div className="flex gap-1.5">
               {THEMES.map((t) => (
                 <button key={t.id} onClick={() => setTheme(t.id)}
@@ -121,13 +121,13 @@ export default function TemplatesPage() {
           <ModeToggle label={L("Vergi","Tax")} value={taxMode} onChange={setTaxMode} options={[["normal",L("Normal","Normal")],["reverse",L("Tevkifat","Reverse")],["exempt",L("Muaf","Exempt")]]} />
         </div>
       </div>
-      <div className="grid md:grid-cols-[180px_1fr] lg:grid-cols-[200px_1fr_210px] gap-4 lg:gap-5 items-start">
+      <div className="grid md:grid-cols-[170px_1fr] lg:grid-cols-[180px_minmax(0,1fr)_200px] gap-4 lg:gap-6 items-start">
         <div className="space-y-2">
           {FAMILIES[family].variants.map((v) => (
             <button key={v} onClick={() => setVariant(v)}
               className={`w-full text-left rounded-xl border p-2.5 transition-all ${variant === v ? "border-blue-400 bg-blue-50/40 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"}`}>
               <div className="flex items-center gap-2.5">
-                <div className="rounded border border-slate-200 overflow-hidden shrink-0 bg-white" style={{ width: 44, aspectRatio: "1/1.414" }}
+                <div className="rounded border border-slate-200 overflow-hidden shrink-0 bg-white" style={{ width: 40, aspectRatio: "1/1.414" }}
                   dangerouslySetInnerHTML={{ __html: thumbSchema(v, themeObj.color, themeObj.light) }} />
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-medium text-slate-900 truncate">{VARIANT_NAMES[v]}</p>
@@ -140,8 +140,8 @@ export default function TemplatesPage() {
           ))}
         </div>
         <div className="flex justify-center">
-          <div className="bg-white rounded-lg shadow-2xl overflow-hidden mx-auto" style={{ width: 440, maxWidth: "100%", height: 440 * 1.414 }}>
-            <div style={{ width: 794, height: 794 * 1.414, transform: `scale(${440/794})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="bg-white rounded-lg shadow-2xl overflow-hidden mx-auto" style={{ width: 540, maxWidth: "100%", height: 540 * 1.414 }}>
+            <div style={{ width: 794, height: 794 * 1.414, transform: `scale(${540 / 794})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
           </div>
         </div>
         <div className="space-y-3 md:col-span-2 lg:col-span-1 lg:sticky lg:top-24">
@@ -158,6 +158,18 @@ export default function TemplatesPage() {
           <p className="text-xs text-slate-400 text-center leading-relaxed">
             {L("Yeni faturalar bu şablonla başlar. Fatura oluştururken değiştirebilirsin.", "New invoices start with this template.")}
           </p>
+
+          {/* Destek / iletişim kartı */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mt-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="h-7 w-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><Mail className="h-3.5 w-3.5" /></div>
+              <h4 className="text-sm font-semibold text-slate-900">{L("Yardıma mı ihtiyacın var?", "Need help?")}</h4>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed mb-2">{L("Şablonlar, faturalama veya başka bir konuda sorun olursa bize yaz.", "Questions about templates, invoicing or anything else? Reach out.")}</p>
+            <a href="mailto:contact@invoyca.com" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700">
+              <Mail className="h-3.5 w-3.5" /> contact@invoyca.com
+            </a>
+          </div>
         </div>
       </div>
     </div>
