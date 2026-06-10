@@ -220,6 +220,9 @@ const T: Record<string, [string, string, string, string, string, string]> = {
   "Düzenle": ["Edit", "Bearbeiten", "Bewerken", "Modifier", "Editar", "Modifica"],
   "Faturayı Düzenle": ["Edit Invoice", "Rechnung bearbeiten", "Factuur bewerken", "Modifier la facture", "Editar factura", "Modifica fattura"],
   "Faturayı sil": ["Delete invoice", "Rechnung löschen", "Factuur verwijderen", "Supprimer la facture", "Eliminar factura", "Elimina fattura"],
+  "Müşteriyi Düzenle": ["Edit Client", "Kunde bearbeiten", "Klant bewerken", "Modifier le client", "Editar cliente", "Modifica cliente"],
+  "Ürünü Düzenle": ["Edit Product", "Produkt bearbeiten", "Product bewerken", "Modifier le produit", "Editar producto", "Modifica prodotto"],
+  "Teklifi sil": ["Delete quote", "Angebot löschen", "Offerte verwijderen", "Supprimer le devis", "Eliminar presupuesto", "Elimina preventivo"],
   "vadesi geçti ve hâlâ ödenmedi.": ["are overdue and still unpaid.", "sind überfällig und unbezahlt.", "zijn verlopen en onbetaald.", "sont en retard et impayées.", "están vencidas y sin pagar.", "sono scadute e non pagate."],
   "Görüntüle →": ["View →", "Anzeigen →", "Bekijken →", "Voir →", "Ver →", "Vedi →"],
 };

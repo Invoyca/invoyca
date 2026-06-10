@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
-import { Plus, Search, Package, X, Loader2, Trash2 } from "lucide-react";
-import { listProducts, createProduct, deleteProduct } from "../data-actions";
+import { Plus, Search, Package, X, Loader2, Trash2, Pencil } from "lucide-react";
+import { listProducts, createProduct, deleteProduct, updateProduct } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 
@@ -19,7 +19,9 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const openForm = () => { if (requireAuth()) setShowForm(true); };
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const openForm = () => { if (requireAuth()) { setEditingProduct(null); setShowForm(true); } };
+  const openEdit = (p: any) => { if (requireAuth()) { setEditingProduct(p); setShowForm(true); } };
 
   const load = () => {
     listProducts().then((res) => {
@@ -107,7 +109,8 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
                       <td className="px-5 py-3 text-slate-500 hidden lg:table-cell">%{Number(p.vatRate)}</td>
                       <td className="px-5 py-3 text-right font-medium">{fmt(Number(p.unitPrice), p.currency)}</td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => del(p.id)} className="text-slate-400 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => openEdit(p)} className="text-slate-400 hover:text-blue-600 mr-2" title={L("Düzenle", "Edit")}><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => del(p.id)} className="text-slate-400 hover:text-rose-600" title={L("Sil", "Delete")}><Trash2 className="h-4 w-4" /></button>
                       </td>
                     </tr>
                   ))}
@@ -121,20 +124,29 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
         </>
       )}
 
-      {showForm && <ProductForm L={L} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+      {showForm && <ProductForm L={L} editProduct={editingProduct} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
     </div>
   );
 }
 
-function ProductForm({ L, onClose, onSaved }: { L: (tr: string, en?: string) => string; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState({ name: "", description: "", unit: "adet", unitPrice: 0, vatRate: 20, currency: "EUR" });
+function ProductForm({ L, onClose, onSaved, editProduct }: { L: (tr: string, en?: string) => string; onClose: () => void; onSaved: () => void; editProduct?: any }) {
+  const [form, setForm] = useState({
+    name: editProduct?.name || "",
+    description: editProduct?.description || "",
+    unit: editProduct?.unit || "adet",
+    unitPrice: editProduct?.unitPrice ?? 0,
+    vatRate: editProduct?.vatRate ?? 20,
+    currency: editProduct?.currency || "EUR",
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   const save = async () => {
     if (!form.name.trim()) { setError(L("Ürün adı gerekli.", "Product name required.")); return; }
     setBusy(true); setError("");
-    const res = await createProduct(form);
+    const res = editProduct
+      ? await updateProduct(editProduct.id, form)
+      : await createProduct(form);
     setBusy(false);
     if (res.ok) onSaved();
     else setError(res.error || "Hata");
@@ -147,7 +159,7 @@ function ProductForm({ L, onClose, onSaved }: { L: (tr: string, en?: string) => 
     <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-lg">{L("Yeni Ürün", "New Product")}</h2>
+          <h2 className="font-semibold text-lg">{editProduct ? L("Ürünü Düzenle", "Edit Product") : L("Yeni Ürün", "New Product")}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3">

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
-import { Plus, FileText, ArrowRight, Loader2 } from "lucide-react";
-import { listInvoices, convertQuoteToInvoice } from "../invoices/actions";
+import { Plus, FileText, ArrowRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { listInvoices, convertQuoteToInvoice, deleteInvoice } from "../invoices/actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 
@@ -44,6 +44,21 @@ export default function QuotesClient({ initialQuotes }: { initialQuotes: any[] }
     setConverting(null);
     if (res.ok) { load(); }
     else alert(res.error || "Hata");
+  };
+
+  const delQuote = async (id: string, number: string) => {
+    if (!requireAuth()) return;
+    const ok = await confirm({
+      title: L("Teklifi sil", "Delete quote"),
+      message: L(`${number} numaralı teklif silinecek. Bu işlem geri alınamaz.`, `Quote ${number} will be deleted. This cannot be undone.`),
+      confirmText: L("Sil", "Delete"),
+      cancelText: L("İptal", "Cancel"),
+      danger: true,
+    });
+    if (!ok) return;
+    setQuotes((p) => p.filter((x) => x.id !== id));
+    const res = await deleteInvoice(id);
+    if (!res.ok) { alert(res.error || "Silinemedi"); load(); }
   };
 
   const newQuote = (e: React.MouseEvent) => { if (!requireAuth()) e.preventDefault(); };
@@ -89,10 +104,12 @@ export default function QuotesClient({ initialQuotes }: { initialQuotes: any[] }
                   <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{fmtDate(q.issueDate)}</td>
                   <td className="px-5 py-3"><StatusBadge status={badge(q.status)} label={sl(q.status)} /></td>
                   <td className="px-5 py-3 text-right font-medium">{fmt(q.total, q.currency)}</td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => convert(q.id)} disabled={converting === q.id} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50">
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <button onClick={() => convert(q.id)} disabled={converting === q.id} className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline disabled:opacity-50 mr-3">
                       {converting === q.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <>{L("Faturaya dönüştür", "To invoice")} <ArrowRight className="h-3 w-3" /></>}
                     </button>
+                    <Link href={`/app/invoices/new?id=${q.id}`} onClick={(e) => { if (!requireAuth()) e.preventDefault(); }} className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500 align-middle" title={L("Düzenle", "Edit")}><Pencil className="h-4 w-4" /></Link>
+                    <button onClick={() => delQuote(q.id, q.number)} className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 align-middle" title={L("Sil", "Delete")}><Trash2 className="h-4 w-4" /></button>
                   </td>
                 </tr>))}
               </tbody>

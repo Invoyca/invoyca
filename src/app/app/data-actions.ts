@@ -63,6 +63,36 @@ export async function createClientRecord(input: {
   }
 }
 
+export async function updateClient(id: string, input: {
+  name: string; email?: string; vatId?: string; address?: string; city?: string; country?: string; phone?: string;
+}) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+  if (!input.name?.trim()) return { ok: false, error: "Müşteri adı gerekli." };
+
+  try {
+    // Sadece kendi müşterisi mi doğrula (yatay yetki koruması)
+    const existing = await prisma.client.findFirst({ where: { id, companyId: company.id } });
+    if (!existing) return { ok: false, error: "Müşteri bulunamadı." };
+
+    await prisma.client.update({
+      where: { id },
+      data: {
+        name: input.name.trim(),
+        email: input.email || null,
+        vatId: input.vatId || null,
+        address: input.address || null,
+        city: input.city || null,
+        country: input.country || null,
+        phone: input.phone || null,
+      },
+    });
+    return { ok: true, id };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Güncelleme başarısız." };
+  }
+}
+
 export async function deleteClient(id: string) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
@@ -110,6 +140,34 @@ export async function createProduct(input: {
     return { ok: true, id: product.id };
   } catch (err: any) {
     return { ok: false, error: err?.message || "Kayıt başarısız." };
+  }
+}
+
+export async function updateProduct(id: string, input: {
+  name: string; description?: string; unit?: string; unitPrice: number; vatRate: number; currency?: string;
+}) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+  if (!input.name?.trim()) return { ok: false, error: "Ürün adı gerekli." };
+
+  try {
+    const existing = await prisma.product.findFirst({ where: { id, companyId: company.id } });
+    if (!existing) return { ok: false, error: "Ürün bulunamadı." };
+
+    await prisma.product.update({
+      where: { id },
+      data: {
+        name: input.name.trim(),
+        description: input.description || null,
+        unit: input.unit || "adet",
+        unitPrice: input.unitPrice || 0,
+        vatRate: input.vatRate ?? 20,
+        currency: (input.currency as any) || "EUR",
+      },
+    });
+    return { ok: true, id };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Güncelleme başarısız." };
   }
 }
 

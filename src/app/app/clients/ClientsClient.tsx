@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
-import { Plus, Search, Mail, Users, X, Loader2, Trash2 } from "lucide-react";
-import { listClients, createClientRecord, deleteClient } from "../data-actions";
+import { Plus, Search, Mail, Users, X, Loader2, Trash2, Pencil } from "lucide-react";
+import { listClients, createClientRecord, deleteClient, updateClient } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 import { getCountries } from "@/lib/countries";
@@ -19,8 +19,10 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
 
-  const openForm = () => { if (requireAuth()) setShowForm(true); };
+  const openForm = () => { if (requireAuth()) { setEditingClient(null); setShowForm(true); } };
+  const openEdit = (c: any) => { if (requireAuth()) { setEditingClient(c); setShowForm(true); } };
 
   const load = () => {
     listClients().then((res) => {
@@ -111,7 +113,8 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
                       </td>
                       <td className="px-5 py-3 text-slate-500 hidden lg:table-cell">{c._count?.invoices ?? 0}</td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => openEdit(c)} className="text-slate-400 hover:text-blue-600 mr-2" title={L("Düzenle", "Edit")}><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => del(c.id)} className="text-slate-400 hover:text-rose-600" title={L("Sil", "Delete")}><Trash2 className="h-4 w-4" /></button>
                       </td>
                     </tr>
                   ))}
@@ -125,13 +128,23 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
         </>
       )}
 
-      {showForm && <ClientForm L={L} lang={lang} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+      {showForm && <ClientForm L={L} lang={lang} editClient={editingClient} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
     </div>
   );
 }
 
-function ClientForm({ L, lang, onClose, onSaved }: { L: (tr: string, en?: string) => string; lang: string; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", vatId: "", address: "", city: "", postalCode: "", country: "" });
+function ClientForm({ L, lang, onClose, onSaved, editClient }: { L: (tr: string, en?: string) => string; lang: string; onClose: () => void; onSaved: () => void; editClient?: any }) {
+  // Düzenleme modunda mevcut müşteri bilgileriyle doldur
+  const [form, setForm] = useState({
+    name: editClient?.name || "",
+    email: editClient?.email || "",
+    phone: editClient?.phone || "",
+    vatId: editClient?.vatId || "",
+    address: editClient?.address || "",
+    city: editClient?.city || "",
+    postalCode: "",
+    country: editClient?.country || "",
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const countries = getCountries(lang);
@@ -139,9 +152,11 @@ function ClientForm({ L, lang, onClose, onSaved }: { L: (tr: string, en?: string
   const save = async () => {
     if (!form.name.trim()) { setError(L("Müşteri adı gerekli.", "Client name required.")); return; }
     setBusy(true); setError("");
-    // adres + posta kodunu birleştir
     const fullAddress = [form.address, form.postalCode].filter(Boolean).join(", ");
-    const res = await createClientRecord({ ...form, address: fullAddress });
+    // editClient varsa GÜNCELLE, yoksa YENİ KAYIT
+    const res = editClient
+      ? await updateClient(editClient.id, { ...form, address: fullAddress })
+      : await createClientRecord({ ...form, address: fullAddress });
     setBusy(false);
     if (res.ok) onSaved();
     else setError(res.error || "Hata");
@@ -154,7 +169,7 @@ function ClientForm({ L, lang, onClose, onSaved }: { L: (tr: string, en?: string
     <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-lg">{L("Yeni Müşteri", "New Client")}</h2>
+          <h2 className="font-semibold text-lg">{editClient ? L("Müşteriyi Düzenle", "Edit Client") : L("Yeni Müşteri", "New Client")}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3">
