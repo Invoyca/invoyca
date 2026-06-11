@@ -17,6 +17,14 @@ type LDict = {
   faq_q1: string; faq_a1: string; faq_q2: string; faq_a2: string;
   faq_q3: string; faq_a3: string; faq_q4: string; faq_a4: string;
   faq_q5: string; faq_a5: string;
+  // YENİ: kıtlık bandı + hero üçleme + güven şeridi + nasıl çalışır
+  banner: string;
+  hero_punch1: string; hero_punch2: string; hero_punch3: string;
+  trust_label: string;
+  how_title: string; how_sub: string;
+  how_s1_t: string; how_s1_d: string; how_s2_t: string; how_s2_d: string;
+  how_s3_t: string; how_s3_d: string; how_s4_t: string; how_s4_d: string;
+  w_lang: string; w_tpl: string; w_world: string; w_paid: string; w_pending: string;
 };
 
 export const LANDING: Record<Lang, LDict> = {
@@ -42,6 +50,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Uluslararası fatura kesebilir miyim?", faq_a3: "Evet. AB sınır ötesi (reverse charge / KDV tevkifatı) ve uluslararası senaryolar için özel şablonlar var. Türkiye e-Arşiv (GİB/ETTN) modu da mevcut.",
     faq_q4: "Faturalarımı PDF olarak alabilir miyim?", faq_a4: "Evet. Her faturayı PDF olarak indirebilir, yazdırabilir veya müşterine e-posta ile gönderebilirsin. 25 farklı profesyonel şablon arasından seçim yaparsın.",
     faq_q5: "Verilerim güvende mi?", faq_a5: "Verilerin şifreli olarak saklanır ve yalnızca senin hesabına bağlıdır. Faturalarına istediğin zaman erişebilir, düzenleyebilir veya silebilirsin.",
+    banner: "2026 boyunca tamamen ücretsiz ve sınırsız",
+    hero_punch1: "7 dil.", hero_punch2: "4 para birimi.", hero_punch3: "Sınırsız fatura.",
+    trust_label: "Dünyaya fatura kesmek için ihtiyacın olan her şey",
+    how_title: "Nasıl çalışır?", how_sub: "İlk faturadan ödemeyi almaya kadar, dört adımda.",
+    how_s1_t: "Müşterini ekle", how_s1_d: "Müşteriyi bir kez ekle; Invoyca dilini ve bilgilerini sonraki faturalar için hatırlar.",
+    how_s2_t: "Faturayı oluştur", how_s2_d: "Kalemleri ekle, para birimini seç. Toplamlar ve KDV otomatik hesaplanır.",
+    how_s3_t: "Dil ve şablon seç", how_s3_d: "25 profesyonel şablon, 7 dil. Fatura, müşterinin dilinde.",
+    how_s4_t: "Gönder ve takip et", how_s4_d: "E-posta ile gönder, ödenen/bekleyeni izle, her şeyi tek panelden yönet.",
+    w_lang: "dil", w_tpl: "şablon", w_world: "Dünya çapında", w_paid: "Ödendi", w_pending: "Bekleyen",
   },
   EN: {
     nav_features: "Features", nav_pricing: "Pricing", nav_faq: "FAQ", cta_start: "Start Free",
@@ -65,6 +82,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Can I invoice internationally?", faq_a3: "Yes. There are dedicated templates for EU cross-border (reverse charge) and international scenarios. A Türkiye e-Archive (GİB/ETTN) mode is also available.",
     faq_q4: "Can I export my invoices as PDF?", faq_a4: "Yes. Download any invoice as PDF, print it, or email it to your client. Choose from 25 professional templates.",
     faq_q5: "Is my data safe?", faq_a5: "Your data is stored encrypted and tied only to your account. You can access, edit or delete your invoices anytime.",
+    banner: "Completely free and unlimited throughout 2026",
+    hero_punch1: "7 languages.", hero_punch2: "4 currencies.", hero_punch3: "Unlimited invoices.",
+    trust_label: "Everything you need to invoice the world",
+    how_title: "How it works", how_sub: "From first invoice to getting paid, in four steps.",
+    how_s1_t: "Add your client", how_s1_d: "Add a client once; Invoyca remembers their language and details for future invoices.",
+    how_s2_t: "Create the invoice", how_s2_d: "Add line items, pick the currency. Totals and VAT calculated automatically.",
+    how_s3_t: "Choose language & template", how_s3_d: "25 professional templates, 7 languages. The invoice in your client's language.",
+    how_s4_t: "Send & track", how_s4_d: "Send by email, track paid/pending, manage everything from one dashboard.",
+    w_lang: "languages", w_tpl: "templates", w_world: "Worldwide", w_paid: "Paid", w_pending: "Pending",
   },
   DE: {
     nav_features: "Funktionen", nav_pricing: "Preise", nav_faq: "FAQ", cta_start: "Kostenlos starten",
@@ -88,6 +114,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Kann ich international Rechnungen stellen?", faq_a3: "Ja. Es gibt eigene Vorlagen für EU-grenzüberschreitend (Reverse Charge) und internationale Szenarien.",
     faq_q4: "Kann ich Rechnungen als PDF exportieren?", faq_a4: "Ja. Lade jede Rechnung als PDF herunter, drucke sie oder sende sie per E-Mail. 25 professionelle Vorlagen.",
     faq_q5: "Sind meine Daten sicher?", faq_a5: "Deine Daten werden verschlüsselt gespeichert und sind nur mit deinem Konto verknüpft.",
+    banner: "Das ganze Jahr 2026 völlig kostenlos und unbegrenzt",
+    hero_punch1: "7 Sprachen.", hero_punch2: "4 Währungen.", hero_punch3: "Unbegrenzte Rechnungen.",
+    trust_label: "Alles, was du brauchst, um weltweit Rechnungen zu stellen",
+    how_title: "So funktioniert's", how_sub: "Von der ersten Rechnung bis zur Zahlung, in vier Schritten.",
+    how_s1_t: "Kunden hinzufügen", how_s1_d: "Kunden einmal anlegen; Invoyca merkt sich Sprache und Daten für die nächsten Rechnungen.",
+    how_s2_t: "Rechnung erstellen", how_s2_d: "Positionen hinzufügen, Währung wählen. Summen und MwSt. automatisch berechnet.",
+    how_s3_t: "Sprache und Vorlage wählen", how_s3_d: "25 professionelle Vorlagen, 7 Sprachen. Die Rechnung in der Sprache des Kunden.",
+    how_s4_t: "Senden und verfolgen", how_s4_d: "Per E-Mail senden, bezahlt/offen verfolgen, alles über ein Dashboard verwalten.",
+    w_lang: "Sprachen", w_tpl: "Vorlagen", w_world: "Weltweit", w_paid: "Bezahlt", w_pending: "Offen",
   },
   NL: {
     nav_features: "Functies", nav_pricing: "Prijzen", nav_faq: "FAQ", cta_start: "Gratis starten",
@@ -111,6 +146,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Kan ik internationaal factureren?", faq_a3: "Ja. Er zijn speciale sjablonen voor EU grensoverschrijdend (reverse charge) en internationale scenario's.",
     faq_q4: "Kan ik facturen als PDF exporteren?", faq_a4: "Ja. Download elke factuur als PDF, print of e-mail ze. 25 professionele sjablonen.",
     faq_q5: "Zijn mijn gegevens veilig?", faq_a5: "Je gegevens worden versleuteld opgeslagen en alleen aan je account gekoppeld.",
+    banner: "Heel 2026 volledig gratis en onbeperkt",
+    hero_punch1: "7 talen.", hero_punch2: "4 valuta's.", hero_punch3: "Onbeperkt factureren.",
+    trust_label: "Alles wat je nodig hebt om de wereld te factureren",
+    how_title: "Hoe het werkt", how_sub: "Van eerste factuur tot betaling, in vier stappen.",
+    how_s1_t: "Voeg de klant toe", how_s1_d: "Voeg de klant één keer toe; Invoyca onthoudt taal en gegevens voor volgende facturen.",
+    how_s2_t: "Maak de factuur", how_s2_d: "Voeg regels toe, kies de valuta. Totalen en btw automatisch berekend.",
+    how_s3_t: "Kies taal en sjabloon", how_s3_d: "25 professionele sjablonen, 7 talen. De factuur in de taal van de klant.",
+    how_s4_t: "Verstuur en volg", how_s4_d: "Verstuur per e-mail, volg betaald/openstaand, beheer alles vanuit één dashboard.",
+    w_lang: "talen", w_tpl: "sjablonen", w_world: "Wereldwijd", w_paid: "Betaald", w_pending: "Openstaand",
   },
   FR: {
     nav_features: "Fonctions", nav_pricing: "Tarifs", nav_faq: "FAQ", cta_start: "Commencer gratuitement",
@@ -134,6 +178,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Puis-je facturer à l'international ?", faq_a3: "Oui. Des modèles dédiés existent pour l'UE transfrontalier (autoliquidation) et les scénarios internationaux.",
     faq_q4: "Puis-je exporter mes factures en PDF ?", faq_a4: "Oui. Téléchargez chaque facture en PDF, imprimez-la ou envoyez-la par e-mail. 25 modèles professionnels.",
     faq_q5: "Mes données sont-elles en sécurité ?", faq_a5: "Vos données sont chiffrées et liées uniquement à votre compte.",
+    banner: "Totalement gratuit et illimité pendant toute l'année 2026",
+    hero_punch1: "7 langues.", hero_punch2: "4 devises.", hero_punch3: "Factures illimitées.",
+    trust_label: "Tout ce qu'il vous faut pour facturer dans le monde entier",
+    how_title: "Comment ça marche", how_sub: "De la première facture à l'encaissement, en quatre étapes.",
+    how_s1_t: "Ajoutez le client", how_s1_d: "Ajoutez le client une fois ; Invoyca retient la langue et les infos pour les prochaines factures.",
+    how_s2_t: "Créez la facture", how_s2_d: "Ajoutez les lignes, choisissez la devise. Totaux et TVA calculés automatiquement.",
+    how_s3_t: "Choisissez langue et modèle", how_s3_d: "25 modèles professionnels, 7 langues. La facture dans la langue du client.",
+    how_s4_t: "Envoyez et suivez", how_s4_d: "Envoyez par e-mail, suivez payé/en attente, gérez tout depuis un seul tableau de bord.",
+    w_lang: "langues", w_tpl: "modèles", w_world: "Dans le monde entier", w_paid: "Payé", w_pending: "En attente",
   },
   ES: {
     nav_features: "Funciones", nav_pricing: "Precios", nav_faq: "FAQ", cta_start: "Empezar gratis",
@@ -157,6 +210,15 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "¿Puedo facturar internacionalmente?", faq_a3: "Sí. Hay plantillas dedicadas para la UE transfronteriza (inversión del sujeto pasivo) y escenarios internacionales.",
     faq_q4: "¿Puedo exportar mis facturas en PDF?", faq_a4: "Sí. Descarga cada factura en PDF, imprímela o envíala por correo. 25 plantillas profesionales.",
     faq_q5: "¿Mis datos están seguros?", faq_a5: "Tus datos se almacenan cifrados y vinculados solo a tu cuenta.",
+    banner: "Durante todo 2026 totalmente gratis e ilimitado",
+    hero_punch1: "7 idiomas.", hero_punch2: "4 monedas.", hero_punch3: "Facturas ilimitadas.",
+    trust_label: "Todo lo que necesitas para facturar al mundo",
+    how_title: "Cómo funciona", how_sub: "De la primera factura al cobro, en cuatro pasos.",
+    how_s1_t: "Agrega el cliente", how_s1_d: "Agrega el cliente una vez; Invoyca recuerda idioma y datos para las próximas facturas.",
+    how_s2_t: "Crea la factura", how_s2_d: "Agrega las líneas, elige la moneda. Totales e IVA calculados automáticamente.",
+    how_s3_t: "Elige idioma y plantilla", how_s3_d: "25 plantillas profesionales, 7 idiomas. La factura en el idioma del cliente.",
+    how_s4_t: "Envía y haz seguimiento", how_s4_d: "Envía por correo, sigue pagado/pendiente, gestiona todo desde un único panel.",
+    w_lang: "idiomas", w_tpl: "plantillas", w_world: "En todo el mundo", w_paid: "Pagado", w_pending: "Pendiente",
   },
   IT: {
     nav_features: "Funzioni", nav_pricing: "Prezzi", nav_faq: "FAQ", cta_start: "Inizia gratis",
@@ -180,5 +242,14 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Posso fatturare a livello internazionale?", faq_a3: "Sì. Ci sono modelli dedicati per l'UE transfrontaliera (reverse charge) e scenari internazionali.",
     faq_q4: "Posso esportare le fatture in PDF?", faq_a4: "Sì. Scarica ogni fattura in PDF, stampala o inviala via e-mail. 25 modelli professionali.",
     faq_q5: "I miei dati sono al sicuro?", faq_a5: "I tuoi dati sono archiviati cifrati e collegati solo al tuo account.",
+    banner: "Per tutto il 2026 completamente gratis e illimitato",
+    hero_punch1: "7 lingue.", hero_punch2: "4 valute.", hero_punch3: "Fatture illimitate.",
+    trust_label: "Tutto ciò di cui hai bisogno per fatturare nel mondo",
+    how_title: "Come funziona", how_sub: "Dalla prima fattura all'incasso, in quattro passaggi.",
+    how_s1_t: "Aggiungi il cliente", how_s1_d: "Inserisci il cliente una volta; Invoyca ricorda lingua e dati per le fatture successive.",
+    how_s2_t: "Crea la fattura", how_s2_d: "Aggiungi le voci, scegli la valuta. Totali e IVA calcolati automaticamente.",
+    how_s3_t: "Scegli lingua e modello", how_s3_d: "25 modelli professionali, 7 lingue. La fattura nella lingua del cliente.",
+    how_s4_t: "Invia e monitora", how_s4_d: "Invia via e-mail, segui pagato/in attesa, gestisci tutto da un'unica dashboard.",
+    w_lang: "lingue", w_tpl: "modelli", w_world: "In tutto il mondo", w_paid: "Pagato", w_pending: "In attesa",
   },
 };

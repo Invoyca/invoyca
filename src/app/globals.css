@@ -23,3 +23,48 @@ body {
 }
 .animate-in { animation: invoycaFadeIn 0.18s ease-out; }
 .animate-in > div { animation: invoycaScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ============ LANDING ANİMASYONLARI ============ */
+/* Yüzen fatura kartı */
+@keyframes invoycaFloat {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  50% { transform: translateY(-14px) rotate(1deg); }
+}
+.iv-float { animation: invoycaFloat 5s ease-in-out infinite; }
+
+/* Arka plan blob hareketi */
+@keyframes invoycaBlob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+.iv-blob { animation: invoycaBlob 18s ease-in-out infinite; }
+
+/* Sonsuz kayan bant (marquee) */
+@keyframes invoycaMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.iv-marquee { animation: invoycaMarquee 22s linear infinite; }
+.iv-marquee:hover { animation-play-state: paused; }
+
+/* Scroll'da beliren (reveal) */
+@keyframes invoycaReveal {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.iv-reveal { opacity: 0; }
+.iv-reveal.iv-show { animation: invoycaReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Yavaş dönen halka */
+@keyframes invoycaSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.iv-spin { animation: invoycaSpin 28s linear infinite; }
+
+/* Parlama (shimmer) */
+@keyframes invoycaShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
