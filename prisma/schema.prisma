@@ -1,3 +1,7 @@
+// Invoyca veritabanı şeması
+// Bu dosya veritabanındaki tüm tabloları tanımlar.
+// Faz 3'te "npm run db:push" ile Supabase'e kurulacak.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,157 +12,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  name         String?
-  language     Language      @default(TR)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  company      Company?
-  subscription Subscription?
-}
-
-model Company {
-  id              String      @id @default(uuid())
-  userId          String      @unique
-  name            String
-  address         String?
-  city            String?
-  country         String?
-  taxId           String?
-  vatId           String?
-  email           String?
-  phone           String?
-  logoUrl         String?
-  bankName        String?
-  iban            String?
-  swift           String?
-  defaultTemplate String      @default("classic-standard")
-  defaultCurrency Currency    @default(EUR)
-  defaultLanguage Language    @default(TR)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  clients         Client[]
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices        Invoice[]
-  products        Product[]
-  recurring       Recurring[]
-}
-
-model Client {
-  id                String    @id @default(uuid())
-  companyId         String
-  name              String
-  address           String?
-  city              String?
-  country           String?
-  vatId             String?
-  email             String?
-  phone             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  preferredLanguage Language?
-  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoices          Invoice[]
-}
-
-model Product {
-  id          String   @id @default(uuid())
-  companyId   String
-  name        String
-  description String?
-  unit        String?
-  unitPrice   Decimal  @default(0)
-  vatRate     Decimal  @default(20)
-  currency    Currency @default(EUR)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model Invoice {
-  id         String        @id @default(uuid())
-  companyId  String
-  clientId   String?
-  number     String
-  type       DocumentType  @default(INVOICE)
-  status     InvoiceStatus @default(DRAFT)
-  issueDate  DateTime      @default(now())
-  dueDate    DateTime?
-  currency   Currency      @default(EUR)
-  language   Language      @default(TR)
-  template   String        @default("classic-standard")
-  themeColor String        @default("blue")
-  taxMode    TaxMode       @default(NORMAL)
-  qrMode     QrMode        @default(VERIFY)
-  notes      String?
-  subtotal   Decimal       @default(0)
-  discount   Decimal       @default(0)
-  vatTotal   Decimal       @default(0)
-  total      Decimal       @default(0)
-  gibNo      String?
-  ettn       String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  client     Client?       @relation(fields: [clientId], references: [id])
-  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  items      InvoiceItem[]
-  payments   Payment[]
-
-  @@unique([companyId, number])
-}
-
-model InvoiceItem {
-  id          String  @id @default(uuid())
-  invoiceId   String
-  description String
-  unit        String?
-  quantity    Decimal @default(1)
-  unitPrice   Decimal @default(0)
-  vatRate     Decimal @default(20)
-  amount      Decimal @default(0)
-  order       Int     @default(0)
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model Payment {
-  id        String   @id @default(uuid())
-  invoiceId String
-  amount    Decimal
-  currency  Currency @default(EUR)
-  method    String?
-  paidAt    DateTime @default(now())
-  note      String?
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model Recurring {
-  id           String   @id @default(uuid())
-  companyId    String
-  name         String
-  active       Boolean  @default(true)
-  frequency    String
-  nextRun      DateTime
-  templateData Json
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-}
-
-model Subscription {
-  id                   String    @id @default(uuid())
-  userId               String    @unique
-  plan                 Plan      @default(FREE)
-  status               String    @default("active")
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  iyzicoSubscriptionId String?
-  currentPeriodEnd     DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// ---------- ENUMLAR (sabit seçenek listeleri) ----------
 
 enum Plan {
   FREE
@@ -168,18 +22,18 @@ enum Plan {
 }
 
 enum DocumentType {
-  INVOICE
-  PROFORMA
-  COMMERCIAL
-  QUOTE
+  INVOICE      // Fatura
+  PROFORMA     // Proforma
+  COMMERCIAL   // Ticari fatura
+  QUOTE        // Teklif
 }
 
 enum InvoiceStatus {
-  DRAFT
-  SENT
-  PAID
-  OVERDUE
-  CANCELLED
+  DRAFT        // Taslak
+  SENT         // Gönderildi
+  PAID         // Ödendi
+  OVERDUE      // Gecikmiş
+  CANCELLED    // İptal
 }
 
 enum Currency {
@@ -200,13 +54,211 @@ enum Language {
 }
 
 enum TaxMode {
-  NORMAL
-  REVERSE
-  EXEMPT
+  NORMAL       // Normal KDV
+  REVERSE      // Reverse charge / tevkifat
+  EXEMPT       // Muaf / ihracat
 }
 
 enum QrMode {
-  VERIFY
-  PAY
-  OFF
+  VERIFY       // Doğrulama (GİB tarzı)
+  PAY          // Ödeme
+  OFF          // Kapalı
+}
+
+// ---------- TABLOLAR ----------
+
+// Kullanıcı (Supabase Auth ile eşleşir)
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  language  Language @default(TR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company       Company?
+  subscription  Subscription?
+}
+
+// Kullanıcının şirketi (faturada GÖNDEREN olarak görünür)
+model Company {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String
+  address   String?
+  city      String?
+  country   String?
+  taxId     String?   // VKN
+  vatId     String?   // VAT ID
+  email     String?
+  phone     String?
+  logoUrl   String?
+
+  // Banka bilgileri
+  bankName  String?
+  iban      String?
+  swift     String?
+
+  // Varsayılan tercihler
+  defaultTemplate String   @default("classic-standard")
+  defaultCurrency Currency @default(EUR)
+  defaultLanguage Language @default(TR)
+
+  clients   Client[]
+  products  Product[]
+  invoices  Invoice[]
+  recurring Recurring[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Müşteri (faturada ALICI olarak görünür)
+model Client {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name      String
+  address   String?
+  city      String?
+  country   String?
+  vatId     String?
+  email     String?
+  phone     String?
+  preferredLanguage Language?   // bu müşteriye fatura hangi dilde kesiliyor (hatırlanır)
+
+  invoices  Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Ürün / hizmet (faturaya hızlı eklemek için katalog)
+model Product {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  unit        String?   // adet, saat, ay, proje...
+  unitPrice   Decimal   @default(0)
+  vatRate     Decimal   @default(20)
+  currency    Currency  @default(EUR)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Fatura (ana belge)
+model Invoice {
+  id          String        @id @default(uuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientId    String?
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  number      String        // 2026-0042
+  type        DocumentType  @default(INVOICE)
+  status      InvoiceStatus @default(DRAFT)
+
+  issueDate   DateTime      @default(now())
+  dueDate     DateTime?
+
+  currency    Currency      @default(EUR)
+  language    Language      @default(TR)
+
+  // Şablon ve görünüm tercihleri
+  template    String        @default("classic-standard")
+  themeColor  String        @default("blue")
+  taxMode     TaxMode       @default(NORMAL)
+  qrMode      QrMode        @default(VERIFY)
+
+  notes       String?
+
+  // Hesaplanan toplamlar (kuruş hassasiyetinde)
+  subtotal    Decimal       @default(0)
+  discount    Decimal       @default(0)
+  vatTotal    Decimal       @default(0)
+  total       Decimal       @default(0)
+
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  // GİB / e-arşiv (Türkiye, opsiyonel)
+  gibNo       String?
+  ettn        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, number])
+}
+
+// Fatura kalemi (satır)
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description String
+  unit        String?
+  quantity    Decimal @default(1)
+  unitPrice   Decimal @default(0)
+  vatRate     Decimal @default(20)
+  amount      Decimal @default(0)
+
+  order       Int     @default(0)
+}
+
+// Ödeme kaydı (faturaya gelen tahsilatlar)
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  amount    Decimal
+  currency  Currency @default(EUR)
+  method    String?  // havale, stripe, iyzico...
+  paidAt    DateTime @default(now())
+  note      String?
+}
+
+// Tekrar eden fatura (otomasyon)
+model Recurring {
+  id          String       @id @default(uuid())
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name        String
+  active      Boolean      @default(true)
+  frequency   String       // monthly, weekly, yearly
+  nextRun     DateTime
+  templateData Json        // fatura şablonu verisi
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Abonelik (Invoyca'nın kendi planları)
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan      Plan     @default(FREE)
+  status    String   @default("active") // active, cancelled, past_due
+
+  // Ödeme sağlayıcı referansları
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  iyzicoSubscriptionId String?
+
+  currentPeriodEnd DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

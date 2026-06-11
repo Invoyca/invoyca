@@ -11,7 +11,6 @@ import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } fro
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
 import { listClients, listProducts, getAccountInfo } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
-import { printInvoicePdf } from "@/lib/pdf-print";
 
 export default function NewInvoicePage() {
   const { lang } = useLang();
@@ -134,8 +133,9 @@ export default function NewInvoicePage() {
   const delItem = (i: number) => setSt((s) => ({ ...s, items: s.items.filter((_, idx) => idx !== i) }));
 
   // Kaydetme: server action'a gönderir (Supabase bağlanınca DB'ye yazar)
-  const save = async () => {
-    if (!requireAuth()) return;
+  // Dönen invoice id'sini döndürür ki e-posta gönderme gibi işlemler kullanabilsin.
+  const save = async (): Promise<string | null> => {
+    if (!requireAuth()) return null;
     setBusy("save");
     const res = await saveInvoice({
       id: editId || undefined,
@@ -148,36 +148,74 @@ export default function NewInvoicePage() {
       language: invoiceLang,
     });
     setBusy("");
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3500); }
-    else alert((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
+    if (res.ok) {
+      setSaved(true); setTimeout(() => setSaved(false), 3500);
+      if (res.id) setEditId(res.id); // sonraki kayıtlar güncelleme olsun
+      return res.id || editId || null;
+    }
+    alert((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
+    return null;
   };
 
   const renderOpts = () => ({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, taxMode: st.taxMode, data });
 
-  const downloadPdf = () => {
-    printInvoicePdf(html, st.meta.no || "fatura");
+  const downloadPdf = async () => {
+    setBusy("pdf");
+    try {
+      const res = await fetch("/api/invoice-pdf", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data,
+          lang: invoiceLang,
+          docType: isQuote ? "quote" : "invoice",
+          taxMode: st.taxMode,
+          themeColor: theme,
+          filename: st.meta.no || "fatura",
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || "PDF");
+      }
+      // PDF blob'unu indir
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(st.meta.no || "fatura").replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert(L("PDF oluşturulamadı: ", "Could not create PDF: ") + (e.message || ""));
+    } finally {
+      setBusy("");
+    }
   };
 
   const sendEmail = async () => {
     if (!requireAuth()) return;
+    // Güvenli model: e-posta için faturanın DB'de kayıtlı olması gerekir.
+    // Önce kaydet (id al), sonra backend invoiceId ile faturayı DB'den çekip PDF'i kendisi üretip gönderir.
     const to = st.client.email || window.prompt(L("Müşteri e-postası:", "Client email:")) || "";
     if (!to) return;
     setBusy("email");
     try {
+      // Faturayı kaydet / güncelle, id al
+      const invoiceId = await save();
+      if (!invoiceId) { setBusy(""); return; } // kaydetme başarısızsa save() zaten uyardı
+
       const res = await fetch("/api/send-invoice", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to, lang: invoiceLang,
-          clientName: st.client.name, invoiceNo: st.meta.no,
-          senderName: st.sender.name, amount: formatMoney(totals.total, st.currency),
-          replyTo: st.sender.email,
-        }),
+        body: JSON.stringify({ invoiceId, toOverride: to }),
       });
       const j = await res.json();
-      if (j.ok) alert(L("E-posta gönderildi ✓", "Email sent ✓"));
+      if (j.ok) alert(L("E-posta gönderildi ✓ (PDF ekli)", "Email sent ✓ (PDF attached)"));
       else throw new Error(j.error);
-    } catch (e) { alert(L("E-posta gönderilemedi (Resend anahtarı gerekli).", "Email failed (Resend key required).")); }
-    finally { setBusy(""); }
+    } catch (e: any) {
+      alert(L("E-posta gönderilemedi: ", "Email failed: ") + (e.message || L("Resend anahtarı gerekli.", "Resend key required.")));
+    } finally { setBusy(""); }
   };
 
   const field = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400";
