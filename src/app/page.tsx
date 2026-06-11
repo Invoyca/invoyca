@@ -5,12 +5,33 @@ import { Logo } from "@/components/Logo";
 import { LANDING } from "@/lib/i18n-landing";
 import { LANGS, Lang } from "@/lib/i18n";
 import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const APP_URL = "https://app.invoyca.com";
 
 export default function Landing() {
   const [lang, setLang] = useState<Lang>("TR");
   const t = LANDING[lang];
+
+  // Giriş yapmış kullanıcının baş harfleri (yoksa boş = giriş yapmamış)
+  const [initials, setInitials] = useState<string | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      if (!u) { setInitials(null); return; }
+      const full = (u.user_metadata?.name || "").trim();
+      if (full) {
+        const parts = full.split(" ").filter(Boolean);
+        const ini = parts.length >= 2 ? (parts[0][0] + parts[parts.length - 1][0]) : full.slice(0, 2);
+        setInitials(ini.toUpperCase());
+      } else if (u.email) {
+        setInitials(u.email.slice(0, 2).toUpperCase());
+      } else {
+        setInitials("•");
+      }
+    }).catch(() => setInitials(null));
+  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F1F4F9" }}>
@@ -28,9 +49,18 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-3">
             <LandingLang lang={lang} setLang={setLang} />
-            <a href={APP_URL} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
-              {t.cta_start}
-            </a>
+            {initials ? (
+              // Giriş yapmış: baş harf avatarı, tıklayınca uygulamaya gider
+              <a href={`${APP_URL}/app/dashboard`} title={t.cta_start}
+                className="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold hover:bg-blue-200 transition-colors">
+                {initials}
+              </a>
+            ) : (
+              // Giriş yapmamış: Ücretsiz Başla
+              <a href={APP_URL} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+                {t.cta_start}
+              </a>
+            )}
           </div>
         </div>
       </header>
