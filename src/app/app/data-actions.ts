@@ -5,7 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { validateClientInput, validateProductInput } from "@/lib/validation";
+import { validateClientInput, validateProductInput, sanitizeImageDataUrl } from "@/lib/validation";
 
 // Oturum sahibinin company'sini bul/oluştur (ilk kullanımda)
 async function getCompany() {
@@ -267,8 +267,10 @@ export async function updateCompany(input: {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
 
-  // QR resmi boyut güvenliği
-  if ((input.qrImage && input.qrImage.length > 720_000) || (input.qrVerify && input.qrVerify.length > 720_000)) {
+  // QR resmi güvenliği: sadece güvenli base64 image (SVG/URL reddedilir → XSS koruması) + boyut
+  const safeQrImage = input.qrImage !== undefined ? sanitizeImageDataUrl(input.qrImage) : undefined;
+  const safeQrVerify = input.qrVerify !== undefined ? sanitizeImageDataUrl(input.qrVerify) : undefined;
+  if ((safeQrImage && safeQrImage.length > 720_000) || (safeQrVerify && safeQrVerify.length > 720_000)) {
     return { ok: false, error: "QR resmi çok büyük." };
   }
 
@@ -283,8 +285,8 @@ export async function updateCompany(input: {
       country: input.country || null,
       taxId: input.taxId || null,
       vatId: input.vatId || null,
-      ...(input.qrImage !== undefined ? { qrImage: input.qrImage || null } : {}),
-      ...(input.qrVerify !== undefined ? { qrVerify: input.qrVerify || null } as any : {}),
+      ...(input.qrImage !== undefined ? { qrImage: safeQrImage } : {}),
+      ...(input.qrVerify !== undefined ? { qrVerify: safeQrVerify } as any : {}),
       ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
         ? { defaultLanguage: input.defaultLanguage as any }
         : {}),
@@ -339,10 +341,10 @@ export async function saveBankAccount(input: {
   const validCur = ["EUR", "USD", "GBP", "TRY"];
   const currency = validCur.includes(input.currency || "") ? input.currency : "EUR";
 
-  // Varsayılan yapılıyorsa diğerlerinin varsayılanını kaldır
+  // Varsayılan yapılıyorsa AYNI PARA BİRİMİNDEKİ diğerlerinin varsayılanını kaldır
   if (input.isDefault) {
     await (prisma as any).bankAccount.updateMany({
-      where: { companyId: company.id },
+      where: { companyId: company.id, currency: currency as any },
       data: { isDefault: false },
     });
   }
@@ -353,8 +355,8 @@ export async function saveBankAccount(input: {
       data: { label, bankName: input.bankName || null, iban, swift: input.swift || null, currency: currency as any, isDefault: !!input.isDefault },
     });
   } else {
-    // İlk hesap otomatik varsayılan olsun
-    const count = await (prisma as any).bankAccount.count({ where: { companyId: company.id } });
+    // Bu para biriminde ilk hesapsa otomatik varsayılan olsun
+    const count = await (prisma as any).bankAccount.count({ where: { companyId: company.id, currency: currency as any } });
     await (prisma as any).bankAccount.create({
       data: { companyId: company.id, label, bankName: input.bankName || null, iban, swift: input.swift || null, currency: currency as any, isDefault: input.isDefault || count === 0 },
     });

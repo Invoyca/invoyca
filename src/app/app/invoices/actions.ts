@@ -7,6 +7,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { sanitizeImageDataUrl } from "@/lib/validation";
 import { canTransition, shouldCancelInsteadOfDelete } from "@/lib/invoice-status";
 import { audit } from "@/lib/audit";
 
@@ -206,7 +207,7 @@ export async function saveInvoice(input: SaveInvoiceInput) {
       currency: (v.currency as any) ?? "EUR",
       taxMode: TAX_MAP[v.taxMode] ?? "NORMAL",
       qrMode: QR_MAP[v.qrMode ?? "verify"] ?? "VERIFY",
-      qrImage: v.qrImage || null,
+      qrImage: sanitizeImageDataUrl(v.qrImage),
       bankName: v.bankName || null,
       bankIban: v.bankIban || null,
       bankSwift: v.bankSwift || null,

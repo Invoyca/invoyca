@@ -38,3 +38,15 @@ export function validateProductInput(input: { name?: string; unitPrice?: number;
   if (input.vatRate != null && !isPercent(input.vatRate)) return "KDV oranı 0–100 arasında olmalı.";
   return null;
 }
+
+// QR/resim güvenliği: yalnızca PNG/JPEG/WEBP base64 data URL kabul et.
+// SVG ve harici URL'lere izin verme (SVG içinde script → XSS riski).
+export function isSafeImageDataUrl(s?: string | null): boolean {
+  if (!s) return false;
+  return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=\s]+$/.test(s);
+}
+
+// Güvenli değilse boş döndür (kaydetmeyi engellemek yerine resmi düşür)
+export function sanitizeImageDataUrl(s?: string | null): string | null {
+  return isSafeImageDataUrl(s) ? (s as string) : null;
+}

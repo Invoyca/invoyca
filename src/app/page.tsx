@@ -543,8 +543,8 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-slate-600">
                 <li><a href="#pricing" className="hover:text-blue-600">{t.nav_pricing}</a></li>
                 <li><a href="#faq" className="hover:text-blue-600">{t.nav_faq}</a></li>
-                <li><a href="mailto:contact@invoyca.com" className="hover:text-blue-600">{t.foot_privacy}</a></li>
-                <li><a href="mailto:contact@invoyca.com" className="hover:text-blue-600">{t.foot_terms}</a></li>
+                <li><a href="/privacy" className="hover:text-blue-600">{t.foot_privacy}</a></li>
+                <li><a href="/terms" className="hover:text-blue-600">{t.foot_terms}</a></li>
               </ul>
             </div>
           </div>

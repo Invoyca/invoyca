@@ -203,17 +203,20 @@ export default function NewInvoicePage() {
   const downloadPdf = async () => {
     setBusy("pdf");
     try {
+      // Önce kaydet ki DB'deki gerçek veriden PDF üretebilelim (preview≠PDF tutarsızlığını önler)
+      let id = editId;
+      if (!id) { id = await save(false); }
       const res = await fetch("/api/invoice-pdf", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data,
-          lang: invoiceLang,
-          docType: isQuote ? "quote" : "invoice",
-          taxMode: st.taxMode,
-          themeColor: theme,
-          qrImage: effectiveQr || undefined,
-          filename: st.meta.no || "fatura",
-        }),
+        body: id
+          ? JSON.stringify({ invoiceId: id })   // güvenli mod: DB'den çek
+          : JSON.stringify({                      // kaydedilemezse önizleme moduna düş
+              data, lang: invoiceLang,
+              docType: isQuote ? "quote" : "invoice",
+              taxMode: st.taxMode, themeColor: theme,
+              qrImage: effectiveQr || undefined,
+              filename: st.meta.no || "fatura",
+            }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));

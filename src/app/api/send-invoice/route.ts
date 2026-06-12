@@ -32,6 +32,22 @@ export async function POST(req: NextRequest) {
     const company = await prisma.company.findUnique({ where: { userId: user.id } });
     if (!company) return NextResponse.json({ error: "Şirket bulunamadı" }, { status: 403 });
 
+    // 2b) ABUSE KORUMASI: e-posta gönderim limiti (EmailLog üzerinden)
+    const now = Date.now();
+    const lastHour = new Date(now - 60 * 60 * 1000);
+    const lastDay = new Date(now - 24 * 60 * 60 * 1000);
+    const [hourCount, dayCount] = await Promise.all([
+      prisma.emailLog.count({ where: { companyId: company.id, status: "sent", createdAt: { gte: lastHour } } }),
+      prisma.emailLog.count({ where: { companyId: company.id, status: "sent", createdAt: { gte: lastDay } } }),
+    ]);
+    const HOUR_LIMIT = 10, DAY_LIMIT = 30;
+    if (hourCount >= HOUR_LIMIT) {
+      return NextResponse.json({ error: "Saatlik e-posta gönderim limitine ulaştın. Lütfen biraz sonra tekrar dene." }, { status: 429 });
+    }
+    if (dayCount >= DAY_LIMIT) {
+      return NextResponse.json({ error: "Günlük e-posta gönderim limitine ulaştın. Yarın tekrar deneyebilirsin." }, { status: 429 });
+    }
+
     // 3) Fatura, SADECE bu şirkete aitse gelir (yetki kontrolü burada)
     const invoice = await prisma.invoice.findFirst({
       where: { id: body.invoiceId, companyId: company.id },
@@ -42,6 +58,10 @@ export async function POST(req: NextRequest) {
     // 4) Alıcı e-posta: önce override (kullanıcı kendi girdiyse), yoksa müşterininki
     const to = (body.toOverride || invoice.client?.email || "").trim();
     if (!to) return NextResponse.json({ error: "Müşteri e-postası yok" }, { status: 400 });
+    // Geçerli e-posta formatı kontrolü
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      return NextResponse.json({ error: "Geçersiz alıcı e-posta adresi" }, { status: 400 });
+    }
 
     // DB verisinden PDF/e-posta verisi
     const data = dbInvoiceToData(invoice);
@@ -73,6 +93,7 @@ export async function POST(req: NextRequest) {
       senderName: company.name,
       amount: data.total,
       lang,
+      dueDate: data.meta?.due || "",
       pdfBase64,
       replyTo: company.email || undefined,
     });
