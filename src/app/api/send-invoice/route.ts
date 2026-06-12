@@ -70,6 +70,30 @@ export async function POST(req: NextRequest) {
       replyTo: company.email || undefined,
     });
 
+    // Gönderim kaydı (denetim + "gönderildi" bilgisi)
+    try {
+      await prisma.emailLog.create({
+        data: {
+          companyId: company.id,
+          invoiceId: invoice.id,
+          toEmail: to,
+          subject: `${invoice.number}`,
+          status: "sent",
+          providerId: result.data?.id || null,
+        },
+      });
+    } catch { /* log başarısız olsa da e-posta gitti, sessiz geç */ }
+
+    // Fatura durumunu DRAFT ise SENT yap (gönderildi)
+    try {
+      if (String(invoice.status).toUpperCase() === "DRAFT") {
+        await prisma.invoice.updateMany({
+          where: { id: invoice.id, companyId: company.id },
+          data: { status: "SENT" as any },
+        });
+      }
+    } catch { /* durum güncellenemese de e-posta gitti */ }
+
     return NextResponse.json({ ok: true, id: result.data?.id });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "E-posta gönderilemedi" }, { status: 500 });

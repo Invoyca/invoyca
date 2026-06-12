@@ -262,3 +262,44 @@ model Subscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Fatura numarası sayacı — şirket + yıl bazında atomik artış.
+// Eş zamanlı fatura oluşturmada çakışmayı önler (transaction içinde kullanılır).
+model InvoiceSequence {
+  id        String  @id @default(uuid())
+  companyId String
+  year      Int
+  lastNumber Int    @default(0)
+
+  @@unique([companyId, year])
+}
+
+// E-posta gönderim kaydı — hangi fatura kime ne zaman gönderildi, başarılı mı.
+// Denetim ve kullanıcıya "gönderildi" bilgisi göstermek için.
+model EmailLog {
+  id         String   @id @default(uuid())
+  companyId  String
+  invoiceId  String?
+  toEmail    String
+  subject    String?
+  status     String   @default("sent") // sent | failed
+  error      String?
+  providerId String?  // Resend mesaj id'si
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
+  @@index([invoiceId])
+}
+
+// Denetim kaydı — önemli olaylar (fatura oluşturuldu, durum değişti, silindi).
+// İleride "fatura geçmişi" ve sorun giderme için.
+model AuditLog {
+  id        String   @id @default(uuid())
+  companyId String
+  action    String   // invoice.created | invoice.status_changed | invoice.deleted | invoice.cancelled
+  entityId  String?  // ilgili fatura/müşteri id'si
+  detail    String?  // serbest metin (ör. "DRAFT -> SENT")
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}

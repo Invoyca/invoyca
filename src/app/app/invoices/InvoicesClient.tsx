@@ -7,13 +7,16 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
 import { Plus, Search, FileText, Check, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { listInvoices, updateInvoiceStatus, deleteInvoice } from "./actions";
+import { nextStatuses } from "@/lib/invoice-status";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
+import { useToast } from "@/lib/toast-context";
 
 export default function InvoicesClient({ initialInvoices }: { initialInvoices: any[] }) {
   const { lang } = useLang();
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
+  const toast = useToast();
   const [filter, setFilter] = useState("all");
   const [invoices, setInvoices] = useState<any[]>(initialInvoices || []);
   const [loading, setLoading] = useState(false);
@@ -122,24 +125,38 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     // İyimser güncelleme: önce ekranda değiştir
     setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status } : i));
     const res = await updateInvoiceStatus(id, status);
-    if (!res.ok) { alert(res.error || "Güncellenemedi"); load(); }
+    if (!res.ok) { toast.error(res.error || "Güncellenemedi"); load(); }
+    else toast.success(L("Durum güncellendi", "Status updated"));
   };
 
-  const statusOptions = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
-
-  const delInvoice = async (id: string, number: string) => {
+  const delInvoice = async (id: string, number: string, status: string) => {
     if (!requireAuth()) return;
+    // Ödenmiş fatura: hiç sorma, direkt uyar
+    if (String(status).toUpperCase() === "PAID") {
+      toast.error(L("Ödenmiş fatura silinemez.", "Paid invoice can't be deleted."));
+      return;
+    }
+    // Gönderilmiş/gecikmiş: silinmez, iptal edilir — kullanıcıyı doğru bilgilendir
+    const willCancel = ["SENT", "OVERDUE"].includes(String(status).toUpperCase());
     const ok = await confirm({
-      title: L("Faturayı sil", "Delete invoice"),
-      message: L(`${number} numaralı fatura silinecek. Bu işlem geri alınamaz.`, `Invoice ${number} will be deleted. This cannot be undone.`),
-      confirmText: L("Sil", "Delete"),
-      cancelText: L("İptal", "Cancel"),
+      title: willCancel ? L("Faturayı iptal et", "Cancel invoice") : L("Faturayı sil", "Delete invoice"),
+      message: willCancel
+        ? L(`${number} numaralı fatura iptal edilecek (kayıt korunur).`, `Invoice ${number} will be cancelled (record kept).`)
+        : L(`${number} numaralı taslak silinecek. Bu işlem geri alınamaz.`, `Draft ${number} will be deleted. This cannot be undone.`),
+      confirmText: willCancel ? L("İptal Et", "Cancel it") : L("Sil", "Delete"),
+      cancelText: L("Vazgeç", "Back"),
       danger: true,
     });
     if (!ok) return;
-    setInvoices((prev) => prev.filter((i) => i.id !== id));
     const res = await deleteInvoice(id);
-    if (!res.ok) { alert(res.error || "Silinemedi"); load(); }
+    if (!res.ok) { toast.error(res.error || "Silinemedi"); load(); return; }
+    if (res.cancelled) {
+      toast.success(L("Fatura iptal edildi", "Invoice cancelled"));
+      load(); // listede CANCELLED olarak görünsün
+    } else {
+      setInvoices((prev) => prev.filter((i) => i.id !== id));
+      toast.success(L("Fatura silindi", "Invoice deleted"));
+    }
   };
 
   return (
@@ -250,14 +267,21 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                             <ChevronDown className="h-3 w-3 text-slate-400" />
                           </button>
                           {openMenu === inv.id && (
-                            <div className="absolute z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white shadow-lg py-1" onClick={(e) => e.stopPropagation()}>
-                              {statusOptions.map((s) => (
+                            <div className="absolute z-20 mt-1 w-44 rounded-lg border border-slate-200 bg-white shadow-lg py-1" onClick={(e) => e.stopPropagation()}>
+                              {/* Mevcut durum (işaretli, tıklanamaz) + sadece geçerli geçişler */}
+                              <div className="px-3 py-1.5 text-xs text-slate-400 flex items-center justify-between">
+                                {statusLabel(inv.status)} <Check className="h-3.5 w-3.5 text-blue-600" />
+                              </div>
+                              {nextStatuses(inv.status).length > 0 && <div className="h-px bg-slate-100 my-1" />}
+                              {nextStatuses(inv.status).map((s) => (
                                 <button key={s} onClick={() => changeStatus(inv.id, s)}
-                                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 text-left">
+                                  className="w-full flex items-center px-3 py-2 text-sm hover:bg-slate-50 text-left">
                                   {statusLabel(s)}
-                                  {inv.status === s && <Check className="h-3.5 w-3.5 text-blue-600" />}
                                 </button>
                               ))}
+                              {nextStatuses(inv.status).length === 0 && (
+                                <div className="px-3 py-2 text-xs text-slate-400">{L("Bu durum kilitli", "Status locked")}</div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -268,7 +292,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                           className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500" title={L("Düzenle", "Edit")}>
                           <Pencil className="h-4 w-4" />
                         </Link>
-                        <button onClick={() => delInvoice(inv.id, inv.number)}
+                        <button onClick={() => delInvoice(inv.id, inv.number, inv.status)}
                           className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600" title={L("Sil", "Delete")}>
                           <Trash2 className="h-4 w-4" />
                         </button>

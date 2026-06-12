@@ -11,10 +11,12 @@ import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } fro
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
 import { listClients, listProducts, getAccountInfo } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
+import { useToast } from "@/lib/toast-context";
 
 export default function NewInvoicePage() {
   const { lang } = useLang();
   const { requireAuth } = useGuest();
+  const toast = useToast();
   const L = (tr: string, _en?: string) => appT(lang, tr);
 
   const [st, setSt] = useState<EditorState>(emptyEditorState);
@@ -150,10 +152,11 @@ export default function NewInvoicePage() {
     setBusy("");
     if (res.ok) {
       setSaved(true); setTimeout(() => setSaved(false), 3500);
+      toast.success(lang === "TR" ? "Fatura kaydedildi" : "Invoice saved");
       if (res.id) setEditId(res.id); // sonraki kayıtlar güncelleme olsun
       return res.id || editId || null;
     }
-    alert((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
+    toast.error((lang === "TR" ? "Kaydedilemedi: " : "Save failed: ") + (res.error || ""));
     return null;
   };
 
@@ -188,7 +191,7 @@ export default function NewInvoicePage() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert(L("PDF oluşturulamadı: ", "Could not create PDF: ") + (e.message || ""));
+      toast.error(L("PDF oluşturulamadı: ", "Could not create PDF: ") + (e.message || ""));
     } finally {
       setBusy("");
     }
@@ -211,10 +214,10 @@ export default function NewInvoicePage() {
         body: JSON.stringify({ invoiceId, toOverride: to }),
       });
       const j = await res.json();
-      if (j.ok) alert(L("E-posta gönderildi ✓ (PDF ekli)", "Email sent ✓ (PDF attached)"));
+      if (j.ok) toast.success(L("E-posta gönderildi (PDF ekli)", "Email sent (PDF attached)"));
       else throw new Error(j.error);
     } catch (e: any) {
-      alert(L("E-posta gönderilemedi: ", "Email failed: ") + (e.message || L("Resend anahtarı gerekli.", "Resend key required.")));
+      toast.error(L("E-posta gönderilemedi: ", "Email failed: ") + (e.message || L("Resend anahtarı gerekli.", "Resend key required.")));
     } finally { setBusy(""); }
   };
 

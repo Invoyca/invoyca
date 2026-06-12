@@ -7,6 +7,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { canTransition, shouldCancelInsteadOfDelete } from "@/lib/invoice-status";
+import { audit } from "@/lib/audit";
 
 // Sunucu tarafı doğrulama şeması — client'tan gelen veriye GÜVENMEYİZ.
 const itemSchema = z.object({
@@ -22,7 +24,10 @@ const saveSchema = z.object({
   clientName: z.string().max(200).optional().default(""),
   clientVat: z.string().max(100).optional().default(""),
   clientAddr: z.string().max(500).optional().default(""),
-  clientEmail: z.string().max(200).optional().default(""),
+  clientEmail: z.string().max(200).optional().default("").refine(
+    (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e),
+    { message: "Geçerli bir e-posta girin" }
+  ),
   currency: z.enum(["EUR", "USD", "GBP", "TRY"]).optional().default("EUR"),
   taxMode: z.enum(["normal", "reverse", "exempt"]).optional().default("normal"),
   qrMode: z.string().optional(),
@@ -34,41 +39,36 @@ const saveSchema = z.object({
   docType: z.enum(["INVOICE", "QUOTE"]).optional().default("INVOICE"),
   language: z.enum(["TR", "EN", "DE", "NL", "FR", "ES", "IT"]).optional().default("TR"),
   notes: z.string().max(2000).optional(),
-});
+}).refine(
+  (d) => {
+    // Vade tarihi, düzenleme tarihinden önce olamaz
+    if (!d.dueDate || !d.issueDate) return true;
+    const issue = new Date(d.issueDate);
+    const due = new Date(d.dueDate);
+    if (isNaN(issue.getTime()) || isNaN(due.getTime())) return true; // tarih parse edilemezse atla
+    return due >= issue;
+  },
+  { message: "Vade tarihi, fatura tarihinden önce olamaz", path: ["dueDate"] }
+);
 
 // Sıradaki fatura numarasını üret (şirket bazlı). Format: 2026-0001
+// Fatura numarası ÖNİZLEMESİ (tahmin). Kesin numara kayıt anında saveInvoice
+// içinde transaction ile atomik atanır; bu sadece kullanıcıya gösterilecek tahmindir.
 export async function getNextInvoiceNumber() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, number: "" };
 
   const company = await prisma.company.findUnique({ where: { userId: user.id } });
-  if (!company) {
-    const year = new Date().getFullYear();
-    return { ok: true, number: `${year}-0001` };
-  }
-
-  // Bu şirketin en son faturasını bul
-  const last = await prisma.invoice.findFirst({
-    where: { companyId: company.id },
-    orderBy: { createdAt: "desc" },
-  });
-
   const year = new Date().getFullYear();
-  if (!last || !last.number) return { ok: true, number: `${year}-0001` };
+  if (!company) return { ok: true, number: `${year}-0001` };
 
-  // Son numaradan sıradakini türet (YYYY-NNNN formatı varsayımı)
-  const m = String(last.number).match(/(\d{4})-(\d+)/);
-  if (m) {
-    const lastYear = parseInt(m[1], 10);
-    const seq = parseInt(m[2], 10);
-    if (lastYear === year) {
-      return { ok: true, number: `${year}-${String(seq + 1).padStart(4, "0")}` };
-    }
-    return { ok: true, number: `${year}-0001` }; // yeni yıl → sıfırla
-  }
-  // Format tanınmazsa güvenli varsayılan
-  return { ok: true, number: `${year}-0001` };
+  // Sayaçtan oku (varsa). Yoksa ilk numara.
+  const seq = await prisma.invoiceSequence.findUnique({
+    where: { companyId_year: { companyId: company.id, year } },
+  });
+  const next = (seq?.lastNumber ?? 0) + 1;
+  return { ok: true, number: `${year}-${String(next).padStart(4, "0")}` };
 }
 
 
@@ -214,13 +214,28 @@ export async function saveInvoice(input: SaveInvoiceInput) {
         data: { ...invoiceData, items: { create: itemsCreate } },
       });
     } else {
-      // YENİ KAYIT
-      invoice = await prisma.invoice.create({
-        data: { companyId: company.id, ...invoiceData, items: { create: itemsCreate } },
+      // YENİ KAYIT — fatura numarasını transaction içinde ATOMİK üret (çakışma önleme).
+      // İki kullanıcı/sekme aynı anda kaydetse bile sayaç atomik arttığı için numara çakışmaz.
+      const companyId = company.id;
+      const year = new Date().getFullYear();
+      invoice = await prisma.$transaction(async (tx: any) => {
+        // Sayacı atomik artır (yoksa oluştur)
+        const seq = await tx.invoiceSequence.upsert({
+          where: { companyId_year: { companyId, year } },
+          update: { lastNumber: { increment: 1 } },
+          create: { companyId, year, lastNumber: 1 },
+        });
+        const number = `${year}-${String(seq.lastNumber).padStart(4, "0")}`;
+        return tx.invoice.create({
+          data: { companyId, ...invoiceData, number, items: { create: itemsCreate } },
+        });
       });
     }
 
-    return { ok: true, id: invoice.id };
+    // Denetim kaydı (yeni fatura veya güncelleme)
+    await audit(company.id, v.id ? "invoice.updated" : "invoice.created", invoice.id, invoice.number);
+
+    return { ok: true, id: invoice.id, number: invoice.number };
   } catch (err: any) {
     if (err?.code === "P2002") return { ok: false, error: "Bu fatura numarası zaten kullanılmış." };
     return { ok: false, error: err?.message || "Kayıt başarısız." };
@@ -279,16 +294,26 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
   const valid = ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"];
   if (!valid.includes(status)) return { ok: false, error: "Geçersiz durum." };
 
-  // GÜVENLİK: updateMany + companyId filtresi → başkasının faturasını değiştiremez
+  // Mevcut durumu çek (yatay yetki + geçiş kontrolü için)
+  const current = await prisma.invoice.findFirst({
+    where: { id: invoiceId, companyId: company.id },
+    select: { status: true },
+  });
+  if (!current) return { ok: false, error: "Fatura bulunamadı." };
+
+  // Durum geçişi kurallı mı? (örn. PAID → DRAFT yasak)
+  if (!canTransition(current.status, status)) {
+    return { ok: false, error: `Bu geçiş yapılamaz: ${current.status} → ${status}` };
+  }
+
   const result = await prisma.invoice.updateMany({
     where: { id: invoiceId, companyId: company.id },
     data: { status: status as any },
   });
   if (result.count === 0) return { ok: false, error: "Fatura bulunamadı." };
+  await audit(company.id, "invoice.status_changed", invoiceId, `${current.status} -> ${status}`);
   return { ok: true };
 }
-
-// Fatura siler — sadece kendi faturası.
 // Tek faturayı kalemleriyle getir (detay + düzenleme için)
 export async function getInvoice(invoiceId: string) {
   const supabase = await createClient();
@@ -314,9 +339,33 @@ export async function deleteInvoice(invoiceId: string) {
   const company = await prisma.company.findUnique({ where: { userId: user.id } });
   if (!company) return { ok: false, error: "Şirket bulunamadı." };
 
+  // Mevcut durumu çek — silme kuralı duruma bağlı
+  const current = await prisma.invoice.findFirst({
+    where: { id: invoiceId, companyId: company.id },
+    select: { status: true },
+  });
+  if (!current) return { ok: false, error: "Fatura bulunamadı." };
+
+  // PAID fatura silinemez (muhasebe kaydı) ve iptal de edilemez
+  if (String(current.status).toUpperCase() === "PAID") {
+    return { ok: false, error: "Ödenmiş fatura silinemez. Önce durumunu değiştirin." };
+  }
+
+  // SENT/OVERDUE: silmek yerine İPTAL et (kayıt korunur)
+  if (shouldCancelInsteadOfDelete(current.status)) {
+    await prisma.invoice.updateMany({
+      where: { id: invoiceId, companyId: company.id },
+      data: { status: "CANCELLED" as any },
+    });
+    await audit(company.id, "invoice.cancelled", invoiceId, `${current.status} -> CANCELLED`);
+    return { ok: true, cancelled: true };
+  }
+
+  // DRAFT (veya CANCELLED): gerçekten sil
   const result = await prisma.invoice.deleteMany({
     where: { id: invoiceId, companyId: company.id },
   });
   if (result.count === 0) return { ok: false, error: "Fatura bulunamadı." };
-  return { ok: true };
+  await audit(company.id, "invoice.deleted", invoiceId, null);
+  return { ok: true, deleted: true };
 }

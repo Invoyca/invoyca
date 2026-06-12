@@ -27,7 +27,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     // Kayıt için ek doğrulamalar
     if (!isLogin) {
       if (name.trim().length < 2) { setError("Lütfen ad soyad girin."); return; }
-      if (password.length < 6) { setError("Şifre en az 6 karakter olmalı."); return; }
+      if (password.length < 8) { setError("Şifre en az 8 karakter olmalı."); return; }
       if (password !== password2) { setError("Şifreler eşleşmiyor."); return; }
     }
 
@@ -139,7 +139,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <label className="text-xs font-medium text-slate-500">Şifre</label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+                <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" className={inputCls} />
               </div>
             </div>
@@ -148,7 +148,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                 <label className="text-xs font-medium text-slate-500">Şifre (Tekrar)</label>
                 <div className="relative mt-1">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input type="password" required minLength={6} value={password2} onChange={(e) => setPassword2(e.target.value)}
+                  <input type="password" required minLength={8} value={password2} onChange={(e) => setPassword2(e.target.value)}
                     placeholder="••••••••" className={inputCls} />
                 </div>
               </div>

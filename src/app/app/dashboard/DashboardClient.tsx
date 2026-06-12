@@ -81,7 +81,7 @@ export default function DashboardClient({ initialInvoices, clientCount = 0 }: { 
   const curPaidCount = invoices.filter((i) => i.status === "PAID" && (i.currency || "EUR") === mainCur).length;
   const curPendingCount = invoices.filter((i) => i.status !== "PAID" && i.status !== "CANCELLED" && (i.currency || "EUR") === mainCur).length;
   const metrics = [
-    { key: "total", label: t("Toplam Gelir"), value: fmt(m.total, mainCur), sub: `${m.count} ${t("fatura")}`, icon: TrendingUp, color: "text-emerald-600 bg-emerald-50", money: true },
+    { key: "total", label: t("Para birimine göre gelir"), value: fmt(m.total, mainCur), sub: `${m.count} ${t("fatura")}`, icon: TrendingUp, color: "text-emerald-600 bg-emerald-50", money: true },
     { key: "pending", label: t("Bekleyen"), value: fmt(m.pending, mainCur), sub: `${curPendingCount} ${t("fatura")}`, icon: Clock, color: "text-amber-600 bg-amber-50", money: true },
     { key: "paid", label: t("Ödenen"), value: fmt(m.paid, mainCur), sub: `${curPaidCount} ${t("fatura")}`, icon: CheckCircle2, color: "text-blue-600 bg-blue-50", money: true },
     { key: "clients", label: t("Müşteriler"), value: String(clientCount), sub: "", icon: Users, color: "text-violet-600 bg-violet-50", money: false },
@@ -246,6 +246,9 @@ export default function DashboardClient({ initialInvoices, clientCount = 0 }: { 
                             </div>
                           ))}
                         </div>
+                        {Object.keys(breakdown).length > 1 && (
+                          <p className="text-xs text-slate-400 mt-2 italic">{t("Farklı para birimleri otomatik çevrilmez.")}</p>
+                        )}
                       </div>
                       {relevant.length > 0 && (
                         <div>

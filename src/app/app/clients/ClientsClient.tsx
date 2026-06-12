@@ -8,6 +8,7 @@ import { Plus, Search, Mail, Users, X, Loader2, Trash2, Pencil } from "lucide-re
 import { listClients, createClientRecord, deleteClient, updateClient } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
+import { useToast } from "@/lib/toast-context";
 import { getCountries } from "@/lib/countries";
 
 export default function ClientsClient({ initialClients }: { initialClients: any[] }) {
@@ -15,6 +16,7 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
+  const toast = useToast();
   const [clients, setClients] = useState<any[]>(initialClients || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -49,7 +51,7 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
     if (!ok) return;
     setClients((p) => p.filter((c) => c.id !== id));
     const res = await deleteClient(id);
-    if (!res.ok) { alert(res.error); load(); }
+    if (!res.ok) { toast.error(res.error || "Hata"); load(); }
   };
 
   return (

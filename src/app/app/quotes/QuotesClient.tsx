@@ -8,12 +8,14 @@ import { Plus, FileText, ArrowRight, Loader2, Pencil, Trash2 } from "lucide-reac
 import { listInvoices, convertQuoteToInvoice, deleteInvoice } from "../invoices/actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
+import { useToast } from "@/lib/toast-context";
 
 export default function QuotesClient({ initialQuotes }: { initialQuotes: any[] }) {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
+  const toast = useToast();
   const [quotes, setQuotes] = useState<any[]>(initialQuotes || []);
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function QuotesClient({ initialQuotes }: { initialQuotes: any[] }
     const res = await convertQuoteToInvoice(id);
     setConverting(null);
     if (res.ok) { load(); }
-    else alert(res.error || "Hata");
+    else toast.error(res.error || "Hata");
   };
 
   const delQuote = async (id: string, number: string) => {
@@ -58,7 +60,7 @@ export default function QuotesClient({ initialQuotes }: { initialQuotes: any[] }
     if (!ok) return;
     setQuotes((p) => p.filter((x) => x.id !== id));
     const res = await deleteInvoice(id);
-    if (!res.ok) { alert(res.error || "Silinemedi"); load(); }
+    if (!res.ok) { toast.error(res.error || "Silinemedi"); load(); }
   };
 
   const newQuote = (e: React.MouseEvent) => { if (!requireAuth()) e.preventDefault(); };

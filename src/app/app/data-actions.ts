@@ -5,6 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { validateClientInput, validateProductInput } from "@/lib/validation";
 
 // Oturum sahibinin company'sini bul/oluştur (ilk kullanımda)
 async function getCompany() {
@@ -42,7 +43,7 @@ export async function createClientRecord(input: {
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  if (!input.name?.trim()) return { ok: false, error: "Müşteri adı gerekli." };
+  const cErr = validateClientInput(input); if (cErr) return { ok: false, error: cErr };
 
   try {
     const client = await prisma.client.create({
@@ -68,7 +69,7 @@ export async function updateClient(id: string, input: {
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  if (!input.name?.trim()) return { ok: false, error: "Müşteri adı gerekli." };
+  const cErr = validateClientInput(input); if (cErr) return { ok: false, error: cErr };
 
   try {
     // Sadece kendi müşterisi mi doğrula (yatay yetki koruması)
@@ -123,7 +124,7 @@ export async function createProduct(input: {
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  if (!input.name?.trim()) return { ok: false, error: "Ürün adı gerekli." };
+  const pErr = validateProductInput(input); if (pErr) return { ok: false, error: pErr };
 
   try {
     const product = await prisma.product.create({
@@ -148,7 +149,7 @@ export async function updateProduct(id: string, input: {
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  if (!input.name?.trim()) return { ok: false, error: "Ürün adı gerekli." };
+  const pErr = validateProductInput(input); if (pErr) return { ok: false, error: pErr };
 
   try {
     const existing = await prisma.product.findFirst({ where: { id, companyId: company.id } });

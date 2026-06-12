@@ -8,12 +8,14 @@ import { Plus, Search, Package, X, Loader2, Trash2, Pencil } from "lucide-react"
 import { listProducts, createProduct, deleteProduct, updateProduct } from "../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
+import { useToast } from "@/lib/toast-context";
 
 export default function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
+  const toast = useToast();
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -52,7 +54,7 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
     if (!ok) return;
     setProducts((p) => p.filter((x) => x.id !== id));
     const res = await deleteProduct(id);
-    if (!res.ok) { alert(res.error); load(); }
+    if (!res.ok) { toast.error(res.error || "Hata"); load(); }
   };
 
   return (
