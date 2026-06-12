@@ -95,6 +95,7 @@ model Company {
   email     String?
   phone     String?
   logoUrl   String?
+  qrImage   String?   // Faturada gösterilecek QR kod görseli (base64 veya URL)
 
   // Banka bilgileri
   bankName  String?
