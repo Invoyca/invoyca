@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import { Logo } from "@/components/Logo";
 import { LANDING } from "@/lib/i18n-landing";
 import { LANGS, Lang } from "@/lib/i18n";
-import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail } from "lucide-react";
+import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail, Users, Sparkles, X, Menu } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const APP_URL = "https://app.invoyca.com";
 
 export default function Landing() {
   const [lang, setLang] = useState<Lang>("TR");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const t = LANDING[lang];
 
   // Giriş yapmış kullanıcının baş harfleri (yoksa boş = giriş yapmamış)
@@ -56,12 +57,16 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Logo size={36} />
-            <span className="font-semibold tracking-tight text-[15px]">Invoyca</span>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200/50">
+              <Logo size={24} />
+            </div>
+            <span className="font-bold tracking-tight text-base text-slate-900">Invoyca</span>
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-slate-600">
+          <nav className="hidden md:flex items-center gap-7 text-sm text-slate-600">
             <a href="#features" className="hover:text-slate-900">{t.nav_features}</a>
+            <a href="#templates" className="hover:text-slate-900">{t.nav_templates}</a>
+            <a href="#how" className="hover:text-slate-900">{t.nav_how}</a>
             <a href="#pricing" className="hover:text-slate-900">{t.nav_pricing}</a>
             <a href="#faq" className="hover:text-slate-900">{t.nav_faq}</a>
           </nav>
@@ -74,13 +79,38 @@ export default function Landing() {
                 {initials}
               </a>
             ) : (
-              // Giriş yapmamış: Ücretsiz Başla
-              <a href={APP_URL} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
+              // Giriş yapmamış: Ücretsiz Başla (sadece masaüstünde göster, mobilde menüde)
+              <a href={APP_URL} className="hidden sm:inline-flex rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
                 {t.cta_start}
               </a>
             )}
+            {/* Mobil hamburger */}
+            <button onClick={() => setMobileOpen((v) => !v)} aria-label="Menu"
+              className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+        {/* Mobil açılır menü */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-1">
+            {[
+              { href: "#features", label: t.nav_features },
+              { href: "#templates", label: t.nav_templates },
+              { href: "#how", label: t.nav_how },
+              { href: "#pricing", label: t.nav_pricing },
+              { href: "#faq", label: t.nav_faq },
+            ].map((item) => (
+              <a key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                {item.label}
+              </a>
+            ))}
+            <a href={APP_URL} className="block text-center rounded-lg bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 mt-2 hover:bg-blue-700">
+              {t.cta_start}
+            </a>
+          </div>
+        )}
       </header>
 
       {/* Hero */}
@@ -92,54 +122,81 @@ export default function Landing() {
           <div className="iv-blob absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-sky-300/20 blur-3xl" style={{ animationDelay: "-12s" }} />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-16 sm:pt-16 sm:pb-20">
+          <div className="grid lg:grid-cols-[1fr_0.85fr] gap-12 items-center">
             <div>
               <span className="inline-block rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium mb-5 border border-blue-100">
                 {t.hero_badge}
               </span>
-              <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-slate-900 leading-[1.1] max-w-2xl">
                 {t.hero_title_1} <span className="text-blue-600">{t.hero_title_hl}</span>.
               </h1>
-              <p className="mt-4 text-xl font-semibold text-slate-700">
-                <span className="text-blue-600">{t.hero_punch1}</span> <span className="text-blue-600">{t.hero_punch2}</span> <span className="text-blue-600">{t.hero_punch3}</span>
-              </p>
-              <p className="mt-4 text-lg text-slate-500 leading-relaxed">{t.hero_desc}</p>
+              <p className="mt-5 text-lg text-slate-500 leading-relaxed max-w-xl">{t.hero_desc}</p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a href={APP_URL} className="group inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white font-semibold px-6 py-3 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all">
                   {t.hero_cta} <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </a>
-                <a href="#pricing" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white/80 backdrop-blur font-semibold px-6 py-3 hover:bg-slate-50 transition-colors">
+                <a href="#templates" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white/80 backdrop-blur font-semibold px-6 py-3 hover:bg-slate-50 transition-colors">
                   {t.hero_pricing}
                 </a>
               </div>
-              <div className="mt-6 flex flex-wrap gap-4 text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-500" /> {t.hero_f1}</span>
-                <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-500" /> {t.hero_f2}</span>
-                <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-500" /> {t.hero_f3}</span>
+              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
+                <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.hero_f1}</span>
+                <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.hero_f3}</span>
+                <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.hero_f2}</span>
+                <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.hero_f4}</span>
               </div>
             </div>
             {/* Yüzen fatura mockup'ı + arka katman */}
             <div className="relative">
+              {/* Yumuşak mavi parıltı */}
+              <div className="pointer-events-none absolute -inset-6 rounded-3xl bg-blue-400/20 blur-3xl" aria-hidden="true" />
               {/* Arkadaki ikinci kart (derinlik) */}
-              <div className="absolute inset-0 rounded-2xl bg-blue-600/10 border border-blue-200 translate-x-4 translate-y-4 rotate-3" aria-hidden="true" />
-              <div className="iv-float relative rounded-2xl bg-white shadow-2xl border border-slate-200 p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <Logo size={36} />
-                  <p className="text-2xl font-bold text-blue-600">FATURA</p>
+              <div className="absolute inset-0 rounded-2xl bg-white border border-slate-200 translate-x-4 translate-y-4 rotate-2 shadow-lg" aria-hidden="true" />
+              <div className="iv-float relative rounded-2xl bg-white shadow-2xl border border-slate-200 p-5 max-w-md mx-auto lg:scale-95 xl:scale-100">
+                {/* Üst: logo + belge başlığı + no/tarih */}
+                <div className="flex items-start justify-between mb-5">
+                  <Logo size={34} />
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-blue-600 tracking-tight">{t.m_title}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t.m_no}: INV-2026-001</p>
+                  </div>
                 </div>
-                <div className="space-y-1 mb-4">
-                  <p className="text-sm font-semibold">Bright Sample Company</p>
-                  <p className="text-xs text-slate-400">48 Sample Avenue, Amsterdam</p>
+                {/* Tarih satırı */}
+                <div className="flex gap-4 mb-4 text-[10px]">
+                  <div><span className="text-slate-400">{t.m_issue}</span><p className="text-slate-700 font-medium">12.06.2026</p></div>
+                  <div><span className="text-slate-400">{t.m_due}</span><p className="text-slate-700 font-medium">12.07.2026</p></div>
                 </div>
-                <div className="border-t border-slate-100 pt-3 space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-slate-500">Web tasarım</span><span>€2.000</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Aylık bakım ×3</span><span>€450</span></div>
-                  <div className="flex justify-between font-semibold text-blue-600 border-t border-slate-100 pt-2 text-sm"><span>GENEL TOPLAM</span><span>€3.540</span></div>
+                {/* From / Bill To */}
+                <div className="flex justify-between gap-3 mb-4 pb-4 border-b border-slate-100">
+                  <div className="text-[10px]">
+                    <p className="text-slate-400 uppercase tracking-wide mb-0.5">{t.m_from}</p>
+                    <p className="text-slate-800 font-semibold">Bright Studio</p>
+                  </div>
+                  <div className="text-[10px] text-right">
+                    <p className="text-slate-400 uppercase tracking-wide mb-0.5">{t.m_billto}</p>
+                    <p className="text-slate-800 font-semibold">Northline B.V.</p>
+                  </div>
                 </div>
-                {/* Canlı "ödendi" rozeti */}
+                {/* Kalemler */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between"><span className="text-slate-500">{t.m_item1}</span><span className="text-slate-700">€2.000</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">{t.m_item2}</span><span className="text-slate-700">€450</span></div>
+                </div>
+                {/* Subtotal + reverse charge notu + total */}
+                <div className="border-t border-slate-100 mt-3 pt-3 space-y-1.5 text-xs">
+                  <div className="flex justify-between text-slate-400"><span>{t.m_subtotal}</span><span>€2.450</span></div>
+                  <p className="text-[9px] text-slate-400 italic">{t.m_vatnote}</p>
+                  <div className="flex justify-between font-bold text-blue-600 text-sm pt-1"><span>{t.m_total}</span><span>€2.450</span></div>
+                </div>
+                {/* Ödeme bilgileri */}
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[9px] text-slate-400 uppercase tracking-wide">{t.m_pay}</p>
+                  <p className="text-[10px] text-slate-500">IBAN: NL00 BANK 0000 0000</p>
+                </div>
+                {/* "PDF hazır" rozeti */}
                 <div className="absolute -bottom-3 -right-3 bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> {t.w_paid}
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> {t.m_ready}
                 </div>
               </div>
             </div>
@@ -152,15 +209,15 @@ export default function Landing() {
         <p className="text-center text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">{t.trust_label}</p>
         <div className="relative">
           <div className="flex w-max iv-marquee">
+            {/* İçerik iki kez yan yana — animasyon -50% kaydırınca kusursuz döner */}
             {[0, 1].map((dup) => (
-              <div key={dup} className="flex items-center gap-10 px-5 text-slate-600" aria-hidden={dup === 1}>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-lg">€ <span className="text-sm">EUR</span></span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-lg">$ <span className="text-sm">USD</span></span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-lg">£ <span className="text-sm">GBP</span></span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-lg">₺ <span className="text-sm">TRY</span></span>
-                <span className="inline-flex items-center gap-1.5 text-sm"><Languages className="h-4 w-4 text-blue-500" /> 7 {t.w_lang}</span>
-                <span className="inline-flex items-center gap-1.5 text-sm"><FileText className="h-4 w-4 text-blue-500" /> 25 {t.w_tpl}</span>
-                <span className="inline-flex items-center gap-1.5 text-sm"><Globe className="h-4 w-4 text-blue-500" /> {t.w_world}</span>
+              <div key={dup} className="flex items-center shrink-0" aria-hidden={dup === 1}>
+                {t.marquee.map((item, i) => (
+                  <span key={i} className="flex items-center whitespace-nowrap text-sm text-slate-600 font-medium">
+                    <span className="px-6">{item}</span>
+                    <span className="h-1 w-1 rounded-full bg-slate-300" />
+                  </span>
+                ))}
               </div>
             ))}
           </div>
@@ -171,7 +228,7 @@ export default function Landing() {
       </section>
 
       {/* Nasıl Çalışır — 4 adım */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+      <section id="how" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
         <h2 className="text-3xl font-bold text-center text-slate-900 mb-3 iv-reveal">{t.how_title}</h2>
         <p className="text-center text-slate-500 mb-12 max-w-2xl mx-auto iv-reveal">{t.how_sub}</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -263,25 +320,145 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Fiyatlar — 2026 promosyonu */}
-      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="rounded-3xl bg-white border-2 border-emerald-200 p-10 sm:p-16 text-center max-w-3xl mx-auto">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 px-4 py-1.5 text-sm font-semibold mb-6">
-            <Check className="h-4 w-4" /> {t.promo_badge}
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
-            {t.promo_title_1} <span className="text-emerald-600">{t.promo_title_hl}</span>
-          </h2>
-          <p className="text-lg text-slate-500 mb-2">{t.promo_desc}</p>
-          <p className="text-sm text-slate-400 mb-8">{t.promo_note}</p>
-          <a href={APP_URL} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white font-semibold px-8 py-3 hover:bg-emerald-700">
-            {t.promo_cta} <ArrowRight className="h-4 w-4" />
+      {/* Şablon önizleme */}
+      <section id="templates" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <h2 className="text-3xl font-bold text-center text-slate-900 mb-3">{t.tpl_title}</h2>
+        <p className="text-center text-slate-500 mb-12 max-w-2xl mx-auto">{t.tpl_sub}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            { label: t.tpl_minimal, accent: "border-slate-300", bar: "bg-slate-800" },
+            { label: t.tpl_consultant, accent: "border-blue-300", bar: "bg-blue-600" },
+            { label: t.tpl_agency, accent: "border-violet-300", bar: "bg-violet-600" },
+            { label: t.tpl_corporate, accent: "border-emerald-300", bar: "bg-emerald-600" },
+          ].map((tpl, i) => (
+            <div key={i} className="iv-reveal group" style={{ animationDelay: `${i * 0.06}s` }}>
+              {/* Mini fatura önizlemesi */}
+              <div className={`rounded-xl bg-white border ${tpl.accent} shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all p-4 aspect-[3/4] flex flex-col`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`h-2 w-8 rounded-full ${tpl.bar}`} />
+                  <div className="h-2 w-10 rounded-full bg-slate-200" />
+                </div>
+                <div className="space-y-1.5 mb-3">
+                  <div className="h-1.5 w-3/4 rounded-full bg-slate-100" />
+                  <div className="h-1.5 w-1/2 rounded-full bg-slate-100" />
+                </div>
+                <div className="flex-1 space-y-1.5 border-t border-slate-100 pt-3">
+                  {[0,1,2].map((r) => (
+                    <div key={r} className="flex justify-between gap-2">
+                      <div className="h-1.5 flex-1 rounded-full bg-slate-100" />
+                      <div className="h-1.5 w-8 rounded-full bg-slate-100" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-100 pt-2 mt-2">
+                  <div className="h-1.5 w-10 rounded-full bg-slate-200" />
+                  <div className={`h-2 w-12 rounded-full ${tpl.bar} opacity-80`} />
+                </div>
+              </div>
+              <p className="text-center text-sm font-medium text-slate-700 mt-3">{tpl.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-10">
+          <a href={APP_URL} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white font-semibold px-6 py-3 hover:bg-slate-50 transition-colors">
+            {t.tpl_cta} <ArrowRight className="h-4 w-4" />
           </a>
-          <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-600">
-            <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.promo_b1}</span>
-            <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.promo_b2}</span>
-            <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.promo_b3}</span>
-            <span className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-emerald-500" /> {t.promo_b4}</span>
+        </div>
+      </section>
+
+      {/* Kimler için? */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <h2 className="text-3xl font-bold text-center text-slate-900 mb-3 iv-reveal">{t.who_title}</h2>
+        <p className="text-center text-slate-500 mb-12 max-w-2xl mx-auto iv-reveal">{t.who_sub}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {t.who_list.map((who, i) => (
+            <div key={i} className="iv-reveal flex items-center gap-3 rounded-xl bg-white border border-slate-200 px-4 py-3.5 hover:border-blue-300 hover:shadow-sm transition-all" style={{ animationDelay: `${i * 0.05}s` }}>
+              <div className="h-8 w-8 shrink-0 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="h-4 w-4" /></div>
+              <span className="text-sm font-medium text-slate-700">{who}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Sadelik / değer */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="iv-reveal">
+            <h2 className="text-3xl font-bold text-slate-900 leading-tight mb-4">{t.val_title}</h2>
+            <p className="text-lg text-slate-500 leading-relaxed mb-6">{t.val_text}</p>
+            <div className="space-y-3">
+              {[t.val_p1, t.val_p2, t.val_p3].map((p, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-6 w-6 shrink-0 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Check className="h-3.5 w-3.5" /></div>
+                  <span className="text-slate-700">{p}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Karşılaştırma kartı */}
+          <div className="iv-reveal rounded-3xl bg-white border border-slate-200 p-8 shadow-sm">
+            <div className="pb-5 mb-5 border-b border-slate-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 shrink-0 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center"><X className="h-4 w-4" /></div>
+                <p className="text-sm font-medium text-slate-400">{t.val_card_not}</p>
+              </div>
+              <div className="space-y-1.5 pl-9 text-sm text-slate-400">
+                <p className="flex items-center gap-2"><X className="h-3.5 w-3.5" /> {lang === "TR" ? "Fazla modül ve ayar" : "Too many modules"}</p>
+                <p className="flex items-center gap-2"><X className="h-3.5 w-3.5" /> {lang === "TR" ? "Uzun kurulum" : "Long setup"}</p>
+                <p className="flex items-center gap-2"><X className="h-3.5 w-3.5" /> {lang === "TR" ? "Karmaşık arayüz" : "Complex interface"}</p>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 shrink-0 rounded-lg bg-blue-600 text-white flex items-center justify-center"><Sparkles className="h-4 w-4" /></div>
+                <p className="text-sm font-bold text-slate-900">Invoyca</p>
+              </div>
+              <div className="space-y-1.5 pl-9 text-sm text-slate-600">
+                <p className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-500" /> {lang === "TR" ? "Hızlı fatura oluşturma" : "Fast invoicing"}</p>
+                <p className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-500" /> {lang === "TR" ? "PDF çıktısı" : "PDF output"}</p>
+                <p className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-500" /> {lang === "TR" ? "Çok dil ve para birimi" : "Multi-language & currency"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Fiyatlar — Early Access + Future Pro */}
+      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <h2 className="text-3xl font-bold text-center text-slate-900 mb-3">{t.pr_title}</h2>
+        <p className="text-center text-slate-500 mb-12 max-w-2xl mx-auto">{t.pr_sub}</p>
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Early Access — vurgulu */}
+          <div className="rounded-3xl bg-white border-2 border-blue-500 p-8 relative shadow-lg">
+            <span className="absolute -top-3 left-8 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">2026</span>
+            <p className="text-sm font-semibold text-blue-600 mb-1">{t.pr_ea_name}</p>
+            <p className="text-4xl font-bold text-slate-900 mb-6">{t.pr_ea_price}</p>
+            <ul className="space-y-3 mb-8">
+              {t.pr_ea_feats.map((feat, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-sm text-slate-600">
+                  <Check className="h-4 w-4 text-emerald-500 shrink-0" /> {feat}
+                </li>
+              ))}
+            </ul>
+            <a href={APP_URL} className="block text-center rounded-xl bg-blue-600 text-white font-semibold px-6 py-3 hover:bg-blue-700 transition-colors">
+              {t.pr_ea_cta}
+            </a>
+          </div>
+          {/* Future Pro — soluk */}
+          <div className="rounded-3xl bg-slate-50 border border-slate-200 p-8 relative">
+            <p className="text-sm font-semibold text-slate-500 mb-1">{t.pr_fp_name}</p>
+            <p className="text-2xl font-bold text-slate-400 mb-2">{t.pr_fp_price}</p>
+            <p className="text-xs text-slate-400 mb-6">{lang === "TR" ? "Daha gelişmiş kullanım için planlanan özellikler:" : "Planned features for more advanced use:"}</p>
+            <ul className="space-y-3 mb-8">
+              {t.pr_fp_feats.map((feat, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-sm text-slate-500">
+                  <Check className="h-4 w-4 text-slate-300 shrink-0" /> {feat}
+                </li>
+              ))}
+            </ul>
+            <a href={APP_URL} className="block text-center rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold px-6 py-3 hover:bg-slate-50 transition-colors">
+              {t.pr_fp_cta}
+            </a>
           </div>
         </div>
       </section>
@@ -297,6 +474,7 @@ export default function Landing() {
             { q: t.faq_q3, a: t.faq_a3 },
             { q: t.faq_q4, a: t.faq_a4 },
             { q: t.faq_q5, a: t.faq_a5 },
+            { q: t.faq_q6, a: t.faq_a6 },
           ].map((item, i) => (
             <details key={i} className="group rounded-xl border border-slate-200 bg-white p-5 [&_summary]:cursor-pointer">
               <summary className="flex items-center justify-between font-semibold text-slate-900 list-none">
@@ -310,32 +488,61 @@ export default function Landing() {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-blue-700 p-10 sm:p-16 text-center text-white">
-          <h2 className="text-3xl font-bold mb-3">{t.final_title}</h2>
-          <p className="text-blue-100 mb-8 max-w-xl mx-auto">{t.final_desc}</p>
-          <a href={APP_URL} className="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 font-semibold px-8 py-3 hover:bg-blue-50">
-            {t.final_cta} <ArrowRight className="h-4 w-4" />
-          </a>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 to-blue-700 p-10 sm:p-16 text-center text-white">
+          {/* Yumuşak radyal parıltı */}
+          <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+          <h2 className="relative text-3xl font-bold mb-3">{t.fcta_title}</h2>
+          <p className="relative text-blue-100 mb-8 max-w-xl mx-auto">{t.fcta_sub}</p>
+          <div className="relative flex flex-wrap items-center justify-center gap-3">
+            <a href={APP_URL} className="inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 font-semibold px-8 py-3 hover:bg-blue-50 transition-colors">
+              {t.fcta_primary} <ArrowRight className="h-4 w-4" />
+            </a>
+            <a href="#features" className="inline-flex items-center gap-2 rounded-xl border border-white/40 text-white font-semibold px-8 py-3 hover:bg-white/10 transition-colors">
+              {t.fcta_secondary}
+            </a>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <Logo size={28} />
-              <span className="font-semibold text-sm">Invoyca</span>
-            </div>
-            <div className="flex flex-col items-center sm:items-end gap-1">
-              <a href="mailto:contact@invoyca.com" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+            {/* Marka + açıklama */}
+            <div className="lg:col-span-2 max-w-sm">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200/50">
+                  <Logo size={20} />
+                </div>
+                <span className="font-bold text-slate-900">Invoyca</span>
+              </div>
+              <p className="text-sm text-slate-500 leading-relaxed">{t.foot_desc}</p>
+              <a href="mailto:contact@invoyca.com" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-blue-600 mt-4">
                 <Mail className="h-4 w-4" /> contact@invoyca.com
               </a>
-              <p className="text-xs text-slate-400">{lang === "TR" ? "Soruların için buradayız." : "We're here for your questions."}</p>
+            </div>
+            {/* Ürün linkleri */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">{t.nav_features}</p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li><a href="#features" className="hover:text-blue-600">{t.nav_features}</a></li>
+                <li><a href="#templates" className="hover:text-blue-600">{t.nav_templates}</a></li>
+                <li><a href="#how" className="hover:text-blue-600">{t.nav_how}</a></li>
+              </ul>
+            </div>
+            {/* Diğer linkler */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Invoyca</p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li><a href="#pricing" className="hover:text-blue-600">{t.nav_pricing}</a></li>
+                <li><a href="#faq" className="hover:text-blue-600">{t.nav_faq}</a></li>
+                <li><a href="mailto:contact@invoyca.com" className="hover:text-blue-600">{t.foot_privacy}</a></li>
+                <li><a href="mailto:contact@invoyca.com" className="hover:text-blue-600">{t.foot_terms}</a></li>
+              </ul>
             </div>
           </div>
-          <div className="border-t border-slate-100 mt-6 pt-6 text-center">
-            <p className="text-xs text-slate-400">© 2026 Invoyca. {lang === "TR" ? "Tüm hakları saklıdır." : "All rights reserved."}</p>
+          <div className="border-t border-slate-100 pt-6 text-center">
+            <p className="text-xs text-slate-400">© 2026 Invoyca. {t.foot_rights}</p>
           </div>
         </div>
       </footer>

@@ -2,9 +2,9 @@
 import { Lang } from "./i18n";
 
 type LDict = {
-  nav_features: string; nav_pricing: string; nav_faq: string; cta_start: string;
+  nav_features: string; nav_templates: string; nav_how: string; nav_pricing: string; nav_faq: string; cta_start: string;
   hero_badge: string; hero_title_1: string; hero_title_hl: string; hero_desc: string;
-  hero_cta: string; hero_pricing: string; hero_f1: string; hero_f2: string; hero_f3: string;
+  hero_cta: string; hero_pricing: string; hero_f1: string; hero_f2: string; hero_f3: string; hero_f4: string;
   features_title: string; features_sub: string;
   f_lang_t: string; f_lang_d: string; f_cur_t: string; f_cur_d: string;
   f_tpl_t: string; f_tpl_d: string; f_law_t: string; f_law_d: string;
@@ -25,13 +25,36 @@ type LDict = {
   how_s1_t: string; how_s1_d: string; how_s2_t: string; how_s2_d: string;
   how_s3_t: string; how_s3_d: string; how_s4_t: string; how_s4_d: string;
   w_lang: string; w_tpl: string; w_world: string; w_paid: string; w_pending: string;
+  marquee: string[];
+  // Hero fatura mockup etiketleri (lokalize)
+  m_title: string; m_no: string; m_issue: string; m_due: string;
+  m_from: string; m_billto: string; m_subtotal: string; m_total: string;
+  m_pay: string; m_ready: string; m_item1: string; m_item2: string; m_vatnote: string;
+  // Kimler için bölümü
+  who_title: string; who_sub: string; who_list: string[];
+  // Sadelik / değer bölümü
+  val_title: string; val_text: string; val_p1: string; val_p2: string; val_p3: string;
+  val_card_not: string; val_card_is: string;
+  // İki kart fiyatlandırma
+  pr_title: string; pr_sub: string;
+  pr_ea_name: string; pr_ea_price: string; pr_ea_feats: string[]; pr_ea_cta: string;
+  pr_fp_name: string; pr_fp_price: string; pr_fp_feats: string[]; pr_fp_cta: string;
+  // 6. FAQ (muhasebe programı mı)
+  faq_q6: string; faq_a6: string;
+  // Şablon önizleme bölümü
+  tpl_title: string; tpl_sub: string; tpl_cta: string;
+  tpl_minimal: string; tpl_consultant: string; tpl_agency: string; tpl_corporate: string;
+  // Final CTA
+  fcta_title: string; fcta_sub: string; fcta_primary: string; fcta_secondary: string;
+  // Footer
+  foot_desc: string; foot_privacy: string; foot_terms: string; foot_rights: string;
 };
 
 export const LANDING: Record<Lang, LDict> = {
   TR: {
-    nav_features: "Özellikler", nav_pricing: "Fiyatlar", nav_faq: "SSS", cta_start: "Ücretsiz Başla",
-    hero_badge: "Dünyaya fatura kesmenin en kolay yolu", hero_title_1: "Uluslararası faturalama,", hero_title_hl: "tek yerde", hero_desc: "7 dil, 4 para birimi, 25 profesyonel şablon. KDV, reverse charge ve e-arşiv uyumlu. Dünyanın her yerindeki müşterilerine saniyeler içinde fatura kes.",
-    hero_cta: "Ücretsiz Başla", hero_pricing: "Detayları Gör", hero_f1: "Kredi kartı gerekmez", hero_f2: "7 dil", hero_f3: "İstediğin an iptal",
+    nav_features: "Özellikler", nav_templates: "Şablonlar", nav_how: "Nasıl Çalışır", nav_pricing: "Fiyatlar", nav_faq: "SSS", cta_start: "Ücretsiz Başla",
+    hero_badge: "Yurtdışı müşteriler için fatura oluşturmanın kolay yolu", hero_title_1: "Yurtdışına iş yapanlar için profesyonel", hero_title_hl: "fatura oluşturucu", hero_desc: "Çok dilli PDF faturalar hazırla, EUR/USD/GBP/TRY ile çalış ve reverse charge, ödeme ve vergi notlarını kolayca ekle. Müşteri ve hizmet bilgilerini bir kez kaydet; sonraki faturalarını saniyeler içinde oluştur.",
+    hero_cta: "Ücretsiz Fatura Oluştur", hero_pricing: "Şablonları Gör", hero_f1: "Kredi kartı gerekmez", hero_f2: "7 dil desteği", hero_f3: "PDF olarak indir", hero_f4: "Müşteri bilgilerini kaydet",
     features_title: "Neden Invoyca?", features_sub: "Sınır tanımayan faturalama için ihtiyacın olan her şey.",
     f_lang_t: "7 Dil", f_lang_d: "Faturanı müşterinin dilinde kes: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Para Birimi", f_cur_d: "EUR, USD, GBP, TRY ile fatura kes, ödeme al.",
@@ -50,7 +73,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Uluslararası fatura kesebilir miyim?", faq_a3: "Evet. AB sınır ötesi (reverse charge / KDV tevkifatı) ve uluslararası senaryolar için özel şablonlar var. Türkiye e-Arşiv (GİB/ETTN) modu da mevcut.",
     faq_q4: "Faturalarımı PDF olarak alabilir miyim?", faq_a4: "Evet. Her faturayı PDF olarak indirebilir, yazdırabilir veya müşterine e-posta ile gönderebilirsin. 25 farklı profesyonel şablon arasından seçim yaparsın.",
     faq_q5: "Verilerim güvende mi?", faq_a5: "Verilerin şifreli olarak saklanır ve yalnızca senin hesabına bağlıdır. Faturalarına istediğin zaman erişebilir, düzenleyebilir veya silebilirsin.",
-    banner: "2026 boyunca tamamen ücretsiz ve sınırsız",
+    banner: "2026 erken erişim dönemi — ücretsiz",
     hero_punch1: "7 dil.", hero_punch2: "4 para birimi.", hero_punch3: "Sınırsız fatura.",
     trust_label: "Dünyaya fatura kesmek için ihtiyacın olan her şey",
     how_title: "Nasıl çalışır?", how_sub: "İlk faturadan ödemeyi almaya kadar, dört adımda.",
@@ -59,11 +82,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Dil ve şablon seç", how_s3_d: "25 profesyonel şablon, 7 dil. Fatura, müşterinin dilinde.",
     how_s4_t: "Gönder ve takip et", how_s4_d: "E-posta ile gönder, ödenen/bekleyeni izle, her şeyi tek panelden yönet.",
     w_lang: "dil", w_tpl: "şablon", w_world: "Dünya çapında", w_paid: "Ödendi", w_pending: "Bekleyen",
+    marquee: ["Profesyonel PDF faturalar", "7 dilde fatura", "EUR / USD / GBP / TRY", "Reverse charge notları", "25 modern şablon", "Kayıtlı müşteri ve ürünler", "Hızlı tekrar fatura"],
+    m_title: "FATURA", m_no: "Fatura No", m_issue: "Tarih", m_due: "Vade", m_from: "Gönderen", m_billto: "Alıcı", m_subtotal: "Ara Toplam", m_total: "Toplam", m_pay: "Ödeme Bilgileri", m_ready: "PDF hazır", m_item1: "Web tasarım danışmanlığı", m_item2: "Aylık hizmet paketi", m_vatnote: "Reverse charge — KDV alıcıya aittir",
+    who_title: "Kimler için uygun?", who_sub: "Freelancer, danışman, yazılımcı, mühendis ve küçük işletmeler için; özellikle yurtdışı müşterilerine düzenli fatura gönderen profesyoneller düşünülerek tasarlandı.",
+    who_list: ["Freelancerlar", "Danışmanlar", "Yazılımcılar", "Tasarımcılar", "Ajanslar", "Mühendisler", "Küçük işletmeler", "Yurtdışına hizmet veren şirketler"],
+    val_title: "Karmaşık muhasebe yazılımlarına gerek kalmadan profesyonel fatura oluştur.", val_text: "Invoyca, tam kapsamlı bir muhasebe programı olmak yerine, fatura oluşturma sürecini hızlı, sade ve uluslararası kullanıma uygun hale getirir.",
+    val_p1: "Daha sade arayüz", val_p2: "Daha hızlı fatura oluşturma", val_p3: "Uluslararası müşteri akışına uygun alanlar",
+    val_card_not: "Karmaşık muhasebe yazılımı değil", val_card_is: "Hızlı, sade fatura oluşturucu",
+    pr_title: "2026 erken erişim dönemi ücretsiz.", pr_sub: "Invoyca'yı 2026 boyunca erken erişim kapsamında ücretsiz kullan. İleride ücretli planlar sunulduğunda temel kullanım sade ve erişilebilir kalacak şekilde tasarlanacaktır.",
+    pr_ea_name: "Early Access", pr_ea_price: "0 €", pr_ea_feats: ["PDF fatura oluşturma", "7 dil desteği", "4 para birimi", "Modern şablonlar", "Müşteri ve ürün kayıtları"], pr_ea_cta: "Ücretsiz Fatura Oluştur",
+    pr_fp_name: "Future Pro", pr_fp_price: "Yakında", pr_fp_feats: ["Gelişmiş şablonlar", "PDF ekli e-posta", "Tekrar fatura", "Aylık dışa aktarma", "Özel marka alanları"], pr_fp_cta: "Haberdar Ol",
+    faq_q6: "Invoyca bir muhasebe programı mı?", faq_a6: "Hayır. Invoyca tam kapsamlı bir muhasebe programı değildir. Fatura oluşturma, PDF hazırlama ve müşteri bilgilerini düzenli tutma sürecini kolaylaştıran bir araçtır. Vergi ve yasal konular için muhasebecine danışmanı öneririz.",
+    tpl_title: "Her iş türüne uygun modern fatura şablonları.", tpl_sub: "Minimal, kurumsal, freelancer, danışmanlık ve ajans kullanımları için hazırlanmış temiz PDF tasarımları.", tpl_cta: "Şablonları Gör",
+    tpl_minimal: "Minimal", tpl_consultant: "Danışman", tpl_agency: "Ajans", tpl_corporate: "Kurumsal",
+    fcta_title: "İlk profesyonel faturanı birkaç dakika içinde oluştur.", fcta_sub: "Invoyca ile yurtdışı müşterilerine gönderebileceğin temiz, çok dilli ve müşteriye hazır PDF faturalar hazırla.", fcta_primary: "Ücretsiz Fatura Oluştur", fcta_secondary: "Özellikleri İncele",
+    foot_desc: "Freelancerlar ve küçük işletmeler için sade, çok dilli ve uluslararası fatura oluşturma aracı.", foot_privacy: "Gizlilik", foot_terms: "Kullanım Şartları", foot_rights: "Tüm hakları saklıdır.",
   },
   EN: {
-    nav_features: "Features", nav_pricing: "Pricing", nav_faq: "FAQ", cta_start: "Start Free",
-    hero_badge: "Invoicing without borders", hero_title_1: "International invoicing,", hero_title_hl: "all in one place", hero_desc: "7 languages, 4 currencies, 25 professional templates. VAT, reverse charge and e-archive compliant. Invoice clients anywhere in the world in seconds.",
-    hero_cta: "Start Free", hero_pricing: "See Details", hero_f1: "No credit card", hero_f2: "7 languages", hero_f3: "Cancel anytime",
+    nav_features: "Features", nav_templates: "Templates", nav_how: "How it works", nav_pricing: "Pricing", nav_faq: "FAQ", cta_start: "Start Free",
+    hero_badge: "The easy way to invoice international clients", hero_title_1: "Professional invoicing for people who", hero_title_hl: "work across borders", hero_desc: "Create multilingual PDF invoices, work with EUR/USD/GBP/TRY, and add reverse charge and payment notes easily. Save your clients and services, and prepare your next invoices in seconds.",
+    hero_cta: "Create Free Invoice", hero_pricing: "See Templates", hero_f1: "No credit card", hero_f2: "7 languages", hero_f3: "Download as PDF", hero_f4: "Save client details",
     features_title: "Why Invoyca?", features_sub: "Everything you need for borderless invoicing.",
     f_lang_t: "7 Languages", f_lang_d: "Invoice in your client's language: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Currencies", f_cur_d: "Invoice and get paid in EUR, USD, GBP, TRY.",
@@ -82,7 +120,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Can I invoice internationally?", faq_a3: "Yes. There are dedicated templates for EU cross-border (reverse charge) and international scenarios. A Türkiye e-Archive (GİB/ETTN) mode is also available.",
     faq_q4: "Can I export my invoices as PDF?", faq_a4: "Yes. Download any invoice as PDF, print it, or email it to your client. Choose from 25 professional templates.",
     faq_q5: "Is my data safe?", faq_a5: "Your data is stored encrypted and tied only to your account. You can access, edit or delete your invoices anytime.",
-    banner: "Completely free and unlimited throughout 2026",
+    banner: "2026 early access — free",
     hero_punch1: "7 languages.", hero_punch2: "4 currencies.", hero_punch3: "Unlimited invoices.",
     trust_label: "Everything you need to invoice the world",
     how_title: "How it works", how_sub: "From first invoice to getting paid, in four steps.",
@@ -91,11 +129,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Choose language & template", how_s3_d: "25 professional templates, 7 languages. The invoice in your client's language.",
     how_s4_t: "Send & track", how_s4_d: "Send by email, track paid/pending, manage everything from one dashboard.",
     w_lang: "languages", w_tpl: "templates", w_world: "Worldwide", w_paid: "Paid", w_pending: "Pending",
+    marquee: ["Professional PDF invoices", "Invoicing in 7 languages", "EUR / USD / GBP / TRY", "Reverse charge notes", "25 modern templates", "Saved clients and products", "Quick repeat invoices"],
+    m_title: "INVOICE", m_no: "Invoice No", m_issue: "Issue Date", m_due: "Due Date", m_from: "From", m_billto: "Bill To", m_subtotal: "Subtotal", m_total: "Total", m_pay: "Payment Details", m_ready: "PDF ready", m_item1: "Web design consultation", m_item2: "Monthly service package", m_vatnote: "Reverse charge — VAT due by recipient",
+    who_title: "Who is it for?", who_sub: "Invoyca is built for professionals who regularly invoice international clients.",
+    who_list: ["Freelancers", "Consultants", "Developers", "Designers", "Agencies", "Engineers", "Small businesses", "Service companies working abroad"],
+    val_title: "Create professional invoices without complex accounting software.", val_text: "Instead of being a full accounting program, Invoyca makes invoicing fast, simple and ready for international use.",
+    val_p1: "A simpler interface", val_p2: "Faster invoice creation", val_p3: "Fields suited to international clients",
+    val_card_not: "Not complex accounting software", val_card_is: "A fast, simple invoice generator",
+    pr_title: "2026 early access is free.", pr_sub: "Use Invoyca for free throughout 2026 as part of early access. When paid plans arrive later, core usage is designed to stay simple and accessible.",
+    pr_ea_name: "Early Access", pr_ea_price: "€0", pr_ea_feats: ["Create PDF invoices", "7 languages", "4 currencies", "Modern templates", "Saved clients and products"], pr_ea_cta: "Create Free Invoice",
+    pr_fp_name: "Future Pro", pr_fp_price: "Soon", pr_fp_feats: ["Advanced templates", "Email with PDF attached", "Repeat invoices", "Monthly export", "Custom branding fields"], pr_fp_cta: "Notify Me",
+    faq_q6: "Is Invoyca an accounting program?", faq_a6: "No. Invoyca is not a full accounting program. It is a tool that makes creating invoices, preparing PDFs and keeping client details organized easier. For tax and legal matters, we recommend consulting your accountant.",
+    tpl_title: "Modern invoice templates for every kind of work.", tpl_sub: "Clean PDF designs prepared for minimal, corporate, freelancer, consulting and agency use.", tpl_cta: "See Templates",
+    tpl_minimal: "Minimal", tpl_consultant: "Consultant", tpl_agency: "Agency", tpl_corporate: "Corporate",
+    fcta_title: "Create your first professional invoice in minutes.", fcta_sub: "With Invoyca, prepare clean, multilingual, client-ready PDF invoices you can send to international clients.", fcta_primary: "Create Free Invoice", fcta_secondary: "Explore Features",
+    foot_desc: "A simple, multilingual international invoicing tool for freelancers and small businesses.", foot_privacy: "Privacy", foot_terms: "Terms", foot_rights: "All rights reserved.",
   },
   DE: {
-    nav_features: "Funktionen", nav_pricing: "Preise", nav_faq: "FAQ", cta_start: "Kostenlos starten",
-    hero_badge: "Rechnungen, die jede Sprache sprechen", hero_title_1: "Internationale Rechnungen,", hero_title_hl: "alles an einem Ort", hero_desc: "7 Sprachen, 4 Währungen, 25 professionelle Vorlagen. MwSt., Reverse Charge und E-Archiv-konform. Stelle Kunden weltweit in Sekunden Rechnungen.",
-    hero_cta: "Kostenlos starten", hero_pricing: "Details ansehen", hero_f1: "Keine Kreditkarte", hero_f2: "7 Sprachen", hero_f3: "Jederzeit kündbar",
+    nav_features: "Funktionen", nav_templates: "Vorlagen", nav_how: "So funktioniert's", nav_pricing: "Preise", nav_faq: "FAQ", cta_start: "Kostenlos starten",
+    hero_badge: "Der einfache Weg, internationale Kunden abzurechnen", hero_title_1: "Professionelle Rechnungen für alle, die", hero_title_hl: "grenzüberschreitend arbeiten", hero_desc: "Erstelle mehrsprachige PDF-Rechnungen, arbeite mit EUR/USD/GBP/TRY und füge Reverse-Charge- und Zahlungshinweise einfach hinzu. Speichere Kunden und Leistungen und erstelle deine nächsten Rechnungen in Sekunden.",
+    hero_cta: "Rechnung kostenlos erstellen", hero_pricing: "Vorlagen ansehen", hero_f1: "Keine Kreditkarte", hero_f2: "7 Sprachen", hero_f3: "Als PDF herunterladen", hero_f4: "Kundendaten speichern",
     features_title: "Warum Invoyca?", features_sub: "Alles für grenzenloses Rechnungsstellen.",
     f_lang_t: "7 Sprachen", f_lang_d: "Rechne in der Sprache deines Kunden: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Währungen", f_cur_d: "Rechne und kassiere in EUR, USD, GBP, TRY.",
@@ -114,7 +167,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Kann ich international Rechnungen stellen?", faq_a3: "Ja. Es gibt eigene Vorlagen für EU-grenzüberschreitend (Reverse Charge) und internationale Szenarien.",
     faq_q4: "Kann ich Rechnungen als PDF exportieren?", faq_a4: "Ja. Lade jede Rechnung als PDF herunter, drucke sie oder sende sie per E-Mail. 25 professionelle Vorlagen.",
     faq_q5: "Sind meine Daten sicher?", faq_a5: "Deine Daten werden verschlüsselt gespeichert und sind nur mit deinem Konto verknüpft.",
-    banner: "Das ganze Jahr 2026 völlig kostenlos und unbegrenzt",
+    banner: "2026 Early Access — kostenlos",
     hero_punch1: "7 Sprachen.", hero_punch2: "4 Währungen.", hero_punch3: "Unbegrenzte Rechnungen.",
     trust_label: "Alles, was du brauchst, um weltweit Rechnungen zu stellen",
     how_title: "So funktioniert's", how_sub: "Von der ersten Rechnung bis zur Zahlung, in vier Schritten.",
@@ -123,11 +176,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Sprache und Vorlage wählen", how_s3_d: "25 professionelle Vorlagen, 7 Sprachen. Die Rechnung in der Sprache des Kunden.",
     how_s4_t: "Senden und verfolgen", how_s4_d: "Per E-Mail senden, bezahlt/offen verfolgen, alles über ein Dashboard verwalten.",
     w_lang: "Sprachen", w_tpl: "Vorlagen", w_world: "Weltweit", w_paid: "Bezahlt", w_pending: "Offen",
+    marquee: ["Professionelle PDF-Rechnungen", "Rechnungen in 7 Sprachen", "EUR / USD / GBP / TRY", "Reverse-Charge-Hinweise", "25 moderne Vorlagen", "Gespeicherte Kunden und Produkte", "Schnelle Folgerechnungen"],
+    m_title: "RECHNUNG", m_no: "Rechnungsnr.", m_issue: "Datum", m_due: "Fällig", m_from: "Von", m_billto: "Rechnung an", m_subtotal: "Zwischensumme", m_total: "Gesamt", m_pay: "Zahlungsdetails", m_ready: "PDF bereit", m_item1: "Webdesign-Beratung", m_item2: "Monatliches Servicepaket", m_vatnote: "Reverse Charge — USt. schuldet der Empfänger",
+    who_title: "Für wen ist es?", who_sub: "Invoyca ist für Profis gemacht, die regelmäßig internationale Kunden abrechnen.",
+    who_list: ["Freelancer", "Berater", "Entwickler", "Designer", "Agenturen", "Ingenieure", "Kleine Unternehmen", "Dienstleister im Ausland"],
+    val_title: "Erstelle professionelle Rechnungen ohne komplexe Buchhaltungssoftware.", val_text: "Statt ein vollständiges Buchhaltungsprogramm zu sein, macht Invoyca das Rechnungsstellen schnell, einfach und international einsatzbereit.",
+    val_p1: "Einfachere Oberfläche", val_p2: "Schnellere Rechnungserstellung", val_p3: "Felder für internationale Kunden",
+    val_card_not: "Keine komplexe Buchhaltungssoftware", val_card_is: "Ein schneller, einfacher Rechnungsgenerator",
+    pr_title: "2026 Early Access ist kostenlos.", pr_sub: "Nutze Invoyca im Rahmen des Early Access das ganze Jahr 2026 kostenlos. Wenn später kostenpflichtige Pläne kommen, bleibt die Grundnutzung einfach und zugänglich.",
+    pr_ea_name: "Early Access", pr_ea_price: "0 €", pr_ea_feats: ["PDF-Rechnungen erstellen", "7 Sprachen", "4 Währungen", "Moderne Vorlagen", "Gespeicherte Kunden und Produkte"], pr_ea_cta: "Rechnung kostenlos erstellen",
+    pr_fp_name: "Future Pro", pr_fp_price: "Bald", pr_fp_feats: ["Erweiterte Vorlagen", "E-Mail mit PDF-Anhang", "Folgerechnungen", "Monatlicher Export", "Eigene Markenfelder"], pr_fp_cta: "Benachrichtigen",
+    faq_q6: "Ist Invoyca ein Buchhaltungsprogramm?", faq_a6: "Nein. Invoyca ist kein vollständiges Buchhaltungsprogramm. Es ist ein Werkzeug, das das Erstellen von Rechnungen, das Vorbereiten von PDFs und das Organisieren von Kundendaten erleichtert. Für steuerliche und rechtliche Fragen empfehlen wir, deinen Steuerberater zu konsultieren.",
+    tpl_title: "Moderne Rechnungsvorlagen für jede Art von Arbeit.", tpl_sub: "Saubere PDF-Designs für minimale, geschäftliche, Freelancer-, Beratungs- und Agenturnutzung.", tpl_cta: "Vorlagen ansehen",
+    tpl_minimal: "Minimal", tpl_consultant: "Berater", tpl_agency: "Agentur", tpl_corporate: "Unternehmen",
+    fcta_title: "Erstelle deine erste professionelle Rechnung in Minuten.", fcta_sub: "Erstelle mit Invoyca saubere, mehrsprachige und kundenfertige PDF-Rechnungen für internationale Kunden.", fcta_primary: "Rechnung kostenlos erstellen", fcta_secondary: "Funktionen ansehen",
+    foot_desc: "Ein einfaches, mehrsprachiges Tool für internationale Rechnungen für Freelancer und kleine Unternehmen.", foot_privacy: "Datenschutz", foot_terms: "AGB", foot_rights: "Alle Rechte vorbehalten.",
   },
   NL: {
-    nav_features: "Functies", nav_pricing: "Prijzen", nav_faq: "FAQ", cta_start: "Gratis starten",
-    hero_badge: "Factureren zonder grenzen", hero_title_1: "Internationaal factureren,", hero_title_hl: "alles op één plek", hero_desc: "7 talen, 4 valuta, 25 professionele sjablonen. Btw, verlegging en e-archief conform. Factureer klanten wereldwijd in seconden.",
-    hero_cta: "Gratis starten", hero_pricing: "Details bekijken", hero_f1: "Geen creditcard", hero_f2: "7 talen", hero_f3: "Altijd opzegbaar",
+    nav_features: "Functies", nav_templates: "Sjablonen", nav_how: "Hoe het werkt", nav_pricing: "Prijzen", nav_faq: "FAQ", cta_start: "Gratis starten",
+    hero_badge: "De makkelijke manier om internationale klanten te factureren", hero_title_1: "Professioneel factureren voor wie", hero_title_hl: "grensoverschrijdend werkt", hero_desc: "Maak meertalige PDF-facturen, werk met EUR/USD/GBP/TRY en voeg eenvoudig verleggings- en betaalnotities toe. Sla klanten en diensten op en maak je volgende facturen in seconden.",
+    hero_cta: "Gratis factuur maken", hero_pricing: "Sjablonen bekijken", hero_f1: "Geen creditcard", hero_f2: "7 talen", hero_f3: "Downloaden als PDF", hero_f4: "Klantgegevens opslaan",
     features_title: "Waarom Invoyca?", features_sub: "Alles voor grenzeloos factureren.",
     f_lang_t: "7 Talen", f_lang_d: "Factureer in de taal van je klant: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Valuta", f_cur_d: "Factureer en word betaald in EUR, USD, GBP, TRY.",
@@ -146,7 +214,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Kan ik internationaal factureren?", faq_a3: "Ja. Er zijn speciale sjablonen voor EU grensoverschrijdend (reverse charge) en internationale scenario's.",
     faq_q4: "Kan ik facturen als PDF exporteren?", faq_a4: "Ja. Download elke factuur als PDF, print of e-mail ze. 25 professionele sjablonen.",
     faq_q5: "Zijn mijn gegevens veilig?", faq_a5: "Je gegevens worden versleuteld opgeslagen en alleen aan je account gekoppeld.",
-    banner: "Heel 2026 volledig gratis en onbeperkt",
+    banner: "2026 vroege toegang — gratis",
     hero_punch1: "7 talen.", hero_punch2: "4 valuta's.", hero_punch3: "Onbeperkt factureren.",
     trust_label: "Alles wat je nodig hebt om de wereld te factureren",
     how_title: "Hoe het werkt", how_sub: "Van eerste factuur tot betaling, in vier stappen.",
@@ -155,11 +223,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Kies taal en sjabloon", how_s3_d: "25 professionele sjablonen, 7 talen. De factuur in de taal van de klant.",
     how_s4_t: "Verstuur en volg", how_s4_d: "Verstuur per e-mail, volg betaald/openstaand, beheer alles vanuit één dashboard.",
     w_lang: "talen", w_tpl: "sjablonen", w_world: "Wereldwijd", w_paid: "Betaald", w_pending: "Openstaand",
+    marquee: ["Professionele PDF-facturen", "Factureren in 7 talen", "EUR / USD / GBP / TRY", "Reverse charge-notities", "25 moderne sjablonen", "Opgeslagen klanten en producten", "Snel herhaalfacturen"],
+    m_title: "FACTUUR", m_no: "Factuurnr.", m_issue: "Datum", m_due: "Vervaldatum", m_from: "Van", m_billto: "Factuur aan", m_subtotal: "Subtotaal", m_total: "Totaal", m_pay: "Betaalgegevens", m_ready: "PDF klaar", m_item1: "Webdesign-consult", m_item2: "Maandelijks servicepakket", m_vatnote: "Verlegging — btw verschuldigd door ontvanger",
+    who_title: "Voor wie is het?", who_sub: "Invoyca is gemaakt voor professionals die regelmatig internationale klanten factureren.",
+    who_list: ["Freelancers", "Consultants", "Ontwikkelaars", "Ontwerpers", "Bureaus", "Ingenieurs", "Kleine bedrijven", "Dienstverleners in het buitenland"],
+    val_title: "Maak professionele facturen zonder complexe boekhoudsoftware.", val_text: "In plaats van een volledig boekhoudprogramma maakt Invoyca factureren snel, eenvoudig en klaar voor internationaal gebruik.",
+    val_p1: "Eenvoudigere interface", val_p2: "Sneller facturen maken", val_p3: "Velden voor internationale klanten",
+    val_card_not: "Geen complexe boekhoudsoftware", val_card_is: "Een snelle, eenvoudige facturengenerator",
+    pr_title: "2026 vroege toegang is gratis.", pr_sub: "Gebruik Invoyca heel 2026 gratis als onderdeel van vroege toegang. Wanneer er later betaalde plannen komen, blijft het basisgebruik eenvoudig en toegankelijk.",
+    pr_ea_name: "Early Access", pr_ea_price: "€0", pr_ea_feats: ["PDF-facturen maken", "7 talen", "4 valuta", "Moderne sjablonen", "Opgeslagen klanten en producten"], pr_ea_cta: "Gratis factuur maken",
+    pr_fp_name: "Future Pro", pr_fp_price: "Binnenkort", pr_fp_feats: ["Geavanceerde sjablonen", "E-mail met PDF-bijlage", "Herhaalfacturen", "Maandelijkse export", "Eigen merkvelden"], pr_fp_cta: "Houd me op de hoogte",
+    faq_q6: "Is Invoyca een boekhoudprogramma?", faq_a6: "Nee. Invoyca is geen volledig boekhoudprogramma. Het is een hulpmiddel dat het maken van facturen, het voorbereiden van PDF's en het ordenen van klantgegevens makkelijker maakt. Voor fiscale en juridische zaken raden we aan je accountant te raadplegen.",
+    tpl_title: "Moderne factuursjablonen voor elk soort werk.", tpl_sub: "Strakke PDF-ontwerpen voor minimaal, zakelijk, freelance, advies- en bureaugebruik.", tpl_cta: "Sjablonen bekijken",
+    tpl_minimal: "Minimaal", tpl_consultant: "Consultant", tpl_agency: "Bureau", tpl_corporate: "Zakelijk",
+    fcta_title: "Maak je eerste professionele factuur in enkele minuten.", fcta_sub: "Maak met Invoyca strakke, meertalige en klantklare PDF-facturen voor internationale klanten.", fcta_primary: "Gratis factuur maken", fcta_secondary: "Functies bekijken",
+    foot_desc: "Een eenvoudig, meertalig hulpmiddel voor internationale facturen voor freelancers en kleine bedrijven.", foot_privacy: "Privacy", foot_terms: "Voorwaarden", foot_rights: "Alle rechten voorbehouden.",
   },
   FR: {
-    nav_features: "Fonctions", nav_pricing: "Tarifs", nav_faq: "FAQ", cta_start: "Commencer gratuitement",
-    hero_badge: "La facture qui parle toutes les langues", hero_title_1: "Facturation internationale,", hero_title_hl: "au même endroit", hero_desc: "7 langues, 4 devises, 25 modèles professionnels. Conforme TVA, autoliquidation et e-archivage. Facturez vos clients partout en quelques secondes.",
-    hero_cta: "Commencer", hero_pricing: "Voir les détails", hero_f1: "Sans carte bancaire", hero_f2: "7 langues", hero_f3: "Annulable à tout moment",
+    nav_features: "Fonctions", nav_templates: "Modèles", nav_how: "Comment ça marche", nav_pricing: "Tarifs", nav_faq: "FAQ", cta_start: "Commencer gratuitement",
+    hero_badge: "La façon simple de facturer vos clients internationaux", hero_title_1: "Facturation professionnelle pour ceux qui", hero_title_hl: "travaillent à l'international", hero_desc: "Créez des factures PDF multilingues, travaillez en EUR/USD/GBP/TRY et ajoutez facilement des notes d'autoliquidation et de paiement. Enregistrez vos clients et services et préparez vos prochaines factures en quelques secondes.",
+    hero_cta: "Commencer", hero_pricing: "Voir les modèles", hero_f1: "Sans carte bancaire", hero_f2: "7 langues", hero_f3: "Télécharger en PDF", hero_f4: "Enregistrer les clients",
     features_title: "Pourquoi Invoyca ?", features_sub: "Tout pour facturer sans frontières.",
     f_lang_t: "7 Langues", f_lang_d: "Facturez dans la langue de votre client : TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Devises", f_cur_d: "Facturez et encaissez en EUR, USD, GBP, TRY.",
@@ -178,7 +261,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Puis-je facturer à l'international ?", faq_a3: "Oui. Des modèles dédiés existent pour l'UE transfrontalier (autoliquidation) et les scénarios internationaux.",
     faq_q4: "Puis-je exporter mes factures en PDF ?", faq_a4: "Oui. Téléchargez chaque facture en PDF, imprimez-la ou envoyez-la par e-mail. 25 modèles professionnels.",
     faq_q5: "Mes données sont-elles en sécurité ?", faq_a5: "Vos données sont chiffrées et liées uniquement à votre compte.",
-    banner: "Totalement gratuit et illimité pendant toute l'année 2026",
+    banner: "Accès anticipé 2026 — gratuit",
     hero_punch1: "7 langues.", hero_punch2: "4 devises.", hero_punch3: "Factures illimitées.",
     trust_label: "Tout ce qu'il vous faut pour facturer dans le monde entier",
     how_title: "Comment ça marche", how_sub: "De la première facture à l'encaissement, en quatre étapes.",
@@ -187,11 +270,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Choisissez langue et modèle", how_s3_d: "25 modèles professionnels, 7 langues. La facture dans la langue du client.",
     how_s4_t: "Envoyez et suivez", how_s4_d: "Envoyez par e-mail, suivez payé/en attente, gérez tout depuis un seul tableau de bord.",
     w_lang: "langues", w_tpl: "modèles", w_world: "Dans le monde entier", w_paid: "Payé", w_pending: "En attente",
+    marquee: ["Factures PDF professionnelles", "Facturation en 7 langues", "EUR / USD / GBP / TRY", "Notes d'autoliquidation", "25 modèles modernes", "Clients et produits enregistrés", "Factures répétées rapides"],
+    m_title: "FACTURE", m_no: "N° Facture", m_issue: "Date", m_due: "Échéance", m_from: "De", m_billto: "Facturer à", m_subtotal: "Sous-total", m_total: "Total", m_pay: "Détails de paiement", m_ready: "PDF prêt", m_item1: "Conseil en design web", m_item2: "Forfait de service mensuel", m_vatnote: "Autoliquidation — TVA due par le client",
+    who_title: "Pour qui ?", who_sub: "Invoyca est conçu pour les professionnels qui facturent régulièrement des clients internationaux.",
+    who_list: ["Freelances", "Consultants", "Développeurs", "Designers", "Agences", "Ingénieurs", "Petites entreprises", "Prestataires à l'international"],
+    val_title: "Créez des factures professionnelles sans logiciel comptable complexe.", val_text: "Plutôt qu'un logiciel comptable complet, Invoyca rend la facturation rapide, simple et prête pour l'international.",
+    val_p1: "Une interface plus simple", val_p2: "Création de factures plus rapide", val_p3: "Des champs adaptés aux clients internationaux",
+    val_card_not: "Pas un logiciel comptable complexe", val_card_is: "Un générateur de factures rapide et simple",
+    pr_title: "L'accès anticipé 2026 est gratuit.", pr_sub: "Utilisez Invoyca gratuitement pendant toute l'année 2026 dans le cadre de l'accès anticipé. Lorsque des offres payantes arriveront, l'usage de base restera simple et accessible.",
+    pr_ea_name: "Early Access", pr_ea_price: "0 €", pr_ea_feats: ["Créer des factures PDF", "7 langues", "4 devises", "Modèles modernes", "Clients et produits enregistrés"], pr_ea_cta: "Créer une facture gratuite",
+    pr_fp_name: "Future Pro", pr_fp_price: "Bientôt", pr_fp_feats: ["Modèles avancés", "E-mail avec PDF joint", "Factures répétées", "Export mensuel", "Champs de marque personnalisés"], pr_fp_cta: "Me prévenir",
+    faq_q6: "Invoyca est-il un logiciel de comptabilité ?", faq_a6: "Non. Invoyca n'est pas un logiciel de comptabilité complet. C'est un outil qui facilite la création de factures, la préparation de PDF et l'organisation des informations clients. Pour les questions fiscales et juridiques, nous vous recommandons de consulter votre comptable.",
+    tpl_title: "Des modèles de facture modernes pour chaque métier.", tpl_sub: "Des designs PDF épurés pour un usage minimal, corporate, freelance, conseil et agence.", tpl_cta: "Voir les modèles",
+    tpl_minimal: "Minimal", tpl_consultant: "Consultant", tpl_agency: "Agence", tpl_corporate: "Corporate",
+    fcta_title: "Créez votre première facture professionnelle en quelques minutes.", fcta_sub: "Avec Invoyca, préparez des factures PDF épurées, multilingues et prêtes à envoyer à vos clients internationaux.", fcta_primary: "Créer une facture gratuite", fcta_secondary: "Voir les fonctionnalités",
+    foot_desc: "Un outil de facturation internationale simple et multilingue pour freelances et petites entreprises.", foot_privacy: "Confidentialité", foot_terms: "Conditions", foot_rights: "Tous droits réservés.",
   },
   ES: {
-    nav_features: "Funciones", nav_pricing: "Precios", nav_faq: "FAQ", cta_start: "Empezar gratis",
-    hero_badge: "Facturas que hablan el idioma de tu cliente", hero_title_1: "Facturación internacional,", hero_title_hl: "todo en un lugar", hero_desc: "7 idiomas, 4 monedas, 25 plantillas profesionales. Compatible con IVA, inversión del sujeto pasivo y archivo electrónico. Factura a clientes de todo el mundo en segundos.",
-    hero_cta: "Empezar gratis", hero_pricing: "Ver detalles", hero_f1: "Sin tarjeta", hero_f2: "7 idiomas", hero_f3: "Cancela cuando quieras",
+    nav_features: "Funciones", nav_templates: "Plantillas", nav_how: "Cómo funciona", nav_pricing: "Precios", nav_faq: "FAQ", cta_start: "Empezar gratis",
+    hero_badge: "La forma fácil de facturar a clientes internacionales", hero_title_1: "Facturación profesional para quienes", hero_title_hl: "trabajan con el extranjero", hero_desc: "Crea facturas PDF multilingües, trabaja con EUR/USD/GBP/TRY y añade fácilmente notas de inversión del sujeto pasivo y de pago. Guarda tus clientes y servicios y prepara tus próximas facturas en segundos.",
+    hero_cta: "Crear factura gratis", hero_pricing: "Ver plantillas", hero_f1: "Sin tarjeta", hero_f2: "7 idiomas", hero_f3: "Descargar como PDF", hero_f4: "Guardar datos de clientes",
     features_title: "¿Por qué Invoyca?", features_sub: "Todo para facturar sin fronteras.",
     f_lang_t: "7 Idiomas", f_lang_d: "Factura en el idioma de tu cliente: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Monedas", f_cur_d: "Factura y cobra en EUR, USD, GBP, TRY.",
@@ -210,7 +308,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "¿Puedo facturar internacionalmente?", faq_a3: "Sí. Hay plantillas dedicadas para la UE transfronteriza (inversión del sujeto pasivo) y escenarios internacionales.",
     faq_q4: "¿Puedo exportar mis facturas en PDF?", faq_a4: "Sí. Descarga cada factura en PDF, imprímela o envíala por correo. 25 plantillas profesionales.",
     faq_q5: "¿Mis datos están seguros?", faq_a5: "Tus datos se almacenan cifrados y vinculados solo a tu cuenta.",
-    banner: "Durante todo 2026 totalmente gratis e ilimitado",
+    banner: "Acceso anticipado 2026 — gratis",
     hero_punch1: "7 idiomas.", hero_punch2: "4 monedas.", hero_punch3: "Facturas ilimitadas.",
     trust_label: "Todo lo que necesitas para facturar al mundo",
     how_title: "Cómo funciona", how_sub: "De la primera factura al cobro, en cuatro pasos.",
@@ -219,11 +317,26 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Elige idioma y plantilla", how_s3_d: "25 plantillas profesionales, 7 idiomas. La factura en el idioma del cliente.",
     how_s4_t: "Envía y haz seguimiento", how_s4_d: "Envía por correo, sigue pagado/pendiente, gestiona todo desde un único panel.",
     w_lang: "idiomas", w_tpl: "plantillas", w_world: "En todo el mundo", w_paid: "Pagado", w_pending: "Pendiente",
+    marquee: ["Facturas PDF profesionales", "Facturación en 7 idiomas", "EUR / USD / GBP / TRY", "Notas de inversión del sujeto pasivo", "25 plantillas modernas", "Clientes y productos guardados", "Facturas repetidas rápidas"],
+    m_title: "FACTURA", m_no: "N° Factura", m_issue: "Fecha", m_due: "Vencimiento", m_from: "De", m_billto: "Facturar a", m_subtotal: "Subtotal", m_total: "Total", m_pay: "Datos de pago", m_ready: "PDF listo", m_item1: "Consultoría de diseño web", m_item2: "Paquete de servicio mensual", m_vatnote: "Inversión del sujeto pasivo — IVA a cargo del cliente",
+    who_title: "¿Para quién es?", who_sub: "Invoyca está pensado para profesionales que facturan habitualmente a clientes internacionales.",
+    who_list: ["Freelancers", "Consultores", "Desarrolladores", "Diseñadores", "Agencias", "Ingenieros", "Pequeñas empresas", "Empresas de servicios en el extranjero"],
+    val_title: "Crea facturas profesionales sin software de contabilidad complejo.", val_text: "En lugar de ser un programa de contabilidad completo, Invoyca hace que facturar sea rápido, sencillo y listo para uso internacional.",
+    val_p1: "Una interfaz más simple", val_p2: "Creación de facturas más rápida", val_p3: "Campos adaptados a clientes internacionales",
+    val_card_not: "No es software de contabilidad complejo", val_card_is: "Un generador de facturas rápido y sencillo",
+    pr_title: "El acceso anticipado 2026 es gratis.", pr_sub: "Usa Invoyca gratis durante todo 2026 como parte del acceso anticipado. Cuando lleguen planes de pago más adelante, el uso básico seguirá siendo simple y accesible.",
+    pr_ea_name: "Early Access", pr_ea_price: "0 €", pr_ea_feats: ["Crear facturas PDF", "7 idiomas", "4 monedas", "Plantillas modernas", "Clientes y productos guardados"], pr_ea_cta: "Crear factura gratis",
+    pr_fp_name: "Future Pro", pr_fp_price: "Pronto", pr_fp_feats: ["Plantillas avanzadas", "Correo con PDF adjunto", "Facturas repetidas", "Exportación mensual", "Campos de marca personalizados"], pr_fp_cta: "Avísame",
+    faq_q6: "¿Invoyca es un programa de contabilidad?", faq_a6: "No. Invoyca no es un programa de contabilidad completo. Es una herramienta que facilita crear facturas, preparar PDF y mantener organizada la información de clientes. Para asuntos fiscales y legales, recomendamos consultar con tu contador.",
+    tpl_title: "Plantillas de factura modernas para cada tipo de trabajo.", tpl_sub: "Diseños PDF limpios preparados para uso minimal, corporativo, freelance, consultoría y agencia.", tpl_cta: "Ver plantillas",
+    tpl_minimal: "Minimal", tpl_consultant: "Consultor", tpl_agency: "Agencia", tpl_corporate: "Corporativo",
+    fcta_title: "Crea tu primera factura profesional en minutos.", fcta_sub: "Con Invoyca, prepara facturas PDF limpias, multilingües y listas para enviar a clientes internacionales.", fcta_primary: "Crear factura gratis", fcta_secondary: "Ver funciones",
+    foot_desc: "Una herramienta de facturación internacional simple y multilingüe para freelancers y pequeñas empresas.", foot_privacy: "Privacidad", foot_terms: "Términos", foot_rights: "Todos los derechos reservados.",
   },
   IT: {
-    nav_features: "Funzioni", nav_pricing: "Prezzi", nav_faq: "FAQ", cta_start: "Inizia gratis",
-    hero_badge: "Fatture senza confini", hero_title_1: "Fatturazione internazionale,", hero_title_hl: "tutto in un posto", hero_desc: "7 lingue, 4 valute, 25 modelli professionali. Conforme a IVA, inversione contabile e archiviazione elettronica. Fattura clienti ovunque in pochi secondi.",
-    hero_cta: "Inizia gratis", hero_pricing: "Vedi dettagli", hero_f1: "Nessuna carta", hero_f2: "7 lingue", hero_f3: "Disdici quando vuoi",
+    nav_features: "Funzioni", nav_templates: "Modelli", nav_how: "Come funziona", nav_pricing: "Prezzi", nav_faq: "FAQ", cta_start: "Inizia gratis",
+    hero_badge: "Il modo semplice per fatturare clienti internazionali", hero_title_1: "Fatturazione professionale per chi", hero_title_hl: "lavora oltre confine", hero_desc: "Crea fatture PDF multilingue, lavora con EUR/USD/GBP/TRY e aggiungi facilmente note di inversione contabile e di pagamento. Salva clienti e servizi e prepara le prossime fatture in pochi secondi.",
+    hero_cta: "Crea fattura gratis", hero_pricing: "Vedi modelli", hero_f1: "Nessuna carta", hero_f2: "7 lingue", hero_f3: "Scarica come PDF", hero_f4: "Salva i dati dei clienti",
     features_title: "Perché Invoyca?", features_sub: "Tutto per fatturare senza confini.",
     f_lang_t: "7 Lingue", f_lang_d: "Fattura nella lingua del cliente: TR, EN, DE, NL, FR, ES, IT.",
     f_cur_t: "4 Valute", f_cur_d: "Fattura e incassa in EUR, USD, GBP, TRY.",
@@ -242,7 +355,7 @@ export const LANDING: Record<Lang, LDict> = {
     faq_q3: "Posso fatturare a livello internazionale?", faq_a3: "Sì. Ci sono modelli dedicati per l'UE transfrontaliera (reverse charge) e scenari internazionali.",
     faq_q4: "Posso esportare le fatture in PDF?", faq_a4: "Sì. Scarica ogni fattura in PDF, stampala o inviala via e-mail. 25 modelli professionali.",
     faq_q5: "I miei dati sono al sicuro?", faq_a5: "I tuoi dati sono archiviati cifrati e collegati solo al tuo account.",
-    banner: "Per tutto il 2026 completamente gratis e illimitato",
+    banner: "Accesso anticipato 2026 — gratis",
     hero_punch1: "7 lingue.", hero_punch2: "4 valute.", hero_punch3: "Fatture illimitate.",
     trust_label: "Tutto ciò di cui hai bisogno per fatturare nel mondo",
     how_title: "Come funziona", how_sub: "Dalla prima fattura all'incasso, in quattro passaggi.",
@@ -251,5 +364,20 @@ export const LANDING: Record<Lang, LDict> = {
     how_s3_t: "Scegli lingua e modello", how_s3_d: "25 modelli professionali, 7 lingue. La fattura nella lingua del cliente.",
     how_s4_t: "Invia e monitora", how_s4_d: "Invia via e-mail, segui pagato/in attesa, gestisci tutto da un'unica dashboard.",
     w_lang: "lingue", w_tpl: "modelli", w_world: "In tutto il mondo", w_paid: "Pagato", w_pending: "In attesa",
+    marquee: ["Fatture PDF professionali", "Fatturazione in 7 lingue", "EUR / USD / GBP / TRY", "Note di inversione contabile", "25 modelli moderni", "Clienti e prodotti salvati", "Fatture ripetute veloci"],
+    m_title: "FATTURA", m_no: "N° Fattura", m_issue: "Data", m_due: "Scadenza", m_from: "Da", m_billto: "Fattura a", m_subtotal: "Subtotale", m_total: "Totale", m_pay: "Dettagli pagamento", m_ready: "PDF pronto", m_item1: "Consulenza web design", m_item2: "Pacchetto servizio mensile", m_vatnote: "Inversione contabile — IVA a carico del cliente",
+    who_title: "Per chi è?", who_sub: "Invoyca è pensato per i professionisti che fatturano regolarmente clienti internazionali.",
+    who_list: ["Freelance", "Consulenti", "Sviluppatori", "Designer", "Agenzie", "Ingegneri", "Piccole imprese", "Aziende di servizi all'estero"],
+    val_title: "Crea fatture professionali senza software di contabilità complesso.", val_text: "Invece di essere un programma di contabilità completo, Invoyca rende la fatturazione veloce, semplice e pronta per l'uso internazionale.",
+    val_p1: "Un'interfaccia più semplice", val_p2: "Creazione fatture più rapida", val_p3: "Campi adatti ai clienti internazionali",
+    val_card_not: "Non è un software di contabilità complesso", val_card_is: "Un generatore di fatture veloce e semplice",
+    pr_title: "L'accesso anticipato 2026 è gratuito.", pr_sub: "Usa Invoyca gratis per tutto il 2026 nell'ambito dell'accesso anticipato. Quando in futuro arriveranno piani a pagamento, l'uso di base resterà semplice e accessibile.",
+    pr_ea_name: "Early Access", pr_ea_price: "0 €", pr_ea_feats: ["Crea fatture PDF", "7 lingue", "4 valute", "Modelli moderni", "Clienti e prodotti salvati"], pr_ea_cta: "Crea fattura gratis",
+    pr_fp_name: "Future Pro", pr_fp_price: "Presto", pr_fp_feats: ["Modelli avanzati", "Email con PDF allegato", "Fatture ripetute", "Esportazione mensile", "Campi brand personalizzati"], pr_fp_cta: "Avvisami",
+    faq_q6: "Invoyca è un programma di contabilità?", faq_a6: "No. Invoyca non è un programma di contabilità completo. È uno strumento che semplifica la creazione di fatture, la preparazione di PDF e l'organizzazione dei dati dei clienti. Per questioni fiscali e legali, consigliamo di consultare il tuo commercialista.",
+    tpl_title: "Modelli di fattura moderni per ogni tipo di lavoro.", tpl_sub: "Design PDF puliti pensati per uso minimal, aziendale, freelance, consulenza e agenzia.", tpl_cta: "Vedi modelli",
+    tpl_minimal: "Minimal", tpl_consultant: "Consulente", tpl_agency: "Agenzia", tpl_corporate: "Aziendale",
+    fcta_title: "Crea la tua prima fattura professionale in pochi minuti.", fcta_sub: "Con Invoyca prepara fatture PDF pulite, multilingue e pronte da inviare ai clienti internazionali.", fcta_primary: "Crea fattura gratis", fcta_secondary: "Esplora le funzioni",
+    foot_desc: "Uno strumento di fatturazione internazionale semplice e multilingue per freelance e piccole imprese.", foot_privacy: "Privacy", foot_terms: "Termini", foot_rights: "Tutti i diritti riservati.",
   },
 };
