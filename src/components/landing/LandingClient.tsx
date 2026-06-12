@@ -6,8 +6,11 @@ import { renderInvoiceHTML } from "@/lib/templates/render";
 import { Logo } from "@/components/Logo";
 import { LANDING } from "@/lib/i18n-landing";
 import { LANGS, Lang } from "@/lib/i18n";
-import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail, Users, Sparkles, X, Menu, Search } from "lucide-react";
+import { Check, ArrowRight, Mail, Users, Sparkles, X, Menu, Globe, Languages, CreditCard, FileText, Shield, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { TemplateThumb } from "@/components/landing/TemplateThumb";
+import { LandingLang } from "@/components/landing/LandingLang";
+import { InvoiceMockup } from "@/components/landing/InvoiceMockup";
 
 const APP_URL = "https://app.invoyca.com";
 
@@ -158,58 +161,7 @@ export default function LandingClient({ locale }: { locale: string }) {
               </div>
             </div>
             {/* Yüzen fatura mockup'ı + arka katman */}
-            <div className="relative">
-              {/* Yumuşak mavi parıltı */}
-              <div className="pointer-events-none absolute -inset-6 rounded-3xl bg-blue-400/20 blur-3xl" aria-hidden="true" />
-              {/* Arkadaki ikinci kart (derinlik) */}
-              <div className="absolute inset-0 rounded-2xl bg-white border border-slate-200 translate-x-4 translate-y-4 rotate-2 shadow-lg" aria-hidden="true" />
-              <div className="iv-float relative rounded-2xl bg-white shadow-2xl border border-slate-200 p-5 max-w-md mx-auto lg:scale-95 xl:scale-100">
-                {/* Üst: logo + belge başlığı + no/tarih */}
-                <div className="flex items-start justify-between mb-5">
-                  <Logo size={34} />
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-blue-600 tracking-tight">{t.m_title}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{t.m_no}: INV-2026-001</p>
-                  </div>
-                </div>
-                {/* Tarih satırı */}
-                <div className="flex gap-4 mb-4 text-[10px]">
-                  <div><span className="text-slate-400">{t.m_issue}</span><p className="text-slate-700 font-medium">12.06.2026</p></div>
-                  <div><span className="text-slate-400">{t.m_due}</span><p className="text-slate-700 font-medium">12.07.2026</p></div>
-                </div>
-                {/* From / Bill To */}
-                <div className="flex justify-between gap-3 mb-4 pb-4 border-b border-slate-100">
-                  <div className="text-[10px]">
-                    <p className="text-slate-400 uppercase tracking-wide mb-0.5">{t.m_from}</p>
-                    <p className="text-slate-800 font-semibold">Bright Studio</p>
-                  </div>
-                  <div className="text-[10px] text-right">
-                    <p className="text-slate-400 uppercase tracking-wide mb-0.5">{t.m_billto}</p>
-                    <p className="text-slate-800 font-semibold">Northline B.V.</p>
-                  </div>
-                </div>
-                {/* Kalemler */}
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-slate-500">{t.m_item1}</span><span className="text-slate-700">€2.000</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t.m_item2}</span><span className="text-slate-700">€450</span></div>
-                </div>
-                {/* Subtotal + reverse charge notu + total */}
-                <div className="border-t border-slate-100 mt-3 pt-3 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-slate-400"><span>{t.m_subtotal}</span><span>€2.450</span></div>
-                  <p className="text-[9px] text-slate-400 italic">{t.m_vatnote}</p>
-                  <div className="flex justify-between font-bold text-blue-600 text-sm pt-1"><span>{t.m_total}</span><span>€2.450</span></div>
-                </div>
-                {/* Ödeme bilgileri */}
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <p className="text-[9px] text-slate-400 uppercase tracking-wide">{t.m_pay}</p>
-                  <p className="text-[10px] text-slate-500">IBAN: NL00 BANK 0000 0000</p>
-                </div>
-                {/* "PDF hazır" rozeti */}
-                <div className="absolute -bottom-3 -right-3 bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> {t.m_ready}
-                </div>
-              </div>
-            </div>
+            <InvoiceMockup t={t} />
           </div>
         </div>
       </section>
@@ -566,60 +518,3 @@ export default function LandingClient({ locale }: { locale: string }) {
 }
 
 // Şablon küçük önizlemesi — gerçek HTML'i A4 oranında karta sığdırır (hepsi aynı boy)
-function TemplateThumb({ html, onClick, label }: { html: string; onClick: () => void; label: string }) {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.25);
-
-  useEffect(() => {
-    const measure = () => {
-      if (!boxRef.current) return;
-      const boxW = boxRef.current.clientWidth; // kartın genişliği
-      setScale(boxW / 794);                    // A4 genişliği 794px → ölçek
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
-  return (
-    <div className="group cursor-pointer" onClick={onClick}>
-      {/* Kart A4 oranında SABİT — tüm şablonlar aynı boyutta görünür */}
-      <div ref={boxRef} className="relative rounded-xl bg-white border border-slate-200 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1.5 transition-all overflow-hidden" style={{ aspectRatio: "794 / 1123" }}>
-        <div className="absolute top-0 left-0 origin-top-left pointer-events-none" style={{ width: "794px", transform: `scale(${scale})` }}>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur rounded-full p-2.5 shadow-lg">
-            <Search className="h-5 w-5 text-slate-700" />
-          </div>
-        </div>
-      </div>
-      <p className="text-center text-sm font-medium text-slate-700 mt-3">{label}</p>
-    </div>
-  );
-}
-
-function LandingLang({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function onClick(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
-  }, []);
-  return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
-        <Globe className="h-4 w-4" /> {lang} <ChevronDown className="h-3 w-3" />
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-40 rounded-xl border border-slate-200 bg-white shadow-xl py-1 z-50">
-          {LANGS.map(({ code, name }) => (
-            <button key={code} onClick={() => { setLang(code); setOpen(false); }}
-              className="w-full px-3 py-2 text-sm hover:bg-slate-50 text-slate-700 text-left">{name}</button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

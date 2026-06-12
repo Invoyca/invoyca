@@ -1,7 +1,7 @@
 // Landing (ana sayfa) çevirileri — 7 dil
 import { Lang } from "./i18n";
 
-type LDict = {
+export type LDict = {
   nav_features: string; nav_templates: string; nav_how: string; nav_pricing: string; nav_faq: string; cta_start: string;
   hero_badge: string; hero_title_1: string; hero_title_hl: string; hero_desc: string;
   hero_cta: string; hero_pricing: string; hero_f1: string; hero_f2: string; hero_f3: string; hero_f4: string;
