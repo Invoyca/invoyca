@@ -8,9 +8,10 @@ import { renderInvoiceHTML } from "@/lib/templates/render";
 import { FAMILIES, THEMES, VARIANT_NAMES, FamilyId } from "@/lib/templates/data";
 import { EditorState, emptyEditorState, toInvoiceData } from "@/lib/invoice-data";
 import { calcTotals, formatMoney } from "@/lib/invoice-calc";
+import { UNIT_ORDER, unitLabel, normalizeUnit } from "@/lib/units";
 import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
-import { listClients, listProducts, getAccountInfo } from "../../data-actions";
+import { listClients, listProducts, getAccountInfo, listBankAccounts } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useToast } from "@/lib/toast-context";
 
@@ -36,8 +37,11 @@ export default function NewInvoicePage() {
   // Fatura dili — program dilinden BAĞIMSIZ. Öncelik: müşteri dili > ayar varsayılanı > program dili
   const [invoiceLang, setInvoiceLang] = useState<string>(lang);
   const [companyDefaultLang, setCompanyDefaultLang] = useState<string | null>(null);
-  const [companyQr, setCompanyQr] = useState<string>("");   // şirketin varsayılan QR'ı
+  const [companyQr, setCompanyQr] = useState<string>("");   // şirketin varsayılan ödeme QR'ı
+  const [companyQrVerify, setCompanyQrVerify] = useState<string>(""); // şirketin doğrulama QR'ı
   const [invoiceQr, setInvoiceQr] = useState<string>("");   // bu faturaya özel QR (boşsa şirketinki)
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]); // kayıtlı banka hesapları
+  const [selectedBankId, setSelectedBankId] = useState<string>(""); // seçili hesap
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setIsQuote(params.get("type") === "quote");
@@ -48,9 +52,23 @@ export default function NewInvoicePage() {
   useEffect(() => {
     listClients().then((r) => { if (r.ok) setSavedClients(r.clients || []); }).catch(() => {});
     listProducts().then((r) => { if (r.ok) setSavedProducts(r.products || []); }).catch(() => {});
+    // Kayıtlı banka hesaplarını yükle; varsayılanı (veya ilkini) faturaya uygula
+    listBankAccounts().then((r) => {
+      if (r.ok && r.accounts.length > 0) {
+        setBankAccounts(r.accounts);
+        const params = new URLSearchParams(window.location.search);
+        // Düzenleme değilse varsayılan hesabı otomatik seç
+        if (!params.get("id")) {
+          const def = r.accounts.find((a: any) => a.isDefault) || r.accounts[0];
+          setSelectedBankId(def.id);
+          setSt((s) => ({ ...s, bank: { name: def.bankName || "", iban: def.iban, swift: def.swift || "" } }));
+        }
+      }
+    }).catch(() => {});
     // Şirketin varsayılan fatura dilini al (yeni faturada başlangıç dili)
     getAccountInfo().then((r) => {
       if (r.ok && r.company?.qrImage) setCompanyQr(r.company.qrImage);
+      if (r.ok && (r.company as any)?.qrVerify) setCompanyQrVerify((r.company as any).qrVerify);
       if (r.ok && r.company?.defaultLanguage) {
         setCompanyDefaultLang(r.company.defaultLanguage);
         // Düzenleme/müşteri seçimi henüz olmadıysa varsayılanı uygula
@@ -84,7 +102,7 @@ export default function NewInvoicePage() {
               ref: s.meta.ref,
             },
             items: (inv.items || []).map((it: any) => ({
-              description: it.description, unit: it.unit, quantity: Number(it.quantity),
+              description: it.description, unit: normalizeUnit(it.unit || "piece"), quantity: Number(it.quantity),
               unitPrice: Number(it.unitPrice), vatRate: Number(it.vatRate),
             })),
             currency: inv.currency || "EUR",
@@ -92,9 +110,14 @@ export default function NewInvoicePage() {
           }));
           // Faturanın kayıtlı dilini yükle
           if (inv.language) setInvoiceLang(inv.language);
+          // Kaydedilmiş banka bilgisini yükle (snapshot)
+          if (inv.bankIban || inv.bankName) {
+            setSt((s) => ({ ...s, bank: { name: inv.bankName || "", iban: inv.bankIban || "", swift: inv.bankSwift || "" } }));
+            setSelectedBankId("custom");
+          }
           // Faturaya özel QR varsa yükle
           if (inv.qrImage) setInvoiceQr(inv.qrImage);
-          if (inv.qrMode) setQrMode(String(inv.qrMode).toLowerCase() === "off" ? "off" : "verify");
+          if (inv.qrMode) { const m = String(inv.qrMode).toLowerCase(); setQrMode(m === "off" ? "off" : (m === "pay" ? "pay" : "verify")); }
         }
       }).catch(() => {});
     } else {
@@ -125,7 +148,7 @@ export default function NewInvoicePage() {
     if (!p) return;
     setSt((s) => ({ ...s, items: [...s.items, {
       description: p.name + (p.description ? ` — ${p.description}` : ""),
-      unit: p.unit || "adet",
+      unit: normalizeUnit(p.unit || "piece"),
       quantity: 1,
       unitPrice: Number(p.unitPrice) || 0,
       vatRate: Number(p.vatRate) || 20,
@@ -134,12 +157,14 @@ export default function NewInvoicePage() {
 
   const family = (Object.keys(FAMILIES) as FamilyId[]).find((f) => FAMILIES[f].variants.includes(variant)) || "classic";
   const totals = calcTotals(st.items, st.discount, st.taxMode);
-  const data = toInvoiceData(st);
-  const html = renderInvoiceHTML({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: invoiceQr || companyQr, taxMode: st.taxMode, data });
+  const data = toInvoiceData(st, invoiceLang);
+  // Etkili QR: faturaya özel varsa o; yoksa seçilen QR tipine göre şirket varsayılanı
+  const effectiveQr = qrMode === "off" ? "" : (invoiceQr || (qrMode === "verify" ? companyQrVerify : companyQr));
+  const html = renderInvoiceHTML({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: effectiveQr, taxMode: st.taxMode, data });
 
   const upItem = (i: number, field: string, val: any) =>
     setSt((s) => ({ ...s, items: s.items.map((it, idx) => (idx === i ? { ...it, [field]: val } : it)) }));
-  const addItem = () => setSt((s) => ({ ...s, items: [...s.items, { description: "", unit: "adet", quantity: 1, unitPrice: 0, vatRate: 20 }] }));
+  const addItem = () => setSt((s) => ({ ...s, items: [...s.items, { description: "", unit: "piece", quantity: 1, unitPrice: 0, vatRate: 20 }] }));
   const delItem = (i: number) => setSt((s) => ({ ...s, items: s.items.filter((_, idx) => idx !== i) }));
 
   // Kaydetme: server action'a gönderir (Supabase bağlanınca DB'ye yazar)
@@ -152,6 +177,7 @@ export default function NewInvoicePage() {
       number: st.meta.no, clientName: st.client.name, clientVat: st.client.vat,
       clientAddr: st.client.addr, clientEmail: st.client.email,
       currency: st.currency, taxMode: st.taxMode, qrMode, qrImage: invoiceQr || undefined, template: variant, themeColor: theme,
+      bankName: st.bank.name || undefined, bankIban: st.bank.iban || undefined, bankSwift: st.bank.swift || undefined,
       issueDate: st.meta.issue, dueDate: st.meta.due,
       items: st.items, subtotal: totals.subtotal, vatTotal: totals.vatTotal, total: totals.total,
       docType: isQuote ? "QUOTE" : "INVOICE",
@@ -172,7 +198,7 @@ export default function NewInvoicePage() {
     return null;
   };
 
-  const renderOpts = () => ({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: invoiceQr || companyQr, taxMode: st.taxMode, data });
+  const renderOpts = () => ({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: effectiveQr, taxMode: st.taxMode, data });
 
   const downloadPdf = async () => {
     setBusy("pdf");
@@ -185,7 +211,7 @@ export default function NewInvoicePage() {
           docType: isQuote ? "quote" : "invoice",
           taxMode: st.taxMode,
           themeColor: theme,
-          qrImage: qrMode !== "off" ? (invoiceQr || companyQr) || undefined : undefined,
+          qrImage: effectiveQr || undefined,
           filename: st.meta.no || "fatura",
         }),
       });
@@ -341,35 +367,70 @@ export default function NewInvoicePage() {
                   <option value="exempt">{L("Muaf", "Exempt")}</option>
                 </select>
               </div>
-              <div><label className={lbl}>{L("QR Kod", "QR Code")}</label>
-                <select className={field} value={qrMode} onChange={(e) => setQrMode(e.target.value)}>
-                  <option value="verify">{L("QR Göster", "Show QR")}</option>
-                  <option value="off">{L("QR Yok", "No QR")}</option>
-                </select>
-                {qrMode !== "off" && (
-                  <div className="mt-2">
-                    {(invoiceQr || companyQr) ? (
-                      <div className="flex items-center gap-2">
-                        <img src={invoiceQr || companyQr} alt="QR" className="h-12 w-12 rounded border border-slate-200 object-contain bg-white p-0.5" />
-                        <div className="flex flex-col gap-1">
-                          <label className="cursor-pointer text-xs text-blue-600 hover:underline">
-                            {L("Bu fatura için değiştir", "Change for this invoice")}
-                            <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => {
-                              const file = e.target.files?.[0]; if (!file) return;
-                              if (file.size > 500 * 1024) { toast.error(L("Resim çok büyük (max 500 KB).", "Image too large (max 500 KB).")); return; }
-                              const reader = new FileReader();
-                              reader.onload = () => setInvoiceQr(String(reader.result));
-                              reader.readAsDataURL(file);
-                            }} />
-                          </label>
-                          {invoiceQr && <button onClick={() => setInvoiceQr("")} className="text-xs text-slate-400 hover:text-slate-600 text-left">{L("Varsayılana dön", "Reset to default")}</button>}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-400">{L("QR yüklemek için Ayarlar → Şirket bölümünü kullan.", "Upload a QR in Settings → Company.")}</p>
-                    )}
+
+              {/* Banka hesabı (IBAN) seçimi */}
+              <div className="sm:col-span-2">
+                <label className={lbl}>{L("Banka Hesabı (IBAN)", "Bank Account (IBAN)")}</label>
+                {bankAccounts.length > 0 ? (
+                  <select className={field} value={selectedBankId} onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedBankId(id);
+                    if (id === "custom") return; // özel: aşağıdaki alanlardan girilsin
+                    const acc = bankAccounts.find((a) => a.id === id);
+                    if (acc) setSt((s) => ({ ...s, bank: { name: acc.bankName || "", iban: acc.iban, swift: acc.swift || "" } }));
+                  }}>
+                    {bankAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>{a.label} — {a.iban}{a.currency ? ` (${a.currency})` : ""}</option>
+                    ))}
+                    <option value="custom">{L("Bu fatura için özel gir…", "Custom for this invoice…")}</option>
+                  </select>
+                ) : (
+                  <p className="text-xs text-slate-400 mt-1">{L("Kayıtlı banka hesabın yok. Ayarlar → Banka & Ödeme bölümünden ekle, ya da aşağıya elle gir.", "No saved bank account. Add one in Settings → Bank & Payment, or enter manually below.")}</p>
+                )}
+                {/* Özel/elle giriş alanları (kayıtlı hesap yoksa veya 'özel' seçildiyse) */}
+                {(bankAccounts.length === 0 || selectedBankId === "custom") && (
+                  <div className="grid sm:grid-cols-3 gap-2 mt-2">
+                    <input className={field} placeholder={L("Banka adı", "Bank name")} value={st.bank.name} onChange={(e) => setSt((s) => ({ ...s, bank: { ...s.bank, name: e.target.value } }))} />
+                    <input className={field} placeholder="IBAN" value={st.bank.iban} onChange={(e) => setSt((s) => ({ ...s, bank: { ...s.bank, iban: e.target.value } }))} />
+                    <input className={field} placeholder="SWIFT/BIC" value={st.bank.swift} onChange={(e) => setSt((s) => ({ ...s, bank: { ...s.bank, swift: e.target.value } }))} />
                   </div>
                 )}
+              </div>
+              <div><label className={lbl}>{L("QR Kod", "QR Code")}</label>
+                <select className={field} value={qrMode} onChange={(e) => setQrMode(e.target.value)}>
+                  <option value="pay">{L("Ödeme QR'ı", "Payment QR")}</option>
+                  <option value="verify">{L("Doğrulama QR'ı (GİB/e-Arşiv)", "Verification QR")}</option>
+                  <option value="off">{L("QR Yok", "No QR")}</option>
+                </select>
+                {qrMode !== "off" && (() => {
+                  // Etkili QR: faturaya özel varsa o; yoksa seçilen tipe göre şirket varsayılanı
+                  const defaultForMode = qrMode === "verify" ? companyQrVerify : companyQr;
+                  const effective = invoiceQr || defaultForMode;
+                  return (
+                    <div className="mt-2">
+                      {effective ? (
+                        <div className="flex items-center gap-2">
+                          <img src={effective} alt="QR" className="h-12 w-12 rounded border border-slate-200 object-contain bg-white p-0.5" />
+                          <div className="flex flex-col gap-1">
+                            <label className="cursor-pointer text-xs text-blue-600 hover:underline">
+                              {L("Bu fatura için değiştir", "Change for this invoice")}
+                              <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => {
+                                const file = e.target.files?.[0]; if (!file) return;
+                                if (file.size > 500 * 1024) { toast.error(L("Resim çok büyük (max 500 KB).", "Image too large (max 500 KB).")); return; }
+                                const reader = new FileReader();
+                                reader.onload = () => setInvoiceQr(String(reader.result));
+                                reader.readAsDataURL(file);
+                              }} />
+                            </label>
+                            {invoiceQr && <button onClick={() => setInvoiceQr("")} className="text-xs text-slate-400 hover:text-slate-600 text-left">{L("Varsayılana dön", "Reset to default")}</button>}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">{L("Bu QR türü için Ayarlar → Banka & Ödeme bölümünden resim yükle.", "Upload an image for this QR type in Settings → Bank & Payment.")}</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -393,8 +454,13 @@ export default function NewInvoicePage() {
             <div className="space-y-2">
               {st.items.map((it, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                  <input className={field + " col-span-5"} placeholder={L("Açıklama", "Description")} value={it.description} onChange={(e) => upItem(i, "description", e.target.value)} />
-                  <input className={field + " col-span-2"} type="number" placeholder={L("Adet", "Qty")} value={it.quantity === 0 ? "" : it.quantity} onChange={(e) => upItem(i, "quantity", e.target.value === "" ? 0 : Number(e.target.value))} onFocus={(e) => e.target.select()} />
+                  <input className={field + " col-span-4"} placeholder={L("Açıklama", "Description")} value={it.description} onChange={(e) => upItem(i, "description", e.target.value)} />
+                  <input className={field + " col-span-1"} type="number" placeholder={L("Adet", "Qty")} value={it.quantity === 0 ? "" : it.quantity} onChange={(e) => upItem(i, "quantity", e.target.value === "" ? 0 : Number(e.target.value))} onFocus={(e) => e.target.select()} />
+                  <select className={field + " col-span-2"} value={normalizeUnit(it.unit)} onChange={(e) => upItem(i, "unit", e.target.value)}>
+                    {UNIT_ORDER.map((u) => (
+                      <option key={u} value={u}>{unitLabel(u, invoiceLang)}</option>
+                    ))}
+                  </select>
                   <input className={field + " col-span-2"} type="number" placeholder={L("Fiyat", "Price")} value={it.unitPrice === 0 ? "" : it.unitPrice} onChange={(e) => upItem(i, "unitPrice", e.target.value === "" ? 0 : Number(e.target.value))} onFocus={(e) => e.target.select()} />
                   <div className="col-span-2 text-right text-sm font-medium">{formatMoney(it.quantity * it.unitPrice, st.currency)}</div>
                   <button onClick={() => delItem(i)} className="col-span-1 text-slate-400 hover:text-rose-600 flex justify-center"><Trash2 className="h-4 w-4" /></button>

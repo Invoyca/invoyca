@@ -95,12 +95,15 @@ model Company {
   email     String?
   phone     String?
   logoUrl   String?
-  qrImage   String?   // Faturada gösterilecek QR kod görseli (base64 veya URL)
+  qrImage   String?   @db.Text  // Ödeme QR'ı (base64 data URL) — varsayılan
+  qrVerify  String?   @db.Text  // Doğrulama/GİB QR'ı (base64 data URL) — varsayılan
 
-  // Banka bilgileri
+  // Banka bilgileri (eski tek hesap — geriye dönük uyumluluk için tutuluyor)
   bankName  String?
   iban      String?
   swift     String?
+
+  bankAccounts BankAccount[]
 
   // Varsayılan tercihler
   defaultTemplate String   @default("classic-standard")
@@ -111,6 +114,24 @@ model Company {
   products  Product[]
   invoices  Invoice[]
   recurring Recurring[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Banka hesabı — bir şirketin birden fazla IBAN'ı olabilir.
+// Fatura oluştururken hangisinin kullanılacağı seçilir.
+model BankAccount {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  label     String   // "Ana Hesap", "EUR Hesabı", "USD Hesabı" gibi
+  bankName  String?
+  iban      String
+  swift     String?
+  currency  Currency @default(EUR)
+  isDefault Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,6 +189,7 @@ model Invoice {
 
   issueDate   DateTime      @default(now())
   dueDate     DateTime?
+  paidAt      DateTime?     // Ödemenin alındığı tarih (PAID işaretlenince)
 
   currency    Currency      @default(EUR)
   language    Language      @default(TR)
@@ -177,6 +199,13 @@ model Invoice {
   themeColor  String        @default("blue")
   taxMode     TaxMode       @default(NORMAL)
   qrMode      QrMode        @default(VERIFY)
+  qrImage     String?       @db.Text  // Bu faturaya özel ödeme QR'ı (yoksa şirketin varsayılanı)
+  qrVerify    String?       @db.Text  // Bu faturaya özel doğrulama/GİB QR'ı (yoksa şirketin varsayılanı)
+
+  // Banka bilgisi snapshot'ı (fatura kesildiği andaki IBAN — sonradan değişse bile fatura sabit kalır)
+  bankName    String?
+  bankIban    String?
+  bankSwift   String?
 
   notes       String?
 

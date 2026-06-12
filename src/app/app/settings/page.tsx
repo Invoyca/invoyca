@@ -5,7 +5,7 @@ import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import Link from "next/link";
 import { LayoutTemplate, ArrowRight, Check, Loader2, User, Lock, Mail } from "lucide-react";
-import { getAccountInfo, updateUserName, updateProfile, updatePassword, updateCompany } from "../data-actions";
+import { getAccountInfo, updateUserName, updateProfile, updatePassword, updateCompany, listBankAccounts, saveBankAccount, deleteBankAccount } from "../data-actions";
 
 export default function SettingsPage() {
   const { lang } = useLang();
@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "account", label: L("Hesap", "Account") },
     { id: "company", label: L("Şirket Profili", "Company") },
+    { id: "bank", label: L("Banka & Ödeme", "Bank & Payment") },
     { id: "subscription", label: L("Abonelik", "Subscription") },
   ];
 
@@ -37,6 +38,7 @@ export default function SettingsPage() {
 
       {tab === "account" && <AccountTab L={L} info={info} />}
       {tab === "company" && <CompanyTab L={L} info={info} />}
+      {tab === "bank" && <BankTab L={L} info={info} />}
 
       {tab === "subscription" && (
         <Card className="p-6">
@@ -166,8 +168,149 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
   );
 }
 
+function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [editing, setEditing] = useState<any | null>(null); // {id?, label, bankName, iban, swift, currency, isDefault}
+  const [msg, setMsg] = useState("");
+  const [qrPay, setQrPay] = useState("");
+  const [qrVerify, setQrVerify] = useState("");
+  const [savingQr, setSavingQr] = useState(false);
+
+  const field = "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30";
+  const lbl = "text-xs font-medium text-slate-500";
+
+  const reload = () => listBankAccounts().then((r) => { if (r.ok) setAccounts(r.accounts); });
+  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    if (info?.company) { setQrPay(info.company.qrImage || ""); setQrVerify(info.company.qrVerify || ""); }
+  }, [info]);
+
+  const blank = { label: "", bankName: "", iban: "", swift: "", currency: "EUR", isDefault: false };
+
+  const saveAcc = async () => {
+    if (!editing) return;
+    const res = await saveBankAccount(editing);
+    if (res.ok) { setEditing(null); reload(); setMsg(L("Hesap kaydedildi ✓", "Account saved ✓")); }
+    else setMsg(res.error || "Hata");
+  };
+  const delAcc = async (id: string) => {
+    const res = await deleteBankAccount(id);
+    if (res.ok) reload();
+  };
+  const saveQrs = async () => {
+    setSavingQr(true); setMsg("");
+    const res = await updateCompany({ qrImage: qrPay, qrVerify });
+    setSavingQr(false);
+    setMsg(res.ok ? L("QR kodları kaydedildi ✓", "QR codes saved ✓") : (res.error || "Hata"));
+  };
+
+  const readQr = (file: File | undefined, setter: (v: string) => void) => {
+    if (!file) return;
+    if (file.size > 500 * 1024) { setMsg(L("Resim çok büyük (max 500 KB).", "Image too large (max 500 KB).")); return; }
+    const reader = new FileReader();
+    reader.onload = () => setter(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const QrUploader = ({ value, setter, title, hint }: { value: string; setter: (v: string) => void; title: string; hint: string }) => (
+    <div>
+      <label className={lbl}>{title}</label>
+      <p className="text-xs text-slate-400 mt-0.5 mb-2">{hint}</p>
+      <div className="flex items-center gap-3">
+        {value ? (
+          <div className="relative">
+            <img src={value} alt="QR" className="h-20 w-20 rounded-lg border border-slate-200 object-contain bg-white p-1" />
+            <button onClick={() => setter("")} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs hover:bg-rose-600">✕</button>
+          </div>
+        ) : (
+          <div className="h-20 w-20 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-300 text-xs font-semibold">QR</div>
+        )}
+        <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">
+          {L("Resim Seç", "Choose Image")}
+          <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => readQr(e.target.files?.[0], setter)} />
+        </label>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Banka hesapları */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold">{L("Banka Hesapları", "Bank Accounts")}</h2>
+          {!editing && <button onClick={() => setEditing({ ...blank })} className="text-sm font-medium text-blue-600 hover:underline">+ {L("Hesap Ekle", "Add Account")}</button>}
+        </div>
+        <p className="text-sm text-slate-500 mb-4">{L("Birden fazla IBAN ekleyebilirsin. Fatura oluştururken hangisini kullanacağını seçersin.", "Add multiple IBANs. You choose which one to use when creating an invoice.")}</p>
+
+        {/* Liste */}
+        {accounts.length === 0 && !editing && (
+          <p className="text-sm text-slate-400 py-4 text-center border border-dashed border-slate-200 rounded-lg">{L("Henüz banka hesabı eklenmedi.", "No bank accounts yet.")}</p>
+        )}
+        <div className="space-y-2">
+          {accounts.map((a) => (
+            <div key={a.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-200">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{a.label}</span>
+                  {a.isDefault && <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{L("Varsayılan", "Default")}</span>}
+                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{a.currency}</span>
+                </div>
+                <p className="text-xs text-slate-500 truncate">{a.iban}{a.bankName ? ` · ${a.bankName}` : ""}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => setEditing({ id: a.id, label: a.label, bankName: a.bankName || "", iban: a.iban, swift: a.swift || "", currency: a.currency, isDefault: a.isDefault })} className="text-xs text-slate-600 hover:text-slate-900">{L("Düzenle", "Edit")}</button>
+                <button onClick={() => delAcc(a.id)} className="text-xs text-rose-500 hover:text-rose-700">{L("Sil", "Delete")}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Ekleme/düzenleme formu */}
+        {editing && (
+          <div className="mt-4 p-4 rounded-lg border border-blue-200 bg-blue-50/30 space-y-3">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div><label className={lbl}>{L("Etiket", "Label")}</label><input className={field} placeholder={L("Ana Hesap", "Main Account")} value={editing.label} onChange={(e) => setEditing({ ...editing, label: e.target.value })} /></div>
+              <div><label className={lbl}>{L("Banka Adı", "Bank Name")}</label><input className={field} value={editing.bankName} onChange={(e) => setEditing({ ...editing, bankName: e.target.value })} /></div>
+              <div className="sm:col-span-2"><label className={lbl}>IBAN</label><input className={field} value={editing.iban} onChange={(e) => setEditing({ ...editing, iban: e.target.value })} /></div>
+              <div><label className={lbl}>SWIFT/BIC</label><input className={field} value={editing.swift} onChange={(e) => setEditing({ ...editing, swift: e.target.value })} /></div>
+              <div><label className={lbl}>{L("Para Birimi", "Currency")}</label>
+                <select className={field} value={editing.currency} onChange={(e) => setEditing({ ...editing, currency: e.target.value })}>
+                  <option value="EUR">EUR</option><option value="USD">USD</option><option value="GBP">GBP</option><option value="TRY">TRY</option>
+                </select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={editing.isDefault} onChange={(e) => setEditing({ ...editing, isDefault: e.target.checked })} />
+              {L("Varsayılan hesap yap", "Set as default")}
+            </label>
+            <div className="flex items-center gap-2">
+              <button onClick={saveAcc} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">{L("Kaydet", "Save")}</button>
+              <button onClick={() => setEditing(null)} className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">{L("İptal", "Cancel")}</button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* QR kodları: ödeme + doğrulama */}
+      <Card className="p-6">
+        <h2 className="font-semibold mb-2">{L("QR Kodları", "QR Codes")}</h2>
+        <p className="text-sm text-slate-500 mb-4">{L("Kendi QR kodlarını yükle. Faturalarında otomatik görünür; her faturada ayrıca değiştirebilirsin. PNG/JPG, max 500 KB.", "Upload your own QR codes. They appear on your invoices automatically; you can also change them per invoice. PNG/JPG, max 500 KB.")}</p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          <QrUploader value={qrPay} setter={setQrPay} title={L("Ödeme QR'ı", "Payment QR")} hint={L("Ödeme bağlantısı/IBAN QR'ı.", "Payment link / IBAN QR.")} />
+          <QrUploader value={qrVerify} setter={setQrVerify} title={L("Doğrulama QR'ı (GİB/e-Arşiv)", "Verification QR (e-archive)")} hint={L("Resmi doğrulama/e-Arşiv QR'ı.", "Official verification / e-archive QR.")} />
+        </div>
+        <div className="flex items-center gap-3 mt-5">
+          <button onClick={saveQrs} disabled={savingQr} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">{savingQr ? L("Kaydediliyor...", "Saving...") : L("QR Kodlarını Kaydet", "Save QR Codes")}</button>
+          {msg && <span className="text-sm text-slate-500">{msg}</span>}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
-  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR", qrImage: "" });
+  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -176,7 +319,6 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
       name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
       city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
       defaultLanguage: info.company.defaultLanguage || "TR",
-      qrImage: info.company.qrImage || "",
     });
   }, [info]);
 
@@ -228,33 +370,6 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
           </select>
         </div>
 
-        {/* QR Kodu yükleme */}
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <label className={lbl}>{L("QR Kodu", "QR Code")}</label>
-          <p className="text-xs text-slate-400 mt-0.5 mb-3">{L("Kendi QR kodunu (ödeme veya e-Arşiv/GİB için) yükle. Faturalarında otomatik görünür. PNG veya JPG, en fazla 500 KB.", "Upload your own QR code (for payment or e-archive). It appears on your invoices automatically. PNG or JPG, max 500 KB.")}</p>
-          <div className="flex items-center gap-4">
-            {form.qrImage ? (
-              <div className="relative">
-                <img src={form.qrImage} alt="QR" className="h-20 w-20 rounded-lg border border-slate-200 object-contain bg-white p-1" />
-                <button onClick={() => setForm({ ...form, qrImage: "" })}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs hover:bg-rose-600" title={L("Kaldır", "Remove")}>✕</button>
-              </div>
-            ) : (
-              <div className="h-20 w-20 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-300 text-xs font-semibold">QR</div>
-            )}
-            <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">
-              {L("Resim Seç", "Choose Image")}
-              <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                if (file.size > 500 * 1024) { setMsg(L("Resim çok büyük (max 500 KB).", "Image too large (max 500 KB).")); return; }
-                const reader = new FileReader();
-                reader.onload = () => setForm({ ...form, qrImage: String(reader.result) });
-                reader.readAsDataURL(file);
-              }} />
-            </label>
-          </div>
-        </div>
         <div className="flex items-center gap-3 mt-4">
           <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}{L("Kaydet", "Save")}

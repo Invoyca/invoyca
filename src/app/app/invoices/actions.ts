@@ -32,6 +32,9 @@ const saveSchema = z.object({
   taxMode: z.enum(["normal", "reverse", "exempt"]).optional().default("normal"),
   qrMode: z.string().optional(),
   qrImage: z.string().optional(),
+  bankName: z.string().optional(),
+  bankIban: z.string().optional(),
+  bankSwift: z.string().optional(),
   template: z.string().max(50),
   themeColor: z.string().max(50),
   issueDate: z.string().max(40),
@@ -84,6 +87,9 @@ export type SaveInvoiceInput = {
   taxMode: string;        // "normal" | "reverse" | "exempt"
   qrMode?: string;
   qrImage?: string;
+  bankName?: string;
+  bankIban?: string;
+  bankSwift?: string;
   template: string;
   themeColor: string;
   issueDate?: string;     // "GG.AA.YYYY" (tr-TR) veya boş
@@ -201,6 +207,9 @@ export async function saveInvoice(input: SaveInvoiceInput) {
       taxMode: TAX_MAP[v.taxMode] ?? "NORMAL",
       qrMode: QR_MAP[v.qrMode ?? "verify"] ?? "VERIFY",
       qrImage: v.qrImage || null,
+      bankName: v.bankName || null,
+      bankIban: v.bankIban || null,
+      bankSwift: v.bankSwift || null,
       template: v.template,
       themeColor: v.themeColor,
       language: (v.language as any) || "TR",
@@ -298,7 +307,7 @@ export async function convertQuoteToInvoice(id: string) {
 }
 
 // Fatura durumunu değiştirir (Ödendi/Bekliyor vb.) — sadece kendi faturası.
-export async function updateInvoiceStatus(invoiceId: string, status: string) {
+export async function updateInvoiceStatus(invoiceId: string, status: string, paidAt?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Oturum bulunamadı." };
@@ -321,12 +330,19 @@ export async function updateInvoiceStatus(invoiceId: string, status: string) {
     return { ok: false, error: `Bu geçiş yapılamaz: ${current.status} → ${status}` };
   }
 
+  // PAID ise ödeme tarihini ayarla (verilmemişse bugün); PAID değilse temizle
+  let paidDate: Date | null = null;
+  if (status === "PAID") {
+    paidDate = paidAt ? new Date(paidAt) : new Date();
+    if (isNaN(paidDate.getTime())) paidDate = new Date();
+  }
+
   const result = await prisma.invoice.updateMany({
     where: { id: invoiceId, companyId: company.id },
-    data: { status: status as any },
+    data: { status: status as any, paidAt: paidDate } as any,
   });
   if (result.count === 0) return { ok: false, error: "Fatura bulunamadı." };
-  await audit(company.id, "invoice.status_changed", invoiceId, `${current.status} -> ${status}`);
+  await audit(company.id, "invoice.status_changed", invoiceId, `${current.status} -> ${status}${paidDate ? ` (${paidDate.toISOString().slice(0,10)})` : ""}`);
   return { ok: true };
 }
 // Tek faturayı kalemleriyle getir (detay + düzenleme için)

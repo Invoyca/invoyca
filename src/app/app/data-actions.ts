@@ -205,6 +205,7 @@ export async function getAccountInfo() {
       vatId: company.vatId || "",
       defaultLanguage: company.defaultLanguage || "TR",
       qrImage: company.qrImage || "",
+      qrVerify: (company as any).qrVerify || "",
     } : null,
   };
 }
@@ -261,13 +262,13 @@ export async function updatePassword(newPassword: string) {
 
 // Şirket bilgilerini güncelle
 export async function updateCompany(input: {
-  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string;
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string; qrVerify?: string;
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
 
-  // QR resmi boyut güvenliği: base64 ~700KB'ı geçmesin (500KB resim ≈ 680KB base64)
-  if (input.qrImage && input.qrImage.length > 720_000) {
+  // QR resmi boyut güvenliği
+  if ((input.qrImage && input.qrImage.length > 720_000) || (input.qrVerify && input.qrVerify.length > 720_000)) {
     return { ok: false, error: "QR resmi çok büyük." };
   }
 
@@ -282,11 +283,12 @@ export async function updateCompany(input: {
       country: input.country || null,
       taxId: input.taxId || null,
       vatId: input.vatId || null,
-      qrImage: input.qrImage || null,
+      ...(input.qrImage !== undefined ? { qrImage: input.qrImage || null } : {}),
+      ...(input.qrVerify !== undefined ? { qrVerify: input.qrVerify || null } as any : {}),
       ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
         ? { defaultLanguage: input.defaultLanguage as any }
         : {}),
-    },
+    } as any,
   });
   return { ok: true };
 }
@@ -309,4 +311,61 @@ export async function getDefaultTemplate() {
   const company = await getCompany();
   if (!company) return { ok: false, template: "classic-standard" };
   return { ok: true, template: company.defaultTemplate || "classic-standard" };
+}
+
+// ---------- BANKA HESAPLARI (çoklu IBAN) ----------
+
+// Şirketin tüm banka hesaplarını listele
+export async function listBankAccounts() {
+  const company = await getCompany();
+  if (!company) return { ok: false, accounts: [] as any[] };
+  const accounts = await (prisma as any).bankAccount.findMany({
+    where: { companyId: company.id },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+  });
+  return { ok: true, accounts };
+}
+
+// Banka hesabı ekle veya güncelle
+export async function saveBankAccount(input: {
+  id?: string; label: string; bankName?: string; iban: string; swift?: string; currency?: string; isDefault?: boolean;
+}) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+
+  const iban = (input.iban || "").replace(/\s+/g, "").toUpperCase();
+  if (iban.length < 5) return { ok: false, error: "Geçerli bir IBAN girin." };
+  const label = (input.label || "").trim() || "Hesap";
+  const validCur = ["EUR", "USD", "GBP", "TRY"];
+  const currency = validCur.includes(input.currency || "") ? input.currency : "EUR";
+
+  // Varsayılan yapılıyorsa diğerlerinin varsayılanını kaldır
+  if (input.isDefault) {
+    await (prisma as any).bankAccount.updateMany({
+      where: { companyId: company.id },
+      data: { isDefault: false },
+    });
+  }
+
+  if (input.id) {
+    await (prisma as any).bankAccount.update({
+      where: { id: input.id },
+      data: { label, bankName: input.bankName || null, iban, swift: input.swift || null, currency: currency as any, isDefault: !!input.isDefault },
+    });
+  } else {
+    // İlk hesap otomatik varsayılan olsun
+    const count = await (prisma as any).bankAccount.count({ where: { companyId: company.id } });
+    await (prisma as any).bankAccount.create({
+      data: { companyId: company.id, label, bankName: input.bankName || null, iban, swift: input.swift || null, currency: currency as any, isDefault: input.isDefault || count === 0 },
+    });
+  }
+  return { ok: true };
+}
+
+// Banka hesabı sil
+export async function deleteBankAccount(id: string) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı." };
+  await (prisma as any).bankAccount.deleteMany({ where: { id, companyId: company.id } });
+  return { ok: true };
 }

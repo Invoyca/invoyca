@@ -2,6 +2,7 @@
 // InvoiceData formatına çevirir. Para biçimlendirmesi para birimine göre yapılır.
 import { InvoiceData } from "@/lib/templates/render";
 import { formatMoney } from "@/lib/invoice-calc";
+import { unitLabel, normalizeUnit } from "@/lib/units";
 
 // Prisma Decimal -> number güvenli dönüşüm
 function num(v: any): number {
@@ -19,6 +20,7 @@ function fmtDate(d: any): string {
 // invoice: Prisma Invoice + { items, client, company }
 export function dbInvoiceToData(invoice: any): InvoiceData {
   const cur = invoice.currency || "EUR";
+  const lang = String(invoice.language || "TR");
   const company = invoice.company || {};
   const client = invoice.client || {};
 
@@ -52,13 +54,13 @@ export function dbInvoiceToData(invoice: any): InvoiceData {
       ref: invoice.reference || "",
     },
     bank: {
-      name: company.bankName || "",
-      iban: company.iban || "",
-      swift: company.swift || "",
+      name: invoice.bankName || company.bankName || "",
+      iban: invoice.bankIban || company.iban || "",
+      swift: invoice.bankSwift || company.swift || "",
     },
     items: (invoice.items || []).map((it: any) => [
       it.description || "",
-      it.unit || "",
+      unitLabel(normalizeUnit(it.unit || ""), lang),
       num(it.quantity),
       formatMoney(num(it.unitPrice), cur),
       formatMoney(num(it.quantity) * num(it.unitPrice), cur),

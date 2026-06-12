@@ -55,7 +55,11 @@ export async function POST(req: NextRequest) {
       taxMode: dbTaxMode(invoice.taxMode),
       themeColor: invoice.themeColor,
       qrImage: String((invoice.qrMode || "")).toUpperCase() !== "OFF"
-        ? ((invoice as any).qrImage || (company as any).qrImage || undefined)
+        ? ((invoice as any).qrImage
+            || (String((invoice.qrMode || "")).toUpperCase() === "VERIFY"
+                ? (company as any).qrVerify
+                : (company as any).qrImage)
+            || undefined)
         : undefined,
     });
     const pdfBuffer = await renderToBuffer(element as any);

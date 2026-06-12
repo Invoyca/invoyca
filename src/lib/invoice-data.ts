@@ -1,6 +1,7 @@
 // Editör state'ini render motorunun beklediği InvoiceData formatına çevirir
 import { LineItem, calcTotals, formatMoney, lineAmount, TaxMode } from "./invoice-calc";
 import { InvoiceData } from "./templates/render";
+import { unitLabel, normalizeUnit } from "./units";
 
 export type EditorState = {
   sender: { name: string; addr: string; tax: string; vat: string; email: string };
@@ -13,7 +14,7 @@ export type EditorState = {
   taxMode: TaxMode;
 };
 
-export function toInvoiceData(s: EditorState): InvoiceData {
+export function toInvoiceData(s: EditorState, lang: string = "TR"): InvoiceData {
   const totals = calcTotals(s.items, s.discount, s.taxMode);
   const noVat = Math.max(0, totals.subtotal - totals.discount);
   return {
@@ -22,7 +23,7 @@ export function toInvoiceData(s: EditorState): InvoiceData {
     meta: s.meta,
     bank: s.bank,
     items: s.items.map((it) => [
-      it.description, it.unit, it.quantity,
+      it.description, unitLabel(normalizeUnit(it.unit), lang), it.quantity,
       formatMoney(it.unitPrice, s.currency), formatMoney(lineAmount(it), s.currency),
     ] as [string, string, number, string, string]),
     subtotal: formatMoney(totals.subtotal, s.currency),
@@ -39,7 +40,7 @@ export const emptyEditorState: EditorState = {
   client: { name: "", addr: "", vat: "", email: "" },
   meta: { no: "2026-0043", issue: new Date().toLocaleDateString("tr-TR"), due: "", ref: "" },
   bank: { name: "Example Bank", iban: "GB00 EXMP 0000 0000 0000 00", swift: "EXMPGB00XXX" },
-  items: [{ description: "", unit: "adet", quantity: 1, unitPrice: 0, vatRate: 20 }],
+  items: [{ description: "", unit: "piece", quantity: 1, unitPrice: 0, vatRate: 20 }],
   discount: 0,
   currency: "EUR",
   taxMode: "normal",

@@ -34,6 +34,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
   }, []);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; up: boolean } | null>(null);
+  const [paidModal, setPaidModal] = useState<{ id: string; date: string } | null>(null);
   const L = (tr: string, _en?: string) => appT(lang, tr);
 
   const load = () => {
@@ -123,11 +124,27 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
   const changeStatus = async (id: string, status: string) => {
     if (!requireAuth()) { setOpenMenu(null); return; }
     setOpenMenu(null);
+    // "Ödendi" seçilince ödeme tarihini sor (varsayılan bugün)
+    if (String(status).toUpperCase() === "PAID") {
+      setPaidModal({ id, date: new Date().toISOString().slice(0, 10) });
+      return;
+    }
     // İyimser güncelleme: önce ekranda değiştir
     setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status } : i));
     const res = await updateInvoiceStatus(id, status);
     if (!res.ok) { toast.error(res.error || "Güncellenemedi"); load(); }
     else toast.success(L("Durum güncellendi", "Status updated"));
+  };
+
+  // Ödeme tarihini onayla
+  const confirmPaid = async () => {
+    if (!paidModal) return;
+    const { id, date } = paidModal;
+    setPaidModal(null);
+    setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status: "PAID", paidAt: date } : i));
+    const res = await updateInvoiceStatus(id, "PAID", date);
+    if (!res.ok) { toast.error(res.error || "Güncellenemedi"); load(); }
+    else toast.success(L("Ödeme alındı olarak işaretlendi", "Marked as paid"));
   };
 
   const delInvoice = async (id: string, number: string, status: string) => {
@@ -277,6 +294,9 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                             <StatusBadge status={badgeStatus(inv.status)} label={statusLabel(inv.status)} />
                             <ChevronDown className="h-3 w-3 text-slate-400" />
                           </button>
+                          {String(inv.status).toUpperCase() === "PAID" && inv.paidAt && (
+                            <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(inv.paidAt)} {L("ödendi", "paid")}</p>
+                          )}
                           {openMenu === inv.id && menuPos && (
                             <div className="fixed z-50 w-44 rounded-lg border border-slate-200 bg-white shadow-xl py-1"
                               style={{ left: menuPos.left, top: menuPos.up ? undefined : menuPos.top + 4, bottom: menuPos.up ? window.innerHeight - menuPos.top + 4 : undefined }}
@@ -320,6 +340,25 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
             </div>
           </Card>
         </>
+      )}
+
+      {/* Ödeme tarihi sorma modalı */}
+      {paidModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setPaidModal(null)}>
+          <div className="absolute inset-0 bg-slate-900/50" />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-lg mb-1">{L("Ödeme alındı", "Payment received")}</h3>
+            <p className="text-sm text-slate-500 mb-4">{L("Ödemenin alındığı tarihi seç.", "Select the date the payment was received.")}</p>
+            <label className="text-xs font-medium text-slate-500">{L("Ödeme tarihi", "Payment date")}</label>
+            <input type="date" value={paidModal.date} max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setPaidModal({ ...paidModal, date: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30" />
+            <div className="flex items-center gap-2 mt-5">
+              <button onClick={confirmPaid} className="flex-1 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">{L("Onayla", "Confirm")}</button>
+              <button onClick={() => setPaidModal(null)} className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">{L("Vazgeç", "Cancel")}</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
