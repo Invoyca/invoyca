@@ -31,6 +31,7 @@ const saveSchema = z.object({
   currency: z.enum(["EUR", "USD", "GBP", "TRY"]).optional().default("EUR"),
   taxMode: z.enum(["normal", "reverse", "exempt"]).optional().default("normal"),
   qrMode: z.string().optional(),
+  qrImage: z.string().optional(),
   template: z.string().max(50),
   themeColor: z.string().max(50),
   issueDate: z.string().max(40),
@@ -82,6 +83,7 @@ export type SaveInvoiceInput = {
   currency: string;
   taxMode: string;        // "normal" | "reverse" | "exempt"
   qrMode?: string;
+  qrImage?: string;
   template: string;
   themeColor: string;
   issueDate?: string;     // "GG.AA.YYYY" (tr-TR) veya boş
@@ -120,7 +122,19 @@ export async function saveInvoice(input: SaveInvoiceInput) {
   const parsed = saveSchema.safeParse(input);
   if (!parsed.success) {
     const first = parsed.error.issues[0];
-    return { ok: false, error: `Geçersiz veri: ${first?.path.join(".")} — ${first?.message}` };
+    const path = first?.path.join(".") || "";
+    // Teknik Zod mesajı yerine, alana göre anlamlı bir kod döndür.
+    // Frontend bunu kendi diline çevirir.
+    let code = "invalid";
+    if (path.includes("description")) code = "item_description";
+    else if (path.includes("quantity")) code = "item_quantity";
+    else if (path.includes("unitPrice")) code = "item_price";
+    else if (path.includes("vatRate")) code = "item_vat";
+    else if (path.includes("clientEmail")) code = "client_email";
+    else if (path.includes("dueDate")) code = "due_date";
+    else if (path.includes("items")) code = "items_empty";
+    else if (path.includes("number")) code = "number";
+    return { ok: false, errorCode: code };
   }
   const v = parsed.data;
 
@@ -186,6 +200,7 @@ export async function saveInvoice(input: SaveInvoiceInput) {
       currency: (v.currency as any) ?? "EUR",
       taxMode: TAX_MAP[v.taxMode] ?? "NORMAL",
       qrMode: QR_MAP[v.qrMode ?? "verify"] ?? "VERIFY",
+      qrImage: v.qrImage || null,
       template: v.template,
       themeColor: v.themeColor,
       language: (v.language as any) || "TR",

@@ -167,7 +167,7 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
 }
 
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
-  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR" });
+  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR", qrImage: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -176,6 +176,7 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
       name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
       city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
       defaultLanguage: info.company.defaultLanguage || "TR",
+      qrImage: info.company.qrImage || "",
     });
   }, [info]);
 
@@ -225,6 +226,34 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
             <option value="ES">Español</option>
             <option value="IT">Italiano</option>
           </select>
+        </div>
+
+        {/* QR Kodu yükleme */}
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <label className={lbl}>{L("QR Kodu", "QR Code")}</label>
+          <p className="text-xs text-slate-400 mt-0.5 mb-3">{L("Kendi QR kodunu (ödeme veya e-Arşiv/GİB için) yükle. Faturalarında otomatik görünür. PNG veya JPG, en fazla 500 KB.", "Upload your own QR code (for payment or e-archive). It appears on your invoices automatically. PNG or JPG, max 500 KB.")}</p>
+          <div className="flex items-center gap-4">
+            {form.qrImage ? (
+              <div className="relative">
+                <img src={form.qrImage} alt="QR" className="h-20 w-20 rounded-lg border border-slate-200 object-contain bg-white p-1" />
+                <button onClick={() => setForm({ ...form, qrImage: "" })}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs hover:bg-rose-600" title={L("Kaldır", "Remove")}>✕</button>
+              </div>
+            ) : (
+              <div className="h-20 w-20 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-300 text-xs font-semibold">QR</div>
+            )}
+            <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">
+              {L("Resim Seç", "Choose Image")}
+              <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 500 * 1024) { setMsg(L("Resim çok büyük (max 500 KB).", "Image too large (max 500 KB).")); return; }
+                const reader = new FileReader();
+                reader.onload = () => setForm({ ...form, qrImage: String(reader.result) });
+                reader.readAsDataURL(file);
+              }} />
+            </label>
+          </div>
         </div>
         <div className="flex items-center gap-3 mt-4">
           <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">

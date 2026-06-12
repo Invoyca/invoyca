@@ -2,7 +2,7 @@
 // Vercel serverless'te hızlı (<400ms) ve güvenilir çalışır; Chromium gerektirmez.
 // Çok dilli (7 dil) ve çok para birimli. Reverse charge / muaf / normal vergi destekli.
 import React from "react";
-import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font, Image } from "@react-pdf/renderer";
 import { InvoiceData } from "@/lib/templates/render";
 import { TPL_LABELS } from "@/lib/templates/data";
 import path from "path";
@@ -37,6 +37,7 @@ export type PdfParams = {
   docType: "invoice" | "quote" | "proforma" | "commercial";
   taxMode: "normal" | "reverse" | "exempt";
   themeColor?: string; // hex, ör. "#1D4ED8"
+  qrImage?: string;    // kullanıcının yüklediği QR (base64 data URL)
 };
 
 // Tema renkleri (editördeki theme id → hex)
@@ -44,7 +45,7 @@ const THEME_HEX: Record<string, string> = {
   blue: "#1D4ED8", slate: "#0F172A", emerald: "#059669", violet: "#7C3AED", rose: "#E11D48",
 };
 
-export function InvoicePDF({ data, lang, docType, taxMode, themeColor }: PdfParams) {
+export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }: PdfParams) {
   ensureFonts();
   const L = (TPL_LABELS as any)[lang] || (TPL_LABELS as any).EN;
   const accent = themeColor || THEME_HEX.blue;
@@ -62,8 +63,8 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor }: PdfPara
     brand: { flexDirection: "row", alignItems: "center" },
     logoMark: { width: 26, height: 26, borderRadius: 6, backgroundColor: accent, marginRight: 8 },
     brandName: { fontSize: 15, fontFamily: "NotoSans", fontWeight: "bold", color: "#0F172A" },
-    docTitle: { fontSize: 22, fontFamily: "NotoSans", fontWeight: "bold", color: accent, textAlign: "right" },
-    docNo: { fontSize: 9, color: "#64748B", textAlign: "right", marginTop: 2 },
+    docTitle: { fontSize: 22, fontFamily: "NotoSans", fontWeight: "bold", color: accent, textAlign: "right", lineHeight: 1 },
+    docNo: { fontSize: 9, color: "#64748B", textAlign: "right", marginTop: 6 },
     // Taraf blokları
     parties: { flexDirection: "row", justifyContent: "space-between", marginBottom: 24 },
     party: { width: "48%" },
@@ -98,7 +99,10 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor }: PdfPara
     noteBox: { marginTop: 18, padding: 8, backgroundColor: "#FFFBEB", borderRadius: 4, borderLeftWidth: 2, borderLeftColor: "#F59E0B" },
     noteTxt: { fontSize: 8, color: "#92400E" },
     // Banka / ödeme
-    payBox: { marginTop: 18 },
+    payBox: { marginTop: 18, flex: 1 },
+    payRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 16 },
+    qrBox: { marginTop: 18, alignItems: "center" },
+    qrImg: { width: 72, height: 72, objectFit: "contain" },
     payTitle: { fontSize: 7.5, color: "#94A3B8", textTransform: "uppercase", fontFamily: "NotoSans", fontWeight: "bold", marginBottom: 4 },
     payTxt: { fontSize: 8.5, color: "#475569" },
     // Footer
@@ -191,13 +195,22 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor }: PdfPara
           </View>
         ) : null}
 
-        {/* Ödeme / banka bilgileri */}
-        {(data.bank.iban || data.bank.name) ? (
-          <View style={styles.payBox}>
-            <Text style={styles.payTitle}>{L.payinfo}</Text>
-            {data.bank.name ? <Text style={styles.payTxt}>{L.bank}: {data.bank.name}</Text> : null}
-            {data.bank.iban ? <Text style={styles.payTxt}>IBAN: {data.bank.iban}</Text> : null}
-            {data.bank.swift ? <Text style={styles.payTxt}>SWIFT/BIC: {data.bank.swift}</Text> : null}
+        {/* Ödeme / banka bilgileri + QR */}
+        {(data.bank.iban || data.bank.name || qrImage) ? (
+          <View style={styles.payRow}>
+            {(data.bank.iban || data.bank.name) ? (
+              <View style={styles.payBox}>
+                <Text style={styles.payTitle}>{L.payinfo}</Text>
+                {data.bank.name ? <Text style={styles.payTxt}>{L.bank}: {data.bank.name}</Text> : null}
+                {data.bank.iban ? <Text style={styles.payTxt}>IBAN: {data.bank.iban}</Text> : null}
+                {data.bank.swift ? <Text style={styles.payTxt}>SWIFT/BIC: {data.bank.swift}</Text> : null}
+              </View>
+            ) : <View style={styles.payBox} />}
+            {qrImage ? (
+              <View style={styles.qrBox}>
+                <Image src={qrImage} style={styles.qrImg} />
+              </View>
+            ) : null}
           </View>
         ) : null}
 

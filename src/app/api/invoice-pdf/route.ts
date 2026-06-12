@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       docType: body.docType || "invoice",
       taxMode: body.taxMode || "normal",
       themeColor: body.themeColor,
+      qrImage: body.qrImage,
     });
     const buffer = await renderToBuffer(element as any);
 

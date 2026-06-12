@@ -20,6 +20,7 @@ export type RenderOpts = {
   lang: string;
   docType: string;
   qrMode: string;
+  qrImage?: string; // kullanıcının yüklediği QR resmi (base64 data URL)
   taxMode: string;
   data?: InvoiceData; // verilmezse SAMPLE kullanılır (önizleme için)
 };
@@ -27,6 +28,7 @@ export type RenderOpts = {
 export function renderInvoiceHTML(opts: RenderOpts): string {
   const curVar = opts.variant;
   const qrMode = opts.qrMode;
+  const qrImage = opts.qrImage || "";
   const taxMode = opts.taxMode;
 
   // Gerçek veri verilmişse onu, yoksa örnek veriyi kullan
@@ -84,13 +86,12 @@ function logo(c,size){ const r=size*0.18; return `<svg width="${size}" height="$
 
 
   function qr(c, size){
-    const n=11, cell=size/n; let cells="";
-    // sabit desen (deterministik) — gerçekçi QR görünümü
-    const pat=[
-      "11111110111","10000010001","10111010111","10111010011","10111010101",
-      "10000010110","11111110101","00000000011","11011011001","01010100101","11101011111"];
-    for(let y=0;y<n;y++) for(let x=0;x<n;x++){ if(pat[y][x]==="1") cells+=`<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#0f172a"/>`; }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">${cells}</svg>`;
+    // Kullanıcı kendi QR resmini yüklediyse onu göster
+    if(qrImage){
+      return `<img src="${qrImage}" width="${size}" height="${size}" style="display:block;object-fit:contain" alt="QR" />`;
+    }
+    // Yüklenmemişse: ince kenarlıklı boş alan + "QR" ipucu (sahte QR deseni YOK)
+    return `<div style="width:${size}px;height:${size}px;border:1px dashed #cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:${size*0.18}px;font-weight:600;letter-spacing:1px">QR</div>`;
   }
 function manyItems(d){
     const base=d.items;
@@ -232,13 +233,12 @@ function notesblock(d,c,style){
   }
 function qrblock(d,c,size){
     if(qrMode==="off") return "";
+    if(!qrImage) return ""; // QR yüklenmemişse hiç gösterme (sahte QR yok)
     const s = size||56;
-    let label, sub;
-    if(qrMode==="verify"){ label=d.scan_verify; sub=`${d.gibno}: EXMP-2026-000042<br>${d.ettn}: 0a1b2c3d-0000-4e5f-demo`; }
-    else { label=d.scan; sub=`IBAN: ${IBAN.slice(0,14)}…`; }
+    const label = qrMode==="verify" ? d.scan_verify : d.scan;
     return `<div style="display:flex;align-items:center;gap:10px">
       <div style="padding:5px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;flex-shrink:0">${qr(c,s)}</div>
-      <div><p class="lbl" style="color:${c};font-weight:600;margin-bottom:2px">${label}</p><p style="font-size:8.5px;color:#cbd5e1;line-height:1.5">${sub}</p></div>
+      <div><p class="lbl" style="color:${c};font-weight:600;margin-bottom:2px">${label}</p></div>
     </div>`;
   }
 function payblock(d,c,style){
@@ -386,7 +386,7 @@ if(curVar==="standard"){
         <div style="background:${c};color:#fff;padding:16px 42px;display:flex;justify-content:space-between;align-items:center;font-size:9.5px;gap:16px">
           <div><b>${d.payinfo}</b><br>${BANKNAME} · ${IBAN}<br>SWIFT: ${SWIFT}</div>
           <div style="text-align:right;opacity:.85"><b>${d.terms}</b><br>${d.terms_val}</div>
-          ${qrMode!=="off"?`<div style="background:#fff;padding:4px;border-radius:6px;flex-shrink:0">${qr(c,50)}</div>`:''}
+          ${(qrMode!=="off"&&qrImage)?`<div style="background:#fff;padding:4px;border-radius:6px;flex-shrink:0">${qr(c,50)}</div>`:''}
         </div>
       </div>`;
     }

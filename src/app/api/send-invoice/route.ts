@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
       docType: dbDocType(invoice.type),
       taxMode: dbTaxMode(invoice.taxMode),
       themeColor: invoice.themeColor,
+      qrImage: String((invoice.qrMode || "")).toUpperCase() !== "OFF"
+        ? ((invoice as any).qrImage || (company as any).qrImage || undefined)
+        : undefined,
     });
     const pdfBuffer = await renderToBuffer(element as any);
     const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");

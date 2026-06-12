@@ -33,6 +33,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     if (status) setFilter(status);
   }, []);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; up: boolean } | null>(null);
   const L = (tr: string, _en?: string) => appT(lang, tr);
 
   const load = () => {
@@ -261,14 +262,26 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                       <td className="px-5 py-3">
                         {/* Tıklanabilir durum menüsü */}
                         <div className="relative">
-                          <button onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === inv.id ? null : inv.id); }}
+                          <button onClick={(e) => {
+                              e.stopPropagation();
+                              if (openMenu === inv.id) { setOpenMenu(null); return; }
+                              // Butonun ekrandaki konumunu ölç → menüyü akıllı konumlandır
+                              const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              const menuH = 200; // tahmini menü yüksekliği
+                              const spaceBelow = window.innerHeight - r.bottom;
+                              const up = spaceBelow < menuH; // altta yer yoksa yukarı aç
+                              setMenuPos({ top: up ? r.top : r.bottom, left: r.left, up });
+                              setOpenMenu(inv.id);
+                            }}
                             className="inline-flex items-center gap-1 hover:opacity-80">
                             <StatusBadge status={badgeStatus(inv.status)} label={statusLabel(inv.status)} />
                             <ChevronDown className="h-3 w-3 text-slate-400" />
                           </button>
-                          {openMenu === inv.id && (
-                            <div className="absolute z-20 mt-1 w-44 rounded-lg border border-slate-200 bg-white shadow-lg py-1" onClick={(e) => e.stopPropagation()}>
-                              {/* Mevcut durum (işaretli, tıklanamaz) + sadece geçerli geçişler */}
+                          {openMenu === inv.id && menuPos && (
+                            <div className="fixed z-50 w-44 rounded-lg border border-slate-200 bg-white shadow-xl py-1"
+                              style={{ left: menuPos.left, top: menuPos.up ? undefined : menuPos.top + 4, bottom: menuPos.up ? window.innerHeight - menuPos.top + 4 : undefined }}
+                              onClick={(e) => e.stopPropagation()}>
+                              {/* Mevcut durum (işaretli) + sadece geçerli geçişler */}
                               <div className="px-3 py-1.5 text-xs text-slate-400 flex items-center justify-between">
                                 {statusLabel(inv.status)} <Check className="h-3.5 w-3.5 text-blue-600" />
                               </div>

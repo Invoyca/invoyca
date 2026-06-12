@@ -204,6 +204,7 @@ export async function getAccountInfo() {
       taxId: company.taxId || "",
       vatId: company.vatId || "",
       defaultLanguage: company.defaultLanguage || "TR",
+      qrImage: company.qrImage || "",
     } : null,
   };
 }
@@ -260,10 +261,15 @@ export async function updatePassword(newPassword: string) {
 
 // Şirket bilgilerini güncelle
 export async function updateCompany(input: {
-  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string;
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string;
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
+
+  // QR resmi boyut güvenliği: base64 ~700KB'ı geçmesin (500KB resim ≈ 680KB base64)
+  if (input.qrImage && input.qrImage.length > 720_000) {
+    return { ok: false, error: "QR resmi çok büyük." };
+  }
 
   const validLangs = ["TR", "EN", "DE", "NL", "FR", "ES", "IT"];
   await prisma.company.update({
@@ -276,6 +282,7 @@ export async function updateCompany(input: {
       country: input.country || null,
       taxId: input.taxId || null,
       vatId: input.vatId || null,
+      qrImage: input.qrImage || null,
       ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
         ? { defaultLanguage: input.defaultLanguage as any }
         : {}),
