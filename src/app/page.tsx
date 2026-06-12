@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { renderInvoiceHTML } from "@/lib/templates/render";
 import { Logo } from "@/components/Logo";
 import { LANDING } from "@/lib/i18n-landing";
 import { LANGS, Lang } from "@/lib/i18n";
-import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail, Users, Sparkles, X, Menu } from "lucide-react";
+import { Globe, Check, FileText, Zap, Shield, Languages, CreditCard, ArrowRight, ChevronDown, Mail, Users, Sparkles, X, Menu, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const APP_URL = "https://app.invoyca.com";
@@ -12,6 +13,7 @@ const APP_URL = "https://app.invoyca.com";
 export default function Landing() {
   const [lang, setLang] = useState<Lang>("TR");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openTpl, setOpenTpl] = useState<string | null>(null); // büyütülen şablon
   const t = LANDING[lang];
 
   // Giriş yapmış kullanıcının baş harfleri (yoksa boş = giriş yapmamış)
@@ -326,36 +328,17 @@ export default function Landing() {
         <p className="text-center text-slate-500 mb-12 max-w-2xl mx-auto">{t.tpl_sub}</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { label: t.tpl_minimal, accent: "border-slate-300", bar: "bg-slate-800" },
-            { label: t.tpl_consultant, accent: "border-blue-300", bar: "bg-blue-600" },
-            { label: t.tpl_agency, accent: "border-violet-300", bar: "bg-violet-600" },
-            { label: t.tpl_corporate, accent: "border-emerald-300", bar: "bg-emerald-600" },
+            { variant: "standard", theme: "slate", label: t.tpl_minimal },
+            { variant: "band", theme: "blue", label: t.tpl_consultant },
+            { variant: "sidebar", theme: "violet", label: t.tpl_agency },
+            { variant: "letterhead", theme: "emerald", label: t.tpl_corporate },
           ].map((tpl, i) => (
-            <div key={i} className="iv-reveal group" style={{ animationDelay: `${i * 0.06}s` }}>
-              {/* Mini fatura önizlemesi */}
-              <div className={`rounded-xl bg-white border ${tpl.accent} shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 transition-all p-4 aspect-[3/4] flex flex-col`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`h-2 w-8 rounded-full ${tpl.bar}`} />
-                  <div className="h-2 w-10 rounded-full bg-slate-200" />
-                </div>
-                <div className="space-y-1.5 mb-3">
-                  <div className="h-1.5 w-3/4 rounded-full bg-slate-100" />
-                  <div className="h-1.5 w-1/2 rounded-full bg-slate-100" />
-                </div>
-                <div className="flex-1 space-y-1.5 border-t border-slate-100 pt-3">
-                  {[0,1,2].map((r) => (
-                    <div key={r} className="flex justify-between gap-2">
-                      <div className="h-1.5 flex-1 rounded-full bg-slate-100" />
-                      <div className="h-1.5 w-8 rounded-full bg-slate-100" />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-100 pt-2 mt-2">
-                  <div className="h-1.5 w-10 rounded-full bg-slate-200" />
-                  <div className={`h-2 w-12 rounded-full ${tpl.bar} opacity-80`} />
-                </div>
-              </div>
-              <p className="text-center text-sm font-medium text-slate-700 mt-3">{tpl.label}</p>
+            <div key={i} className="iv-reveal" style={{ animationDelay: `${i * 0.06}s` }}>
+              <TemplateThumb
+                label={tpl.label}
+                onClick={() => setOpenTpl(tpl.variant)}
+                html={renderInvoiceHTML({ variant: tpl.variant, theme: tpl.theme, lang, docType: "invoice", qrMode: "off", taxMode: "normal" })}
+              />
             </div>
           ))}
         </div>
@@ -364,6 +347,30 @@ export default function Landing() {
             {t.tpl_cta} <ArrowRight className="h-4 w-4" />
           </a>
         </div>
+
+        {/* Şablon büyütme modal'ı */}
+        {openTpl && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-8" onClick={() => setOpenTpl(null)}>
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+            <div className="relative bg-slate-100 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setOpenTpl(null)} className="sticky top-3 left-full ml-[-3rem] z-10 flex items-center justify-center h-9 w-9 rounded-full bg-white shadow-lg text-slate-600 hover:text-slate-900">
+                <X className="h-5 w-5" />
+              </button>
+              <div className="p-4 sm:p-8 -mt-12">
+                <div className="bg-white shadow-xl mx-auto" style={{ maxWidth: "794px" }}
+                  dangerouslySetInnerHTML={{ __html: renderInvoiceHTML({ variant: openTpl, theme: openTpl === "band" ? "blue" : openTpl === "sidebar" ? "violet" : openTpl === "letterhead" ? "emerald" : "slate", lang, docType: "invoice", qrMode: "off", taxMode: "normal" }) }} />
+                <p className="text-center text-sm text-slate-500 mt-6">
+                  {lang === "TR" ? "Bu, 25 hazır şablondan biri. Uygulamada rengini ve dilini değiştirebilirsin." : "One of 25 ready templates. You can change its color and language in the app."}
+                </p>
+                <div className="text-center mt-4">
+                  <a href={APP_URL} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white font-semibold px-6 py-2.5 hover:bg-blue-700">
+                    {t.hero_cta} <ArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Kimler için? */}
@@ -546,6 +553,40 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// Şablon küçük önizlemesi — gerçek HTML'i A4 oranında karta sığdırır (hepsi aynı boy)
+function TemplateThumb({ html, onClick, label }: { html: string; onClick: () => void; label: string }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.25);
+
+  useEffect(() => {
+    const measure = () => {
+      if (!boxRef.current) return;
+      const boxW = boxRef.current.clientWidth; // kartın genişliği
+      setScale(boxW / 794);                    // A4 genişliği 794px → ölçek
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  return (
+    <div className="group cursor-pointer" onClick={onClick}>
+      {/* Kart A4 oranında SABİT — tüm şablonlar aynı boyutta görünür */}
+      <div ref={boxRef} className="relative rounded-xl bg-white border border-slate-200 shadow-sm group-hover:shadow-xl group-hover:-translate-y-1.5 transition-all overflow-hidden" style={{ aspectRatio: "794 / 1123" }}>
+        <div className="absolute top-0 left-0 origin-top-left pointer-events-none" style={{ width: "794px", transform: `scale(${scale})` }}>
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur rounded-full p-2.5 shadow-lg">
+            <Search className="h-5 w-5 text-slate-700" />
+          </div>
+        </div>
+      </div>
+      <p className="text-center text-sm font-medium text-slate-700 mt-3">{label}</p>
     </div>
   );
 }
