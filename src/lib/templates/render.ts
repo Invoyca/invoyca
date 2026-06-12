@@ -280,7 +280,7 @@ if(curVar==="standard"){
             <p style="font-size:10px;color:#94a3b8;line-height:1.55;margin-top:2px">${SENDER.addr.join("<br>")}</p>${senderTax}
           </div>
           <div style="text-align:right">
-            <p style="font-size:26px;font-weight:800;color:${c};letter-spacing:.5px">${dt}</p>
+            <p style="font-size:26px;font-weight:800;color:${c};letter-spacing:.5px;line-height:1.1">${dt}</p>
             <table style="margin-top:10px;font-size:10px;color:#94a3b8;margin-left:auto">
               <tr><td style="text-align:right;padding:1.5px 8px 1.5px 0">${d.invno}:</td><td style="text-align:right;color:#0f172a;font-weight:600">${META.no}</td></tr>
               <tr><td style="text-align:right;padding:1.5px 8px 1.5px 0">${d.issue}:</td><td style="text-align:right;color:#475569">${META.issue}</td></tr>
@@ -328,7 +328,7 @@ if(curVar==="standard"){
       html=`<div class="paper-inner" style="padding:40px 44px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid ${c};padding-bottom:16px;margin-bottom:20px">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,36)}<div><p style="font-weight:700;color:#0f172a;font-size:13px">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.email}</p></div></div>
-          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c};letter-spacing:.5px">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:3px">${d.invno}: ${META.no}</p></div>
+          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c};letter-spacing:.5px;line-height:1.1">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no}</p></div>
         </div>
         <div style="display:flex;gap:24px;margin-bottom:18px">
           <div style="flex:1">
@@ -395,7 +395,7 @@ if(curVar==="standard"){
       html=`<div class="paper-inner" style="padding:34px 38px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
           <div>${logo(c,36)}<p style="font-weight:700;margin-top:7px;color:#0f172a;font-size:12px">${SENDER.name}</p><p style="font-size:9.5px;color:#94a3b8;line-height:1.5">${SENDER.addr.join("<br>")}</p><p style="font-size:9px;color:#cbd5e1;margin-top:2px">${d.vkn}: ${SENDER.tax} · ${d.vatid}: ${SENDER.vat}</p></div>
-          <div style="text-align:right"><p style="font-size:20px;font-weight:800;color:${c}">${dt}</p>
+          <div style="text-align:right"><p style="font-size:20px;font-weight:800;color:${c};line-height:1.1">${dt}</p>
             <table style="margin-top:8px;font-size:9px;color:#94a3b8;margin-left:auto">
               <tr><td style="text-align:right;padding:1px 8px 1px 0">${d.invno}:</td><td style="text-align:right;color:#475569;font-weight:600">${META.no}</td></tr>
               <tr><td style="text-align:right;padding:1px 8px 1px 0">${d.issue}:</td><td style="text-align:right;color:#475569">${META.issue}</td></tr>
@@ -423,7 +423,7 @@ if(curVar==="band"){
       html=`<div class="paper-inner" style="padding:38px 42px;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px">
           <div style="display:flex;align-items:center;gap:11px">${logo(c,36)}<div><p style="font-weight:700;font-size:14px;color:#0f172a">${SENDER.name}</p><p style="font-size:9.5px;color:#94a3b8">${SENDER.addr.join(", ")}</p></div></div>
-          <div style="text-align:right"><p style="font-size:24px;font-weight:800;color:${c};letter-spacing:.5px">${dt}</p><p style="font-size:10px;color:#94a3b8;margin-top:3px">${d.invno}: ${META.no}</p></div>
+          <div style="text-align:right"><p style="font-size:24px;font-weight:800;color:${c};letter-spacing:.5px;line-height:1.1">${dt}</p><p style="font-size:10px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no}</p></div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:22px">
           <div style="flex:1;border:1px solid #eef2f7;border-radius:12px;padding:14px 16px">
@@ -458,7 +458,7 @@ if(curVar==="band"){
           </div>
         </div>
         <div style="flex:1;padding:30px 32px;display:flex;flex-direction:column">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px"><p style="font-size:26px;font-weight:800;color:${c};letter-spacing:.5px">${dt}</p></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px"><p style="font-size:26px;font-weight:800;color:${c};letter-spacing:.5px;line-height:1.1">${dt}</p></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:16px;gap:16px">
             <div style="flex:1">${partyBlock(d,d.billto,CLIENT,clientTax)}</div>
           </div>
@@ -481,7 +481,7 @@ if(curVar==="band"){
       html=`<div class="paper-inner" style="padding:38px 42px;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,34)}<div><p style="font-weight:700;font-size:13px;color:#0f172a">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.email}</p></div></div>
-          <div style="text-align:right"><p style="font-size:23px;font-weight:800;color:${c}">${dt}</p><p style="font-size:10px;color:#94a3b8;margin-top:2px">${d.invno}: ${META.no}</p></div>
+          <div style="text-align:right"><p style="font-size:23px;font-weight:800;color:${c};line-height:1.1">${dt}</p><p style="font-size:10px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no}</p></div>
         </div>
         <div style="background:${lt};border-radius:10px;padding:14px 18px;margin-bottom:20px">
           <p class="lbl" style="color:${c};margin-bottom:8px">${d.issue==="Tarih"?"Hizmet Detayları":"Service Details"}</p>
@@ -505,7 +505,7 @@ if(curVar==="band"){
       html=`<div class="paper-inner" style="padding:38px 42px;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,36)}<div><p style="font-weight:700;color:#0f172a;font-size:13px">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.email}</p></div></div>
-          <p style="font-size:23px;font-weight:800;color:${c}">${dt}</p>
+          <p style="font-size:23px;font-weight:800;color:${c};line-height:1.1">${dt}</p>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:20px">
           <div style="flex:1;background:${c};color:#fff;border-radius:12px;padding:14px 18px">
@@ -543,7 +543,7 @@ if(curVar==="band"){
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,36)}<div><p style="font-weight:700;color:#0f172a;font-size:13px">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.addr.join(", ")}</p></div></div>
           <div style="text-align:right">
-            <p style="font-size:23px;font-weight:800;color:${c}">${dt}</p>
+            <p style="font-size:23px;font-weight:800;color:${c};line-height:1.1">${dt}</p>
             <span style="display:inline-block;margin-top:5px;background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:20px">${d.issue==="Tarih"?"Ödenmedi":"Unpaid"}</span>
           </div>
         </div>
@@ -578,7 +578,7 @@ if(curVar==="mono"){
       html=`<div class="paper-inner" style="padding:42px 46px;color:#475569">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
           <div style="display:flex;align-items:center;gap:9px">${logo(c,28)}<div><span style="font-weight:700;color:#0f172a;font-size:13px">${SENDER.name}</span><p style="font-size:9px;color:#94a3b8">${SENDER.addr.join(", ")}</p></div></div>
-          <div style="text-align:right"><p style="font-size:18px;font-weight:700;letter-spacing:.5px;color:#0f172a">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:2px">${d.invno}: ${META.no} · ${META.issue}</p></div>
+          <div style="text-align:right"><p style="font-size:18px;font-weight:700;letter-spacing:.5px;color:#0f172a">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no} · ${META.issue}</p></div>
         </div>
         <div style="background:${lt};border-radius:8px;padding:11px 16px;margin-bottom:20px">
           <p class="lbl" style="color:${c};margin-bottom:3px;font-size:9px">${d.billto}</p>
@@ -713,7 +713,7 @@ if(curVar==="dense"){
       html=`<div class="paper-inner" style="display:flex;flex-direction:column;font-size:10.5px">
         <div style="background:${lt};padding:20px 34px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid ${c}">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,30)}<div><p style="font-weight:700;font-size:14px;color:#0f172a">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.addr.join(", ")}</p></div></div>
-          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c}">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:1px">${d.invno}: ${META.no}</p></div>
+          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c};line-height:1.1">${dt}</p><p style="font-size:9px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no}</p></div>
         </div>
         <div style="padding:22px 34px;flex:1;display:flex;flex-direction:column">
           <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:18px">
@@ -801,7 +801,7 @@ if(curVar==="block"){
       html=`<div class="paper-inner" style="padding:40px 44px;display:flex;flex-direction:column">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
           <div style="display:flex;align-items:center;gap:10px">${logo(c,36)}<div><p style="font-weight:700;color:#0f172a;font-size:13px">${SENDER.name}</p><p style="font-size:9px;color:#94a3b8">${SENDER.addr.join(", ")}</p></div></div>
-          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c}">${dt}</p><p style="font-size:9.5px;color:#94a3b8;margin-top:3px">${d.invno}: ${META.no} · ${META.issue}</p></div>
+          <div style="text-align:right"><p style="font-size:22px;font-weight:800;color:${c};line-height:1.1">${dt}</p><p style="font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.3">${d.invno}: ${META.no} · ${META.issue}</p></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:16px">
           <div style="flex:1">${partyBlock(d,d.billto,CLIENT,clientTax)}</div>
@@ -859,7 +859,7 @@ if(curVar==="block"){
             <p style="font-size:10px;color:#94a3b8;line-height:1.5">${SENDER.addr.join("<br>")}</p>${senderTax}
           </div>
           <div style="text-align:right">
-            <p style="font-size:28px;font-weight:800;color:${c};letter-spacing:.5px">${dt}</p>
+            <p style="font-size:28px;font-weight:800;color:${c};letter-spacing:.5px;line-height:1.1">${dt}</p>
             <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:${lt};border:1px solid ${c}33;border-radius:8px;padding:5px 12px">
               <span style="width:6px;height:6px;border-radius:50%;background:${c}"></span>
               <span style="font-size:10px;font-weight:600;color:${c};letter-spacing:.3px">${META.no}</span>
@@ -894,7 +894,7 @@ if(curVar==="block"){
         <div style="border:8px solid ${c};border-radius:4px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
           <div style="background:${c};color:#fff;padding:20px 30px;display:flex;justify-content:space-between;align-items:center">
             <div style="display:flex;align-items:center;gap:10px"><div style="background:#fff;border-radius:8px;padding:5px">${logo(c,26)}</div><div><p style="font-weight:700;font-size:14px">${SENDER.name}</p><p style="font-size:9px;opacity:.85">${SENDER.addr.join(", ")}</p></div></div>
-            <p style="font-size:26px;font-weight:800;letter-spacing:1px">${dt}</p>
+            <p style="font-size:26px;font-weight:800;letter-spacing:1px;line-height:1.1">${dt}</p>
           </div>
           <div style="padding:24px 30px;flex:1;display:flex;flex-direction:column">
             <div style="display:flex;justify-content:space-between;margin-bottom:20px">
