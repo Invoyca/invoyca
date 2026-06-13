@@ -13,9 +13,14 @@ export default function SettingsPage() {
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const [tab, setTab] = useState("account");
   const [info, setInfo] = useState<any>(null);
+  const [bankAccounts, setBankAccounts] = useState<any[] | null>(null); // null = henüz yüklenmedi
+
+  // Banka hesaplarını üst seviyede bir kere yükle (sekme değişince tekrar çekilmez)
+  const loadBanks = () => listBankAccounts().then((r) => { if (r.ok) setBankAccounts(r.accounts); }).catch(() => {});
 
   useEffect(() => {
     getAccountInfo().then((res) => { if (res.ok) setInfo(res); });
+    loadBanks();
     // URL'de ?tab=company gibi bir parametre varsa o sekmeyi aç (dashboard yönlendirmesi için)
     const params = new URLSearchParams(window.location.search);
     const t = params.get("tab");
@@ -43,7 +48,7 @@ export default function SettingsPage() {
 
       {tab === "account" && <AccountTab L={L} info={info} />}
       {tab === "company" && <CompanyTab L={L} info={info} />}
-      {tab === "bank" && <BankTab L={L} info={info} />}
+      {tab === "bank" && <BankTab L={L} info={info} initialAccounts={bankAccounts} onReload={loadBanks} />}
 
       {tab === "subscription" && (
         <Card className="p-6">
@@ -173,9 +178,10 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
   );
 }
 
-function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
-  const [accounts, setAccounts] = useState<any[]>([]);
+function BankTab({ L, info, initialAccounts, onReload }: { L: (tr: string, en?: string) => string; info: any; initialAccounts: any[] | null; onReload: () => void }) {
+  const [accounts, setAccounts] = useState<any[]>(initialAccounts || []);
   const [editing, setEditing] = useState<any | null>(null); // {id?, label, bankName, iban, swift, currency, isDefault}
+  const [savingAcc, setSavingAcc] = useState(false);
   const [msg, setMsg] = useState("");
   const [qrPay, setQrPay] = useState("");
   const [qrVerify, setQrVerify] = useState("");
@@ -184,8 +190,10 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
   const field = "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30";
   const lbl = "text-xs font-medium text-slate-500";
 
-  const reload = () => listBankAccounts().then((r) => { if (r.ok) setAccounts(r.accounts); });
-  useEffect(() => { reload(); }, []);
+  // Üstten gelen veri değişince (ilk yükleme veya yenileme sonrası) listeyi güncelle.
+  // Sekme açılışında SUNUCUYA GİTMEZ — veri zaten hazır gelir, lag olmaz.
+  useEffect(() => { if (initialAccounts) setAccounts(initialAccounts); }, [initialAccounts]);
+  const reload = () => onReload();
   useEffect(() => {
     if (info?.company) { setQrPay(info.company.qrImage || ""); setQrVerify(info.company.qrVerify || ""); }
   }, [info]);
@@ -194,9 +202,21 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
 
   const saveAcc = async () => {
     if (!editing) return;
-    const res = await saveBankAccount(editing);
-    if (res.ok) { setEditing(null); reload(); setMsg(L("Hesap kaydedildi ✓", "Account saved ✓")); }
-    else setMsg(res.error || "Hata");
+    setSavingAcc(true); setMsg("");
+    try {
+      const res = await saveBankAccount(editing);
+      if (res.ok) {
+        setEditing(null);
+        setMsg(L("Hesap kaydedildi ✓", "Account saved ✓"));
+        reload(); // listeyi arka planda yenile (await yok — kullanıcı beklemez)
+      } else {
+        setMsg(res.error || L("Kaydedilemedi.", "Could not save."));
+      }
+    } catch {
+      setMsg(L("Kaydedilemedi.", "Could not save."));
+    } finally {
+      setSavingAcc(false);
+    }
   };
   const delAcc = async (id: string) => {
     const res = await deleteBankAccount(id);
@@ -290,8 +310,11 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
               {L("Varsayılan hesap yap", "Set as default")}
             </label>
             <div className="flex items-center gap-2">
-              <button onClick={saveAcc} className="rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">{L("Kaydet", "Save")}</button>
-              <button onClick={() => setEditing(null)} className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50">{L("İptal", "Cancel")}</button>
+              <button onClick={saveAcc} disabled={savingAcc} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">
+                {savingAcc && <Loader2 className="h-4 w-4 animate-spin" />}
+                {savingAcc ? L("Kaydediliyor...", "Saving...") : L("Kaydet", "Save")}
+              </button>
+              <button onClick={() => setEditing(null)} disabled={savingAcc} className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-50">{L("İptal", "Cancel")}</button>
             </div>
           </div>
         )}
