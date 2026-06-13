@@ -4,6 +4,28 @@ import { Lang } from "./i18n";
 
 // Her giriş: [EN, DE, NL, FR, ES, IT] (TR zaten anahtar)
 const T: Record<string, [string, string, string, string, string, string]> = {
+  // --- Şablon stüdyosu (preview-first redesign) ---
+  "Şablonunu seç, renklerini özelleştir ve faturalarında kullan.": ["Pick a template, customize colors, use it on your invoices.", "Wähle eine Vorlage, passe Farben an und nutze sie auf deinen Rechnungen.", "Kies een sjabloon, pas kleuren aan en gebruik het op je facturen.", "Choisissez un modèle, personnalisez les couleurs et utilisez-le sur vos factures.", "Elige una plantilla, personaliza los colores y úsala en tus facturas.", "Scegli un modello, personalizza i colori e usalo nelle tue fatture."],
+  "Varsayılan:": ["Default:", "Standard:", "Standaard:", "Par défaut :", "Predeterminada:", "Predefinita:"],
+  "Özelleştir": ["Customize", "Anpassen", "Aanpassen", "Personnaliser", "Personalizar", "Personalizza"],
+  "Önizleme": ["Preview", "Vorschau", "Voorbeeld", "Aperçu", "Vista previa", "Anteprima"],
+  "Kaydedilmemiş değişiklikler": ["Unsaved changes", "Nicht gespeicherte Änderungen", "Niet-opgeslagen wijzigingen", "Modifications non enregistrées", "Cambios sin guardar", "Modifiche non salvate"],
+  "Tam Ekran": ["Full Screen", "Vollbild", "Volledig scherm", "Plein écran", "Pantalla completa", "Schermo intero"],
+  "Bu Şablonu Kullan": ["Use This Template", "Diese Vorlage verwenden", "Dit sjabloon gebruiken", "Utiliser ce modèle", "Usar esta plantilla", "Usa questo modello"],
+  "Seçili": ["Selected", "Ausgewählt", "Geselecteerd", "Sélectionné", "Seleccionado", "Selezionato"],
+  "Uzaklaştır": ["Zoom out", "Verkleinern", "Uitzoomen", "Dézoomer", "Alejar", "Riduci"],
+  "Yakınlaştır": ["Zoom in", "Vergrößern", "Inzoomen", "Zoomer", "Acercar", "Ingrandisci"],
+  "Genişlik": ["Width", "Breite", "Breedte", "Largeur", "Ancho", "Larghezza"],
+  "Sayfaya sığdır": ["Fit page", "An Seite anpassen", "Aan pagina aanpassen", "Ajuster à la page", "Ajustar a la página", "Adatta alla pagina"],
+  "Tam ekran": ["Full screen", "Vollbild", "Volledig scherm", "Plein écran", "Pantalla completa", "Schermo intero"],
+  "Görünüm": ["Appearance", "Darstellung", "Weergave", "Apparence", "Apariencia", "Aspetto"],
+  "Belge": ["Document", "Dokument", "Document", "Document", "Documento", "Documento"],
+  "Seçili Şablon": ["Selected Template", "Ausgewählte Vorlage", "Geselecteerd sjabloon", "Modèle sélectionné", "Plantilla seleccionada", "Modello selezionato"],
+  "Varsayılan şablon": ["Default template", "Standardvorlage", "Standaardsjabloon", "Modèle par défaut", "Plantilla predeterminada", "Modello predefinito"],
+  "Varsayılan Yap": ["Make Default", "Als Standard festlegen", "Als standaard instellen", "Définir par défaut", "Establecer predeterminada", "Imposta come predefinito"],
+  "Kaydedildi": ["Saved", "Gespeichert", "Opgeslagen", "Enregistré", "Guardado", "Salvato"],
+  "Tam Ekran Önizleme": ["Full Screen Preview", "Vollbild-Vorschau", "Volledig scherm voorbeeld", "Aperçu plein écran", "Vista previa a pantalla completa", "Anteprima a schermo intero"],
+
   // --- Logo işleme + kaydetme hatası ---
   "Logo işleniyor...": ["Processing logo...", "Logo wird verarbeitet...", "Logo verwerken...", "Traitement du logo...", "Procesando logo...", "Elaborazione logo..."],
   "Kaydedilemedi.": ["Could not save.", "Speichern fehlgeschlagen.", "Opslaan mislukt.", "Échec de l'enregistrement.", "No se pudo guardar.", "Salvataggio non riuscito."],

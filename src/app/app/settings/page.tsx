@@ -128,20 +128,20 @@ function AccountTab({ L, info, onSaved }: { L: (tr: string, en?: string) => stri
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className={lbl}>{L("Ad Soyad", "Full Name")} *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={L("Adınız Soyadınız", "Your name")} className={field} />
+            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder={L("Adınız Soyadınız", "Your name")} className={field} />
           </div>
           <div>
             <label className={lbl}>{L("E-posta", "Email")}</label>
-            <input value={info?.email || ""} disabled className={field + " bg-slate-50 text-slate-400"} />
+            <input value={info?.email || ""} disabled autoComplete="off" className={field + " bg-slate-50 text-slate-400"} />
             <p className="text-xs text-slate-400 mt-1">{L("E-posta değiştirilemez.", "Email cannot be changed.")}</p>
           </div>
           <div>
             <label className={lbl}>{L("Telefon", "Phone")}</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+90 5xx xxx xx xx" className={field} />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+90 5xx xxx xx xx" className={field} />
           </div>
           <div>
             <label className={lbl}>{L("Ünvan / Görev", "Title / Role")}</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={L("ör. Kurucu, Muhasebeci", "e.g. Founder, Accountant")} className={field} />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" name="job-title-invoyca" placeholder={L("ör. Kurucu, Muhasebeci", "e.g. Founder, Accountant")} className={field} />
           </div>
         </div>
         <div className="flex items-center gap-3 mt-4">
@@ -429,7 +429,7 @@ function CompanyTab({ L, info, onSaved }: { L: (tr: string, en?: string) => stri
           {fields.map(([label, key]) => (
             <div key={key}>
               <label className={lbl}>{label}</label>
-              <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} />
+              <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} autoComplete="off" name={`company-${key}`} className={field} />
             </div>
           ))}
           <div>
