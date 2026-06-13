@@ -1,25 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useLang } from "@/lib/lang-context";
+import { useAccount } from "@/lib/account-context";
 import { getCountries } from "@/lib/countries";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import Link from "next/link";
 import { LayoutTemplate, ArrowRight, Check, Loader2, User, Lock, Mail } from "lucide-react";
-import { getAccountInfo, updateUserName, updateProfile, updatePassword, updateCompany, listBankAccounts, saveBankAccount, deleteBankAccount } from "../data-actions";
+import { updateUserName, updateProfile, updatePassword, updateCompany, listBankAccounts, saveBankAccount, deleteBankAccount } from "../data-actions";
 
 export default function SettingsPage() {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const [tab, setTab] = useState("account");
-  const [info, setInfo] = useState<any>(null);
+  const { info, refresh: refreshAccount } = useAccount();
   const [bankAccounts, setBankAccounts] = useState<any[] | null>(null); // null = henüz yüklenmedi
 
   // Banka hesaplarını üst seviyede bir kere yükle (sekme değişince tekrar çekilmez)
   const loadBanks = () => listBankAccounts().then((r) => { if (r.ok) setBankAccounts(r.accounts); }).catch(() => {});
 
   useEffect(() => {
-    getAccountInfo().then((res) => { if (res.ok) setInfo(res); });
     loadBanks();
     // URL'de ?tab=company gibi bir parametre varsa o sekmeyi aç (dashboard yönlendirmesi için)
     const params = new URLSearchParams(window.location.search);
@@ -46,8 +46,8 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {tab === "account" && <AccountTab L={L} info={info} />}
-      {tab === "company" && <CompanyTab L={L} info={info} />}
+      {tab === "account" && <AccountTab L={L} info={info} onSaved={refreshAccount} />}
+      {tab === "company" && <CompanyTab L={L} info={info} onSaved={refreshAccount} />}
       {tab === "bank" && <BankTab L={L} info={info} initialAccounts={bankAccounts} onReload={loadBanks} />}
 
       {tab === "subscription" && (
@@ -77,7 +77,7 @@ export default function SettingsPage() {
   );
 }
 
-function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
+function AccountTab({ L, info, onSaved }: { L: (tr: string, en?: string) => string; info: any; onSaved?: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [title, setTitle] = useState("");
@@ -102,7 +102,8 @@ function AccountTab({ L, info }: { L: (tr: string, en?: string) => string; info:
     setSavingName(true); setNameMsg("");
     const res = await updateProfile({ name, phone, title });
     setSavingName(false);
-    setNameMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || "Hata"));
+    if (res.ok) { setNameMsg(L("Kaydedildi ✓", "Saved ✓")); onSaved?.(); }
+    else setNameMsg(res.error || L("Kaydedilemedi.", "Could not save."));
   };
 
   const savePw = async () => {
@@ -337,7 +338,7 @@ function BankTab({ L, info, initialAccounts, onReload }: { L: (tr: string, en?: 
   );
 }
 
-function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
+function CompanyTab({ L, info, onSaved }: { L: (tr: string, en?: string) => string; info: any; onSaved?: () => void }) {
   const { lang } = useLang();
   const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR", defaultDueDays: 15 });
   const [logo, setLogo] = useState<string>("");
@@ -363,7 +364,8 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
     setSaving(true); setMsg("");
     try {
       const res = await updateCompany({ ...form, logoUrl: logo, defaultDueDays: form.defaultDueDays });
-      setMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || L("Kaydedilemedi.", "Could not save.")));
+      if (res.ok) { setMsg(L("Kaydedildi ✓", "Saved ✓")); onSaved?.(); }
+      else setMsg(res.error || L("Kaydedilemedi.", "Could not save."));
     } catch (e: any) {
       // Sunucu hata atarsa (ör. çok büyük logo, ağ hatası) yine de loading dursun ve kullanıcı sebebi görsün
       setMsg(L("Kaydedilemedi. Logo çok büyük olabilir veya bağlantı koptu.", "Could not save. The logo may be too large or the connection dropped."));

@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { GuestProvider } from "@/lib/guest-context";
 import { ConfirmProvider } from "@/lib/confirm-context";
 import { ToastProvider } from "@/lib/toast-context";
+import { AccountProvider } from "@/lib/account-context";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +11,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <GuestProvider>
         <ConfirmProvider>
           <ToastProvider>
-            <AppShell>{children}</AppShell>
+            <AccountProvider>
+              <AppShell>{children}</AppShell>
+            </AccountProvider>
           </ToastProvider>
         </ConfirmProvider>
       </GuestProvider>
