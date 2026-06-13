@@ -338,9 +338,15 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
 
   const save = async () => {
     setSaving(true); setMsg("");
-    const res = await updateCompany({ ...form, logoUrl: logo, defaultDueDays: form.defaultDueDays });
-    setSaving(false);
-    setMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || "Hata"));
+    try {
+      const res = await updateCompany({ ...form, logoUrl: logo, defaultDueDays: form.defaultDueDays });
+      setMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || L("Kaydedilemedi.", "Could not save.")));
+    } catch (e: any) {
+      // Sunucu hata atarsa (ör. çok büyük logo, ağ hatası) yine de loading dursun ve kullanıcı sebebi görsün
+      setMsg(L("Kaydedilemedi. Logo çok büyük olabilir veya bağlantı koptu.", "Could not save. The logo may be too large or the connection dropped."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Logo yükle (base64). 2 MB sınırı, sadece görsel.
@@ -348,8 +354,34 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
     const file = e.target.files?.[0]; if (!file) return;
     if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) { setMsg(L("Sadece PNG, JPG veya WEBP.", "Only PNG, JPG or WEBP.")); return; }
     if (file.size > 2 * 1024 * 1024) { setMsg(L("Logo çok büyük (max 2 MB).", "Logo too large (max 2 MB).")); return; }
+    setMsg(L("Logo işleniyor...", "Processing logo..."));
     const reader = new FileReader();
-    reader.onload = () => setLogo(String(reader.result));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Logoyu makul boyuta küçült (en fazla 400px) — veritabanı/ağ yükünü azaltır,
+        // fatura logosu için 400px fazlasıyla yeterli. Böylece kaydetme takılmaz.
+        const maxDim = 400;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { setLogo(String(reader.result)); setMsg(""); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        // PNG şeffaflığı korusun; JPEG/WEBP ise sıkıştır
+        const isPng = /image\/png/.test(file.type);
+        const out = isPng ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.85);
+        setLogo(out);
+        setMsg("");
+      };
+      img.onerror = () => { setLogo(String(reader.result)); setMsg(""); };
+      img.src = String(reader.result);
+    };
     reader.readAsDataURL(file);
   };
 

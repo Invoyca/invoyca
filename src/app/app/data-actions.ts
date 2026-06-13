@@ -317,28 +317,33 @@ export async function updateCompany(input: {
   }
 
   const validLangs = ["TR", "EN", "DE", "NL", "FR", "ES", "IT"];
-  await prisma.company.update({
-    where: { id: company.id },
-    data: {
-      name: input.name?.trim() || company.name,
-      email: input.email || null,
-      address: input.address || null,
-      city: input.city || null,
-      country: input.country || null,
-      taxId: input.taxId || null,
-      vatId: input.vatId || null,
-      ...(input.qrImage !== undefined ? { qrImage: safeQrImage } : {}),
-      ...(input.qrVerify !== undefined ? { qrVerify: safeQrVerify } as any : {}),
-      ...(input.logoUrl !== undefined ? { logoUrl: safeLogo } : {}),
-      ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
-        ? { defaultLanguage: input.defaultLanguage as any }
-        : {}),
-      ...(typeof input.defaultDueDays === "number" && input.defaultDueDays >= 0 && input.defaultDueDays <= 365
-        ? { defaultDueDays: Math.round(input.defaultDueDays) }
-        : {}),
-    } as any,
-  });
-  return { ok: true };
+  try {
+    await prisma.company.update({
+      where: { id: company.id },
+      data: {
+        name: input.name?.trim() || company.name,
+        email: input.email || null,
+        address: input.address || null,
+        city: input.city || null,
+        country: input.country || null,
+        taxId: input.taxId || null,
+        vatId: input.vatId || null,
+        ...(input.qrImage !== undefined ? { qrImage: safeQrImage } : {}),
+        ...(input.qrVerify !== undefined ? { qrVerify: safeQrVerify } as any : {}),
+        ...(input.logoUrl !== undefined ? { logoUrl: safeLogo } : {}),
+        ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
+          ? { defaultLanguage: input.defaultLanguage as any }
+          : {}),
+        ...(typeof input.defaultDueDays === "number" && input.defaultDueDays >= 0 && input.defaultDueDays <= 365
+          ? { defaultDueDays: Math.round(input.defaultDueDays) }
+          : {}),
+      } as any,
+    });
+    return { ok: true };
+  } catch (e: any) {
+    // Veritabanı hatası (ör. eksik kolon, bağlantı) — anlamlı mesaj dön, çökme
+    return { ok: false, error: "Şirket bilgileri kaydedilemedi. Lütfen tekrar deneyin." };
+  }
 }
 
 // ---------- ŞABLON / VARSAYILAN AYARLAR ----------

@@ -4,6 +4,11 @@ import { Lang } from "./i18n";
 
 // Her giriş: [EN, DE, NL, FR, ES, IT] (TR zaten anahtar)
 const T: Record<string, [string, string, string, string, string, string]> = {
+  // --- Logo işleme + kaydetme hatası ---
+  "Logo işleniyor...": ["Processing logo...", "Logo wird verarbeitet...", "Logo verwerken...", "Traitement du logo...", "Procesando logo...", "Elaborazione logo..."],
+  "Kaydedilemedi.": ["Could not save.", "Speichern fehlgeschlagen.", "Opslaan mislukt.", "Échec de l'enregistrement.", "No se pudo guardar.", "Salvataggio non riuscito."],
+  "Kaydedilemedi. Logo çok büyük olabilir veya bağlantı koptu.": ["Could not save. The logo may be too large or the connection dropped.", "Speichern fehlgeschlagen. Das Logo ist evtl. zu groß oder die Verbindung wurde unterbrochen.", "Opslaan mislukt. Het logo is mogelijk te groot of de verbinding is verbroken.", "Échec de l'enregistrement. Le logo est peut-être trop volumineux ou la connexion a été interrompue.", "No se pudo guardar. El logo puede ser demasiado grande o se perdió la conexión.", "Salvataggio non riuscito. Il logo potrebbe essere troppo grande o la connessione è caduta."],
+
   // --- Tur 4: diğer app sayfaları 7-dil audit ---
   // Fatura listesi
   "Durum güncellendi": ["Status updated", "Status aktualisiert", "Status bijgewerkt", "Statut mis à jour", "Estado actualizado", "Stato aggiornato"],
