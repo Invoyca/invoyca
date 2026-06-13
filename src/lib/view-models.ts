@@ -6,6 +6,10 @@ export type InvoiceStatus = "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED";
 export type Currency = "EUR" | "USD" | "GBP" | "TRY";
 export type AppLang = "TR" | "EN" | "DE" | "NL" | "FR" | "ES" | "IT";
 
+// Para/sayı alanları: Prisma Decimal, number veya string olabilir.
+// Decimal'in toString()/Number() ile güvenle işlendiği için hepsini kabul ediyoruz.
+export type Numericish = number | string | { toString(): string };
+
 // Listelerde ve dashboard'da gösterilen fatura satırı
 export type InvoiceListItem = {
   id: string;
@@ -13,7 +17,7 @@ export type InvoiceListItem = {
   status: InvoiceStatus;
   type?: string;
   currency: Currency | string;
-  total: number | string;
+  total: Numericish;
   issueDate: string | Date | null;
   dueDate?: string | Date | null;
   paidAt?: string | Date | null;
@@ -44,8 +48,8 @@ export type ProductVM = {
   name: string;
   description?: string | null;
   unit?: string | null;
-  unitPrice: number | string;
-  vatRate: number | string;
+  unitPrice: Numericish;
+  vatRate: Numericish;
   currency: Currency | string;
   isArchived?: boolean;
 };

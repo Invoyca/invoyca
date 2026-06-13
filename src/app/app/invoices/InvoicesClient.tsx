@@ -12,7 +12,7 @@ import { nextStatuses } from "@/lib/invoice-status";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 import { useToast } from "@/lib/toast-context";
-import type { InvoiceListItem, InvoiceStatus } from "@/lib/view-models";
+import type { InvoiceListItem, InvoiceStatus, Numericish } from "@/lib/view-models";
 
 export default function InvoicesClient({ initialInvoices }: { initialInvoices: InvoiceListItem[] }) {
   const { lang } = useLang();
@@ -71,7 +71,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: I
     ({ PAID: "paid", SENT: "sent", OVERDUE: "overdue", DRAFT: "draft", CANCELLED: "draft" }[s] || "draft");
 
   const curSym: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
-  const fmt = (n: number | string, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt = (n: Numericish | null | undefined, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtDate = (d: string | Date | null | undefined) => d ? new Date(d).toLocaleDateString("tr-TR") : "—";
 
   // 1) Durum filtresi
