@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useLang } from "@/lib/lang-context";
+import { getCountries } from "@/lib/countries";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
 import Link from "next/link";
@@ -314,6 +315,7 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
 }
 
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
+  const { lang } = useLang();
   const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR", defaultDueDays: 15 });
   const [logo, setLogo] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -356,10 +358,10 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
     [L("E-posta", "Email"), "email"],
     [L("Adres", "Address"), "address"],
     [L("Şehir", "City"), "city"],
-    [L("Ülke", "Country"), "country"],
     [L("Vergi No", "Tax ID"), "taxId"],
     [L("VAT ID", "VAT ID"), "vatId"],
   ];
+  const countries = getCountries(lang);
 
   return (
     <div className="space-y-4">
@@ -373,6 +375,13 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
               <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} />
             </div>
           ))}
+          <div>
+            <label className={lbl}>{L("Ülke", "Country")}</label>
+            <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={field}>
+              <option value="">{L("Seç...", "Select...")}</option>
+              {countries.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-slate-100">

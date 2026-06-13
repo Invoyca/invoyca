@@ -13,6 +13,7 @@ import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2, File
 import { generateEmailDraft } from "../../ai-actions";
 import { saveErrorMessage } from "./save-error";
 import { MobilePreview } from "./MobilePreview";
+import { getCountries } from "@/lib/countries";
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
 import { listClients, listProducts, getAccountInfo, listBankAccounts, createClientRecord } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
@@ -707,7 +708,10 @@ export default function NewInvoicePage() {
                 </div>
                 <div>
                   <label className={lbl}>{L("Ülke", "Country")}</label>
-                  <input className={field + " mt-1"} value={clientModal.country} onChange={(e) => setClientModal({ ...clientModal, country: e.target.value })} />
+                  <select className={field + " mt-1"} value={clientModal.country} onChange={(e) => setClientModal({ ...clientModal, country: e.target.value })}>
+                    <option value="">{L("Seç...", "Select...")}</option>
+                    {getCountries(lang).map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+                  </select>
                 </div>
               </div>
             </div>
