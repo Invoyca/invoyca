@@ -38,6 +38,7 @@ export type PdfParams = {
   taxMode: "normal" | "reverse" | "exempt";
   themeColor?: string; // hex, ör. "#1D4ED8"
   qrImage?: string;    // kullanıcının yüklediği QR (base64 data URL)
+  logoUrl?: string;    // kullanıcının yüklediği logo (base64 data URL)
 };
 
 // Tema renkleri (editördeki theme id → hex)
@@ -45,7 +46,7 @@ const THEME_HEX: Record<string, string> = {
   blue: "#1D4ED8", slate: "#0F172A", emerald: "#059669", violet: "#7C3AED", rose: "#E11D48",
 };
 
-export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }: PdfParams) {
+export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage, logoUrl }: PdfParams) {
   ensureFonts();
   const L = (TPL_LABELS as any)[lang] || (TPL_LABELS as any).EN;
   const accent = themeColor || THEME_HEX.blue;
@@ -62,8 +63,10 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }
     headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
     brand: { flexDirection: "row", alignItems: "center" },
     logoMark: { width: 26, height: 26, borderRadius: 6, backgroundColor: accent, marginRight: 8 },
+    logoImg: { maxWidth: 90, maxHeight: 32, marginRight: 8, objectFit: "contain" },
     brandName: { fontSize: 15, fontFamily: "NotoSans", fontWeight: "bold", color: "#0F172A" },
     docTitle: { fontSize: 22, fontFamily: "NotoSans", fontWeight: "bold", color: accent, textAlign: "right", lineHeight: 1 },
+    docSubtitle: { fontSize: 8.5, color: "#94A3B8", textAlign: "right", marginTop: 3, maxWidth: 220 },
     docNo: { fontSize: 9, color: "#64748B", textAlign: "right", marginTop: 6 },
     // Taraf blokları
     parties: { flexDirection: "row", justifyContent: "space-between", marginBottom: 24 },
@@ -98,6 +101,10 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }
     // Notlar / vergi notu
     noteBox: { marginTop: 18, padding: 8, backgroundColor: "#FFFBEB", borderRadius: 4, borderLeftWidth: 2, borderLeftColor: "#F59E0B" },
     noteTxt: { fontSize: 8, color: "#92400E" },
+    userNoteWrap: { marginTop: 14, flexDirection: "row", gap: 24 },
+    userNoteBlock: { flex: 1 },
+    userNoteLbl: { fontSize: 8, fontWeight: 600, color: "#64748B", marginBottom: 2 },
+    userNoteTxt: { fontSize: 8.5, color: "#475569", lineHeight: 1.5 },
     // Banka / ödeme
     payBox: { marginTop: 18, flex: 1 },
     payRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 16 },
@@ -121,11 +128,16 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }
         {/* Üst başlık */}
         <View style={styles.headerRow}>
           <View style={styles.brand}>
-            <View style={styles.logoMark} />
+            {logoUrl ? (
+              <Image src={logoUrl} style={styles.logoImg} />
+            ) : (
+              <View style={styles.logoMark} />
+            )}
             <Text style={styles.brandName}>{data.sender.name || "Invoyca"}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={styles.docTitle}>{docTitle}</Text>
+            {(data as any).subtitle ? <Text style={styles.docSubtitle}>{(data as any).subtitle}</Text> : null}
             <Text style={styles.docNo}>{L.invno}: {data.meta.no}</Text>
           </View>
         </View>
@@ -192,6 +204,24 @@ export function InvoicePDF({ data, lang, docType, taxMode, themeColor, qrImage }
         {(isReverse || isExempt) ? (
           <View style={styles.noteBox}>
             <Text style={styles.noteTxt}>{isReverse ? L.rc_note : L.ex_note}</Text>
+          </View>
+        ) : null}
+
+        {/* Müşteri notu + ödeme şartları (kullanıcı girdiyse) */}
+        {((data as any).userNotes || (data as any).userTerms) ? (
+          <View style={styles.userNoteWrap}>
+            {(data as any).userNotes ? (
+              <View style={styles.userNoteBlock}>
+                <Text style={styles.userNoteLbl}>{L.notes}</Text>
+                <Text style={styles.userNoteTxt}>{(data as any).userNotes}</Text>
+              </View>
+            ) : null}
+            {(data as any).userTerms ? (
+              <View style={styles.userNoteBlock}>
+                <Text style={styles.userNoteLbl}>{L.terms}</Text>
+                <Text style={styles.userNoteTxt}>{(data as any).userTerms}</Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 

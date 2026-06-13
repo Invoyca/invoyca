@@ -69,6 +69,13 @@ export function dbInvoiceToData(invoice: any): InvoiceData {
     vat: formatMoney(vatTotal, cur),
     total: formatMoney(total, cur),
     totalReverse: formatMoney(noVat, cur),
+    // Kullanıcının girdiği serbest alanlar (PDF/HTML render bunları gösterir)
+    // @ts-ignore
+    subtitle: invoice.subtitle || "",
+    // @ts-ignore
+    userNotes: invoice.notes || "",
+    // @ts-ignore
+    userTerms: invoice.terms || "",
   };
 }
 

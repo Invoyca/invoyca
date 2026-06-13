@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Fatura şablon render motoru — galeri dosyalarından BİREBİR çıkarılmıştır.
 // 25 varyant × tema × dil × QR modu × vergi modu. HTML string üretir.
 // React'te dangerouslySetInnerHTML ile gösterilir (galeri ile aynı çıktı).
@@ -21,6 +20,7 @@ export type RenderOpts = {
   docType: string;
   qrMode: string;
   qrImage?: string; // kullanıcının yüklediği QR resmi (base64 data URL)
+  logoUrl?: string; // kullanıcının yüklediği logo (base64 data URL)
   taxMode: string;
   data?: InvoiceData; // verilmezse SAMPLE kullanılır (önizleme için)
 };
@@ -29,6 +29,7 @@ export function renderInvoiceHTML(opts: RenderOpts): string {
   const curVar = opts.variant;
   const qrMode = opts.qrMode;
   const qrImage = opts.qrImage || "";
+  const logoUrl = opts.logoUrl || "";
   const taxMode = opts.taxMode;
 
   // Gerçek veri verilmişse onu, yoksa örnek veriyi kullan
@@ -38,11 +39,11 @@ export function renderInvoiceHTML(opts: RenderOpts): string {
   // render.ts string interpolation ile HTML üretir; bu yüzden veriyi BURADA, tek noktada temizliyoruz.
   const esc = (v: unknown): string =>
     String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
   // Veri objesini derinlemesine escape'le (string'ler temizlenir, sayı/diğer korunur)
   const escDeep = (val: any): any => {
@@ -68,7 +69,7 @@ export function renderInvoiceHTML(opts: RenderOpts): string {
   const curTheme = { color: themeObj.color, light: themeObj.light };
 
   // Çeviri sözlüğü — galeri "d" objesi. Ek olarak dt ve items alanları.
-  const base = TPL_LABELS[opts.lang] || TPL_LABELS.EN;
+  const base = (TPL_LABELS as Record<string, Record<string, string>>)[opts.lang] || TPL_LABELS.EN;
   const d: any = {
     ...base,
     dt: { invoice: base.invoice, proforma: base.proforma, commercial: base.commercial, quote: base.quote },
@@ -80,12 +81,21 @@ export function renderInvoiceHTML(opts: RenderOpts): string {
     _subtotalVal: D.subtotal, _vatVal: (D as any).vatAmount || (D as any).vat || "0", _totalVal: D.total, _totalNoVat: D.totalReverse,
     gibno: "GİB No", ettn: "ETTN",
   };
+  // Kullanıcı kendi notunu/şartını/alt başlığını girdiyse varsayılanın yerine koy
+  if ((D as any).userNotes) d.notes_val = (D as any).userNotes;
+  if ((D as any).userTerms) d.terms_val = (D as any).userTerms;
+  d.subtitle = (D as any).subtitle || "";
 
   // ---- Galeri yardımcı fonksiyonları (birebir) ----
-function logo(c,size){ const r=size*0.18; return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><rect x="1" y="1" width="${size-2}" height="${size-2}" rx="${r}" fill="${c}1a" stroke="${c}55" stroke-width="1.2" stroke-dasharray="4 3"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="${size*0.2}" font-family="sans-serif" font-weight="600" fill="${c}" letter-spacing="1">LOGO</text></svg>`; }
+function logo(c:string,size:number){
+  // Kullanıcı kendi logosunu yüklediyse onu göster
+  if(logoUrl){
+    return `<img src="${logoUrl}" style="display:block;max-width:${size*2.4}px;max-height:${size}px;object-fit:contain" alt="logo" />`;
+  }
+  const r=size*0.18; return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none"><rect x="1" y="1" width="${size-2}" height="${size-2}" rx="${r}" fill="${c}1a" stroke="${c}55" stroke-width="1.2" stroke-dasharray="4 3"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="${size*0.2}" font-family="sans-serif" font-weight="600" fill="${c}" letter-spacing="1">LOGO</text></svg>`; }
 
 
-  function qr(c, size){
+  function qr(c:string, size:number){
     // Kullanıcı kendi QR resmini yüklediyse onu göster
     if(qrImage){
       return `<img src="${qrImage}" width="${size}" height="${size}" style="display:block;object-fit:contain" alt="QR" />`;
@@ -93,7 +103,7 @@ function logo(c,size){ const r=size*0.18; return `<svg width="${size}" height="$
     // Yüklenmemişse: ince kenarlıklı boş alan + "QR" ipucu (sahte QR deseni YOK)
     return `<div style="width:${size}px;height:${size}px;border:1px dashed #cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:${size*0.18}px;font-weight:600;letter-spacing:1px">QR</div>`;
   }
-function manyItems(d){
+function manyItems(d:any){
     const base=d.items;
     const extra=[
       [d.items[0][0],base[0][1],4,base[0][3],"€8.000,00"],
@@ -105,7 +115,7 @@ function manyItems(d){
     ];
     return base.concat(extra);
   }
-function itemsTable(d,c,opts){
+function itemsTable(d:any,c:string,opts?:any){
     const showUnit = opts.unit!==false;
     const data = opts.many ? manyItems(d) : d.items;
     const head = `<tr style="${opts.headStyle}">
@@ -114,7 +124,7 @@ function itemsTable(d,c,opts){
       <th style="text-align:center;padding:${opts.hpad};width:42px">${d.qty}</th>
       <th style="text-align:right;padding:${opts.hpad};width:84px">${d.price}</th>
       <th style="text-align:right;padding:${opts.hpad};width:88px">${d.amount}</th></tr>`;
-    const rows = data.map((it,i)=>`<tr style="${opts.rowStyle}${opts.zebra&&i%2===1?`;background:${opts.zebraColor||'#f8fafc'}`:''}">
+    const rows = data.map((it:any,i:number)=>`<tr style="${opts.rowStyle}${opts.zebra&&i%2===1?`;background:${opts.zebraColor||'#f8fafc'}`:''}">
       <td style="padding:${opts.rpad};color:#334155">${it[0]}</td>
       ${showUnit?`<td style="padding:${opts.rpad};text-align:center;color:#94a3b8">${it[1]}</td>`:``}
       <td style="padding:${opts.rpad};text-align:center;color:#64748b">${it[2]}</td>
@@ -122,7 +132,7 @@ function itemsTable(d,c,opts){
       <td style="padding:${opts.rpad};text-align:right;color:#0f172a;font-weight:500">${it[4]}</td></tr>`).join("");
     return `<table style="width:100%;border-collapse:collapse;font-size:10.5px"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
   }
-function totals(d,c){
+function totals(d:any,c:string){
     let vatRow, totalVal, note="";
     if(taxMode==="reverse"){
       vatRow=`<div style="display:flex;justify-content:space-between;padding:4px 0;color:#64748b"><span>${d.reverse_short}</span><span>€0,00</span></div>`;
@@ -145,7 +155,7 @@ function totals(d,c){
     </div>`;
   }
   // Tax Focused için: çok kolonlu vergi tablosu (indirim, matrah, KDV oranı, KDV tutarı, satır toplamı)
-  function taxItemsTable(d,c){
+  function taxItemsTable(d:any,c:string){
     const rows = d.items.map((it:any,i:number)=>{
       // örnek: matrah = tutar, KDV %20
       const lineNet = it[4];
@@ -175,7 +185,7 @@ function totals(d,c){
       </tr></thead><tbody>${rows}</tbody></table>`;
   }
   // Tax Focused için: detaylı vergi özeti (KDV oranına göre döküm + tevkifat satırı)
-  function taxSummary(d,c){
+  function taxSummary(d:any,c:string){
     return `<div style="width:280px;font-size:10.5px">
       <div style="display:flex;justify-content:space-between;padding:4px 0;color:#64748b"><span>${d.subtotal}</span><span>${d._subtotalVal}</span></div>
       <div style="display:flex;justify-content:space-between;padding:4px 0;color:#64748b"><span>${d.discount}</span><span>– €0,00</span></div>
@@ -185,7 +195,7 @@ function totals(d,c){
     </div>`;
   }
   // Service Invoice için: saatlik/hizmet tablosu (açıklama, dönem, saat, ücret, toplam)
-  function serviceItemsTable(d,c){
+  function serviceItemsTable(d:any,c:string){
     const periods = ["01–15 "+(d.issue==="Tarih"?"Haz":"Jun"), "01–30 "+(d.issue==="Tarih"?"Haz":"Jun"), "10–20 "+(d.issue==="Tarih"?"Haz":"Jun")];
     const rows = d.items.map((it:any,i:number)=>`<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:9px 6px;color:#334155">${it[0]}</td>
@@ -204,7 +214,7 @@ function totals(d,c){
       </tr></thead><tbody>${rows}</tbody></table>`;
   }
   // Inventory için: SKU/ürün kodlu kompakt tablo
-  function skuItemsTable(d,c){
+  function skuItemsTable(d:any,c:string){
     const skus = ["SKU-1042","SKU-2071","SKU-3318","SKU-4405","SKU-5560","SKU-6612"];
     const data = d.items.length>3 ? d.items : d.items;
     const rows = data.map((it:any,i:number)=>`<tr style="border-bottom:1px solid #f1f5f9">
@@ -227,11 +237,11 @@ function totals(d,c){
         <th style="text-align:right;padding:6px 8px;width:82px">${d.amount}</th>
       </tr></thead><tbody>${rows}</tbody></table>`;
   }
-function notesblock(d,c,style){
+function notesblock(d:any,c:string,style?:string){
     return `<div style="${style||''}"><p class="lbl" style="color:${c};font-weight:600;margin-bottom:4px">${d.notes_lbl}</p>
       <p style="font-size:10px;color:#64748b;line-height:1.55">${d.notes_val}</p></div>`;
   }
-function qrblock(d,c,size){
+function qrblock(d:any,c:string,size?:number){
     if(qrMode==="off") return "";
     if(!qrImage) return ""; // QR yüklenmemişse hiç gösterme (sahte QR yok)
     const s = size||56;
@@ -241,12 +251,12 @@ function qrblock(d,c,size){
       <div><p class="lbl" style="color:${c};font-weight:600;margin-bottom:2px">${label}</p></div>
     </div>`;
   }
-function payblock(d,c,style){
+function payblock(d:any,c:string,style?:string){
     return `<div style="${style||''}"><p class="lbl" style="color:${c};font-weight:600;margin-bottom:4px">${d.payinfo}</p>
       <p style="font-size:10px;color:#475569;line-height:1.6">${d.bank}: ${BANKNAME}<br>IBAN: ${IBAN}<br>SWIFT/BIC: ${SWIFT}</p>
       <p style="font-size:10px;color:#94a3b8;margin-top:6px"><b style="color:#64748b">${d.terms}:</b> ${d.terms_val}</p></div>`;
   }
-function partyBlock(d,label,party,extra){
+function partyBlock(d:any,label:string,party:any,extra:string){
     return `<div><p class="lbl" style="margin-bottom:4px">${label}</p>
       <p style="font-weight:600;color:#0f172a;font-size:12px">${party.name}</p>
       <p style="font-size:10px;color:#94a3b8;line-height:1.55">${party.addr.join("<br>")}</p>
@@ -255,7 +265,11 @@ function partyBlock(d,label,party,extra){
 
   // ---- renderPaper head ----
   const c = curTheme.color, lt = curTheme.light;
-  const dt = d.dt[opts.docType];
+  const _dtBase = d.dt[opts.docType];
+  // Alt başlık varsa belge başlığının altına küçük punto ekle (tüm 25 varyantta çalışır)
+  const dt = d.subtitle
+    ? `${_dtBase}<span style="display:block;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:0;margin-top:3px;line-height:1.3">${esc(d.subtitle)}</span>`
+    : _dtBase;
   const senderTax = `<p style="font-size:10px;color:#94a3b8;margin-top:3px">${d.vkn}: ${SENDER.tax}${SENDER.vat?` \u00b7 ${d.vatid}: ${SENDER.vat}`:''}</p>`;
   const clientTax = `<p style="font-size:10px;color:#94a3b8;margin-top:3px">${d.vatid}: ${CLIENT.vat}</p>`;
   const metaRows = `<p>${d.invno}: <b style="color:#475569">${META.no}</b></p><p style="margin-top:2px">${d.issue}: <span style="color:#475569">${META.issue}</span></p><p style="margin-top:2px">${d.due}: <span style="color:#475569">${META.due}</span></p>`;

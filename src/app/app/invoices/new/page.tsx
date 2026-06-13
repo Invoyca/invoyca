@@ -9,9 +9,10 @@ import { FAMILIES, THEMES, VARIANT_NAMES, FamilyId } from "@/lib/templates/data"
 import { EditorState, emptyEditorState, toInvoiceData } from "@/lib/invoice-data";
 import { calcTotals, formatMoney } from "@/lib/invoice-calc";
 import { UNIT_ORDER, unitLabel, normalizeUnit } from "@/lib/units";
-import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Save, Eye, X, Download, Send, Loader2, CheckCircle2, FileText, Sparkles } from "lucide-react";
+import { generateEmailDraft } from "../../ai-actions";
 import { saveInvoice, getNextInvoiceNumber, getInvoice } from "../actions";
-import { listClients, listProducts, getAccountInfo, listBankAccounts } from "../../data-actions";
+import { listClients, listProducts, getAccountInfo, listBankAccounts, createClientRecord } from "../../data-actions";
 import { useGuest } from "@/lib/guest-context";
 import { useToast } from "@/lib/toast-context";
 
@@ -29,6 +30,10 @@ export default function NewInvoicePage() {
   const [showPreview, setShowPreview] = useState(false);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState("");
+  const [emailModal, setEmailModal] = useState<{ to: string; subject: string; message: string } | null>(null);
+  const [clientModal, setClientModal] = useState<{ name: string; email: string; vatId: string; address: string; city: string; country: string } | null>(null);
+  const [savingClient, setSavingClient] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
   const [savedClients, setSavedClients] = useState<any[]>([]);
   const [savedProducts, setSavedProducts] = useState<any[]>([]);
   // URL'de ?type=quote varsa teklif modu, ?id=... varsa düzenleme modu
@@ -39,6 +44,7 @@ export default function NewInvoicePage() {
   const [companyDefaultLang, setCompanyDefaultLang] = useState<string | null>(null);
   const [companyQr, setCompanyQr] = useState<string>("");   // şirketin varsayılan ödeme QR'ı
   const [companyQrVerify, setCompanyQrVerify] = useState<string>(""); // şirketin doğrulama QR'ı
+  const [companyLogo, setCompanyLogo] = useState<string>(""); // şirketin logosu
   const [invoiceQr, setInvoiceQr] = useState<string>("");   // bu faturaya özel QR (boşsa şirketinki)
   const [bankAccounts, setBankAccounts] = useState<any[]>([]); // kayıtlı banka hesapları
   const [selectedBankId, setSelectedBankId] = useState<string>(""); // seçili hesap
@@ -50,7 +56,25 @@ export default function NewInvoicePage() {
 
   // Kayıtlı müşteri ve ürünleri yükle (faturada seçim için)
   useEffect(() => {
-    listClients().then((r) => { if (r.ok) setSavedClients(r.clients || []); }).catch(() => {});
+    listClients().then((r) => {
+      if (r.ok) {
+        setSavedClients(r.clients || []);
+        // URL'de ?client=ID varsa (müşteri detayından "Bu müşteriye fatura") o müşteriyi seç
+        const params = new URLSearchParams(window.location.search);
+        const cid = params.get("client");
+        if (cid && !params.get("id")) {
+          const c = (r.clients || []).find((x: any) => x.id === cid);
+          if (c) {
+            setSt((s) => ({ ...s, client: {
+              name: c.name || "", email: c.email || "",
+              addr: [c.address, c.city, c.country].filter(Boolean).join("\n"),
+              vat: c.vatId || "",
+            } }));
+            if (c.preferredLanguage) setInvoiceLang(String(c.preferredLanguage).toUpperCase() as any);
+          }
+        }
+      }
+    }).catch(() => {});
     listProducts().then((r) => { if (r.ok) setSavedProducts(r.products || []); }).catch(() => {});
     // Kayıtlı banka hesaplarını yükle; varsayılanı (veya ilkini) faturaya uygula
     listBankAccounts().then((r) => {
@@ -69,6 +93,7 @@ export default function NewInvoicePage() {
     getAccountInfo().then((r) => {
       if (r.ok && r.company?.qrImage) setCompanyQr(r.company.qrImage);
       if (r.ok && (r.company as any)?.qrVerify) setCompanyQrVerify((r.company as any).qrVerify);
+      if (r.ok && (r.company as any)?.logoUrl) setCompanyLogo((r.company as any).logoUrl);
       if (r.ok && r.company?.defaultLanguage) {
         setCompanyDefaultLang(r.company.defaultLanguage);
         // Düzenleme/müşteri seçimi henüz olmadıysa varsayılanı uygula
@@ -100,6 +125,7 @@ export default function NewInvoicePage() {
               issue: inv.issueDate ? new Date(inv.issueDate).toLocaleDateString("tr-TR") : s.meta.issue,
               due: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("tr-TR") : "",
               ref: s.meta.ref,
+              subtitle: inv.subtitle || "",
             },
             items: (inv.items || []).map((it: any) => ({
               description: it.description, unit: normalizeUnit(it.unit || "piece"), quantity: Number(it.quantity),
@@ -107,6 +133,8 @@ export default function NewInvoicePage() {
             })),
             currency: inv.currency || "EUR",
             taxMode: (inv.taxMode || "NORMAL").toLowerCase(),
+            notes: inv.notes || "",
+            terms: inv.terms || "",
           }));
           // Faturanın kayıtlı dilini yükle
           if (inv.language) setInvoiceLang(inv.language);
@@ -128,6 +156,38 @@ export default function NewInvoicePage() {
   }, []);
 
   // Kayıtlı müşteri seçilince alanları doldur
+  // Modal'dan yeni müşteri kaydet → listeye ekle → faturaya otomatik seç
+  const saveNewClient = async () => {
+    if (!clientModal) return;
+    if (!clientModal.name.trim()) { toast.error(L("Müşteri adı gerekli.", "Client name required.")); return; }
+    if (clientModal.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientModal.email.trim())) {
+      toast.error(L("Geçersiz e-posta adresi.", "Invalid email address.")); return;
+    }
+    setSavingClient(true);
+    const res = await createClientRecord({
+      name: clientModal.name.trim(),
+      email: clientModal.email.trim() || undefined,
+      vatId: clientModal.vatId.trim() || undefined,
+      address: clientModal.address.trim() || undefined,
+      city: clientModal.city.trim() || undefined,
+      country: clientModal.country.trim() || undefined,
+    });
+    setSavingClient(false);
+    if (!res.ok) { toast.error(res.error || L("Müşteri kaydedilemedi.", "Could not save client.")); return; }
+    // Listeyi yenile + faturaya bu müşteriyi uygula
+    const c = (res as any).client;
+    if (c) {
+      setSavedClients((prev) => [c, ...prev]);
+      setSt((s) => ({ ...s, client: {
+        ...s.client, name: c.name || "", vat: c.vatId || "",
+        addr: [c.address, c.city, c.country].filter(Boolean).join("\n"),
+        email: c.email || "",
+      } }));
+    }
+    setClientModal(null);
+    toast.success(L("Müşteri kaydedildi", "Client saved"));
+  };
+
   const pickClient = (id: string) => {
     const c = savedClients.find((x) => x.id === id);
     if (!c) return;
@@ -160,7 +220,7 @@ export default function NewInvoicePage() {
   const data = toInvoiceData(st, invoiceLang);
   // Etkili QR: faturaya özel varsa o; yoksa seçilen QR tipine göre şirket varsayılanı
   const effectiveQr = qrMode === "off" ? "" : (invoiceQr || (qrMode === "verify" ? companyQrVerify : companyQr));
-  const html = renderInvoiceHTML({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: effectiveQr, taxMode: st.taxMode, data });
+  const html = renderInvoiceHTML({ variant, theme, lang: invoiceLang, docType: isQuote ? "quote" : "invoice", qrMode, qrImage: effectiveQr, logoUrl: companyLogo, taxMode: st.taxMode, data });
 
   const upItem = (i: number, field: string, val: any) =>
     setSt((s) => ({ ...s, items: s.items.map((it, idx) => (idx === i ? { ...it, [field]: val } : it)) }));
@@ -182,6 +242,9 @@ export default function NewInvoicePage() {
       items: st.items, subtotal: totals.subtotal, vatTotal: totals.vatTotal, total: totals.total,
       docType: isQuote ? "QUOTE" : "INVOICE",
       language: invoiceLang,
+      notes: st.notes || undefined,
+      terms: st.terms || undefined,
+      subtitle: st.meta.subtitle || undefined,
     });
     setBusy("");
     if (res.ok) {
@@ -239,25 +302,69 @@ export default function NewInvoicePage() {
     }
   };
 
-  const sendEmail = async () => {
+  // E-posta modalını aç — alanları otomatik doldur
+  const openEmailModal = () => {
     if (!requireAuth()) return;
-    // Güvenli model: e-posta için faturanın DB'de kayıtlı olması gerekir.
-    // Önce kaydet (id al), sonra backend invoiceId ile faturayı DB'den çekip PDF'i kendisi üretip gönderir.
-    const to = st.client.email || window.prompt(L("Müşteri e-postası:", "Client email:")) || "";
-    if (!to) return;
+    const to = st.client.email || "";
+    const docLabel = isQuote ? L("Teklif", "Quote") : L("Fatura", "Invoice");
+    const subject = `${st.sender.name || "Invoyca"} — ${docLabel} ${st.meta.no || ""}`.trim();
+    // Faturanın dilinde varsayılan mesaj
+    const greet = st.client.name ? `${L("Merhaba")} ${st.client.name},` : `${L("Merhaba")},`;
+    const intro = isQuote
+      ? `${L("Numaralı teklifimizi ekte bulabilirsiniz:")} ${st.meta.no}`
+      : `${L("Numaralı faturayı ekte bulabilirsiniz:")} ${st.meta.no}`;
+    const sign = L("İyi çalışmalar") + `,\n${st.sender.name || ""}`;
+    const message = `${greet}\n\n${intro}\n\n${sign}`;
+    setEmailModal({ to, subject, message });
+  };
+
+  // AI ile e-posta mesajı öner — sonucu mesaj kutusuna yazar (kullanıcı düzenleyebilir)
+  const suggestEmail = async () => {
+    if (!emailModal) return;
+    setAiBusy(true);
+    try {
+      const res = await generateEmailDraft({
+        clientName: st.client.name || undefined,
+        invoiceNo: st.meta.no || undefined,
+        amount: data.total,
+        currency: st.currency,
+        dueDate: st.meta.due || undefined,
+        companyName: st.sender.name || undefined,
+        lang: invoiceLang,
+        isQuote,
+      });
+      if (res.ok && res.text) {
+        setEmailModal({ ...emailModal, message: res.text });
+        toast.success(L("AI önerisi hazır — istersen düzenle", "AI draft ready — edit if you like"));
+      } else {
+        toast.error(res.error || L("AI önerisi alınamadı.", "Couldn't get AI suggestion."));
+      }
+    } catch {
+      toast.error(L("AI önerisi alınamadı.", "Couldn't get AI suggestion."));
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  // Modaldan gerçek gönderim
+  const doSendEmail = async () => {
+    if (!emailModal) return;
+    const { to, subject, message } = emailModal;
+    if (!to.trim()) { toast.error(L("Alıcı e-postası gerekli.", "Recipient email required.")); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to.trim())) { toast.error(L("Geçersiz e-posta adresi.", "Invalid email address.")); return; }
     setBusy("email");
     try {
-      // Faturayı kaydet / güncelle, id al
       const invoiceId = await save();
-      if (!invoiceId) { setBusy(""); return; } // kaydetme başarısızsa save() zaten uyardı
-
+      if (!invoiceId) { setBusy(""); return; }
       const res = await fetch("/api/send-invoice", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId, toOverride: to }),
+        body: JSON.stringify({ invoiceId, toOverride: to.trim(), subject: subject.trim(), customMessage: message }),
       });
       const j = await res.json();
-      if (j.ok) toast.success(L("E-posta gönderildi (PDF ekli)", "Email sent (PDF attached)"));
-      else throw new Error(j.error);
+      if (j.ok) {
+        toast.success(L("E-posta gönderildi (PDF ekli)", "Email sent (PDF attached)"));
+        setEmailModal(null);
+      } else throw new Error(j.error);
     } catch (e: any) {
       toast.error(L("E-posta gönderilemedi: ", "Email failed: ") + (e.message || L("Resend anahtarı gerekli.", "Resend key required.")));
     } finally { setBusy(""); }
@@ -284,7 +391,7 @@ export default function NewInvoicePage() {
           <button onClick={downloadPdf} disabled={busy==="pdf"} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-60">
             {busy==="pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
           </button>
-          <button onClick={sendEmail} disabled={busy==="email"} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-60">
+          <button onClick={openEmailModal} disabled={busy==="email"} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-60">
             {busy==="email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} {L("Gönder", "Send")}
           </button>
           <button onClick={() => save(true)} disabled={busy==="save"} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">
@@ -320,18 +427,24 @@ export default function NewInvoicePage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="font-medium text-sm mb-3">{L("Alıcı (Müşteri)", "Bill To (Client)")}</p>
 
-            {/* Kayıtlı müşteriden seç (varsa) */}
-            {savedClients.length > 0 && (
-              <div className="mb-3">
-                <label className={lbl}>{L("Kayıtlı müşteriden seç", "Pick saved client")}</label>
+            {/* Kayıtlı müşteriden seç (varsa) + yeni ekle */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <label className={lbl}>{savedClients.length > 0 ? L("Kayıtlı müşteriden seç", "Pick saved client") : L("Müşteri", "Client")}</label>
+                <button type="button" onClick={() => setClientModal({ name: "", email: "", vatId: "", address: "", city: "", country: "" })}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                  <Plus className="h-3.5 w-3.5" /> {L("Yeni müşteri", "New client")}
+                </button>
+              </div>
+              {savedClients.length > 0 && (
                 <select className={field} defaultValue="" onChange={(e) => { pickClient(e.target.value); e.target.value = ""; }}>
                   <option value="" disabled>{L("Seç...", "Select...")}</option>
                   {savedClients.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="grid sm:grid-cols-2 gap-3">
               <div><label className={lbl}>{L("Şirket adı", "Company name")}</label><input className={field} value={st.client.name} onChange={(e) => setSt((s) => ({ ...s, client: { ...s.client, name: e.target.value } }))} /></div>
@@ -369,6 +482,31 @@ export default function NewInvoicePage() {
                   <option value="reverse">{L("Tevkifat", "Reverse charge")}</option>
                   <option value="exempt">{L("Muaf", "Exempt")}</option>
                 </select>
+              </div>
+
+              {/* Alt başlık — belge başlığının altında küçük açıklama */}
+              <div className="sm:col-span-2">
+                <label className={lbl}>{L("Fatura alt başlığı (opsiyonel)", "Invoice subtitle (optional)")}</label>
+                <input className={field} maxLength={120}
+                  placeholder={L("Örn: Danışmanlık hizmetleri — Haziran 2026", "e.g. Engineering consultancy — June 2026")}
+                  value={st.meta.subtitle || ""}
+                  onChange={(e) => setSt((s) => ({ ...s, meta: { ...s.meta, subtitle: e.target.value } }))} />
+              </div>
+
+              {/* Müşteri notu + Ödeme şartları */}
+              <div>
+                <label className={lbl}>{L("Müşteri notu (opsiyonel)", "Note to client (optional)")}</label>
+                <textarea className={field + " resize-none"} rows={2} maxLength={300}
+                  placeholder={L("Örn: İşbirliğiniz için teşekkürler.", "e.g. Thank you for your business.")}
+                  value={st.notes || ""}
+                  onChange={(e) => setSt((s) => ({ ...s, notes: e.target.value }))} />
+              </div>
+              <div>
+                <label className={lbl}>{L("Ödeme şartları (opsiyonel)", "Payment terms (optional)")}</label>
+                <textarea className={field + " resize-none"} rows={2} maxLength={300}
+                  placeholder={L("Örn: Ödeme 14 gün içinde yapılmalıdır.", "e.g. Payment due within 14 days.")}
+                  value={st.terms || ""}
+                  onChange={(e) => setSt((s) => ({ ...s, terms: e.target.value }))} />
               </div>
 
               {/* Banka hesabı (IBAN) seçimi */}
@@ -489,6 +627,118 @@ export default function NewInvoicePage() {
           </div>
         </div>
       </div>
+
+      {/* Yeni müşteri ekleme modalı */}
+      {clientModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => !savingClient && setClientModal(null)}>
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-lg text-slate-900">{L("Yeni Müşteri", "New Client")}</h3>
+              <button onClick={() => setClientModal(null)} disabled={savingClient} className="text-slate-400 hover:text-slate-600 disabled:opacity-50">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-xs text-slate-400">{L("Kaydedince bu faturaya eklenir ve sonraki faturalarında tekrar kullanabilirsin.", "Once saved, it's added to this invoice and reusable on future invoices.")}</p>
+              <div>
+                <label className={lbl}>{L("Şirket adı", "Company name")} *</label>
+                <input className={field + " mt-1"} value={clientModal.name} onChange={(e) => setClientModal({ ...clientModal, name: e.target.value })} autoFocus />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>{L("E-posta", "Email")}</label>
+                  <input className={field + " mt-1"} value={clientModal.email} onChange={(e) => setClientModal({ ...clientModal, email: e.target.value })} placeholder="client@example.com" />
+                </div>
+                <div>
+                  <label className={lbl}>{L("Vergi / VAT No", "Tax / VAT No")}</label>
+                  <input className={field + " mt-1"} value={clientModal.vatId} onChange={(e) => setClientModal({ ...clientModal, vatId: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>{L("Adres", "Address")}</label>
+                <input className={field + " mt-1"} value={clientModal.address} onChange={(e) => setClientModal({ ...clientModal, address: e.target.value })} />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>{L("Şehir", "City")}</label>
+                  <input className={field + " mt-1"} value={clientModal.city} onChange={(e) => setClientModal({ ...clientModal, city: e.target.value })} />
+                </div>
+                <div>
+                  <label className={lbl}>{L("Ülke", "Country")}</label>
+                  <input className={field + " mt-1"} value={clientModal.country} onChange={(e) => setClientModal({ ...clientModal, country: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100">
+              <button onClick={() => setClientModal(null)} disabled={savingClient}
+                className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-50">
+                {L("İptal", "Cancel")}
+              </button>
+              <button onClick={saveNewClient} disabled={savingClient}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">
+                {savingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {savingClient ? L("Kaydediliyor...", "Saving...") : L("Kaydet", "Save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* E-posta gönderme modalı */}
+      {emailModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => busy !== "email" && setEmailModal(null)}>
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-lg text-slate-900">{L("Faturayı e-posta ile gönder", "Send invoice by email")}</h3>
+              <button onClick={() => setEmailModal(null)} disabled={busy === "email"} className="text-slate-400 hover:text-slate-600 disabled:opacity-50">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className={lbl}>{L("Alıcı", "To")}</label>
+                <input type="email" value={emailModal.to} onChange={(e) => setEmailModal({ ...emailModal, to: e.target.value })}
+                  placeholder="client@example.com" className={field + " mt-1"} />
+              </div>
+              <div>
+                <label className={lbl}>{L("Konu", "Subject")}</label>
+                <input type="text" value={emailModal.subject} onChange={(e) => setEmailModal({ ...emailModal, subject: e.target.value })}
+                  className={field + " mt-1"} />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className={lbl}>{L("Mesaj", "Message")}</label>
+                  <button type="button" onClick={suggestEmail} disabled={aiBusy}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50">
+                    {aiBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {aiBusy ? L("Yazılıyor...", "Writing...") : L("AI ile öner", "Suggest with AI")}
+                  </button>
+                </div>
+                <textarea value={emailModal.message} onChange={(e) => setEmailModal({ ...emailModal, message: e.target.value })}
+                  rows={7} className={field + " mt-1 resize-none leading-relaxed"} />
+              </div>
+              {/* PDF ekli göstergesi */}
+              <div className="flex items-center gap-2.5 rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2.5">
+                <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                <span className="text-sm text-slate-600">{L("PDF fatura otomatik olarak eklenecek", "PDF invoice will be attached automatically")}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100">
+              <button onClick={() => setEmailModal(null)} disabled={busy === "email"}
+                className="rounded-lg border border-slate-300 bg-white text-sm font-medium px-4 py-2 hover:bg-slate-50 disabled:opacity-50">
+                {L("İptal", "Cancel")}
+              </button>
+              <button onClick={doSendEmail} disabled={busy === "email"}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700 disabled:opacity-60">
+                {busy === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {busy === "email" ? L("Gönderiliyor...", "Sending...") : L("Gönder", "Send")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobil önizleme modalı */}
       {showPreview && (

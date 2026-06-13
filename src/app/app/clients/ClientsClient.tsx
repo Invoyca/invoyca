@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card } from "@/components/ui";
@@ -22,7 +23,6 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
-  const [detailClient, setDetailClient] = useState<any>(null);
 
   const openForm = () => { if (requireAuth()) { setEditingClient(null); setShowForm(true); } };
   const openEdit = (c: any) => { if (requireAuth()) { setEditingClient(c); setShowForm(true); } };
@@ -72,8 +72,8 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mb-4">
               <Users className="h-7 w-7 text-slate-400" />
             </div>
-            <p className="font-medium text-slate-900 mb-1">{L("Henüz müşterin yok", "No clients yet")}</p>
-            <p className="text-sm text-slate-500 mb-5">{L("İlk müşterini ekleyerek başla.", "Add your first client to get started.")}</p>
+            <p className="font-medium text-slate-900 mb-1">{L("Henüz müşteri eklemedin", "No clients yet")}</p>
+            <p className="text-sm text-slate-500 mb-5 max-w-sm mx-auto leading-relaxed">{L("Müşteri bilgilerini bir kez kaydet, sonraki faturalarında tekrar tekrar yazma. Adres, vergi numarası ve para birimi otomatik gelir.", "Save client details once and reuse them on every future invoice. Address, tax ID and currency fill in automatically.")}</p>
             <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
               <Plus className="h-4 w-4" /> {L("Yeni Müşteri", "New Client")}
             </button>
@@ -106,7 +106,7 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
                             {(c.name || "?").slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <button onClick={() => setDetailClient(c)} className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left">{c.name}</button>
+                            <Link href={`/app/clients/${c.id}`} className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left">{c.name}</Link>
                             <p className="text-xs text-slate-400">{fmtCountry(c)}</p>
                           </div>
                         </div>
@@ -134,57 +134,6 @@ export default function ClientsClient({ initialClients }: { initialClients: any[
       {showForm && <ClientForm L={L} lang={lang} editClient={editingClient} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
 
       {/* Müşteri detay penceresi */}
-      {detailClient && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4" onClick={() => setDetailClient(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-base font-semibold">
-                  {(detailClient.name || "?").slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="font-semibold text-lg text-slate-900">{detailClient.name}</h2>
-                  <p className="text-xs text-slate-400">{fmtCountry(detailClient)}</p>
-                </div>
-              </div>
-              <button onClick={() => setDetailClient(null)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              {detailClient.email && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("E-posta", "Email")}</span><span className="text-slate-700 text-right">{detailClient.email}</span></div>
-              )}
-              {detailClient.phone && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Telefon", "Phone")}</span><span className="text-slate-700 text-right">{detailClient.phone}</span></div>
-              )}
-              {detailClient.vatId && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Vergi / VAT No", "Tax / VAT No")}</span><span className="text-slate-700 text-right">{detailClient.vatId}</span></div>
-              )}
-              {detailClient.address && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Adres", "Address")}</span><span className="text-slate-700 text-right">{detailClient.address}</span></div>
-              )}
-              {detailClient.city && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Şehir", "City")}</span><span className="text-slate-700 text-right">{detailClient.city}</span></div>
-              )}
-              {detailClient.country && (
-                <div className="flex justify-between gap-4"><span className="text-slate-400">{L("Ülke", "Country")}</span><span className="text-slate-700 text-right">{detailClient.country}</span></div>
-              )}
-              <div className="flex justify-between gap-4 pt-2 border-t border-slate-100"><span className="text-slate-400">{L("Fatura sayısı", "Invoices")}</span><span className="text-slate-700 font-medium">{detailClient._count?.invoices ?? 0}</span></div>
-            </div>
-
-            <div className="flex gap-2 mt-6">
-              <button onClick={() => { const c = detailClient; setDetailClient(null); openEdit(c); }}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
-                <Pencil className="h-4 w-4" /> {L("Düzenle", "Edit")}
-              </button>
-              <button onClick={() => setDetailClient(null)}
-                className="rounded-lg border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 hover:bg-slate-50">
-                {L("Kapat", "Close")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

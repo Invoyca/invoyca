@@ -208,6 +208,8 @@ model Invoice {
   bankSwift   String?
 
   notes       String?
+  terms       String?       // ödeme şartları (kullanıcı girer)
+  subtitle    String?       // fatura alt başlığı (belge başlığının altında)
 
   // Hesaplanan toplamlar (kuruş hassasiyetinde)
   subtotal    Decimal       @default(0)

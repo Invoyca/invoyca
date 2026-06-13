@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         taxMode: dbTaxMode((invoice as any).taxMode),
         themeColor: (invoice as any).themeColor,
         qrImage,
+        logoUrl: (company as any).logoUrl || undefined,
       });
       filename = (invoice.number || "fatura").replace(/[^a-zA-Z0-9_-]/g, "_");
     } else {
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
         taxMode: body.taxMode || "normal",
         themeColor: body.themeColor,
         qrImage: body.qrImage,
+        logoUrl: (body as any).logoUrl,
       });
       filename = (body.filename || body.data.meta?.no || "fatura").replace(/[^a-zA-Z0-9_-]/g, "_");
     }

@@ -38,6 +38,23 @@ export async function listClients() {
   return { ok: true, clients };
 }
 
+// Tek müşteri + o müşterinin faturaları (detay sayfası için, sahiplik kontrollü)
+export async function getClientDetail(clientId: string) {
+  const company = await getCompany();
+  if (!company) return { ok: false, error: "Oturum bulunamadı.", client: null, invoices: [] as any[] };
+  // Müşteri SADECE bu şirkete aitse gelir (yatay yetki)
+  const client = await prisma.client.findFirst({
+    where: { id: clientId, companyId: company.id },
+  });
+  if (!client) return { ok: false, error: "Müşteri bulunamadı.", client: null, invoices: [] as any[] };
+  const invoices = await prisma.invoice.findMany({
+    where: { companyId: company.id, clientId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  return { ok: true, client, invoices };
+}
+
 export async function createClientRecord(input: {
   name: string; email?: string; vatId?: string; address?: string; city?: string; country?: string; phone?: string;
 }) {
@@ -58,7 +75,7 @@ export async function createClientRecord(input: {
         phone: input.phone || null,
       },
     });
-    return { ok: true, id: client.id };
+    return { ok: true, id: client.id, client };
   } catch (err: any) {
     return { ok: false, error: err?.message || "Kayıt başarısız." };
   }
@@ -262,7 +279,7 @@ export async function updatePassword(newPassword: string) {
 
 // Şirket bilgilerini güncelle
 export async function updateCompany(input: {
-  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string; qrVerify?: string;
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string; qrVerify?: string; logoUrl?: string;
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
@@ -270,8 +287,15 @@ export async function updateCompany(input: {
   // QR resmi güvenliği: sadece güvenli base64 image (SVG/URL reddedilir → XSS koruması) + boyut
   const safeQrImage = input.qrImage !== undefined ? sanitizeImageDataUrl(input.qrImage) : undefined;
   const safeQrVerify = input.qrVerify !== undefined ? sanitizeImageDataUrl(input.qrVerify) : undefined;
+  // Logo da güvenli base64 image olmalı (boş string = logoyu kaldır)
+  const safeLogo = input.logoUrl !== undefined
+    ? (input.logoUrl === "" ? null : sanitizeImageDataUrl(input.logoUrl))
+    : undefined;
   if ((safeQrImage && safeQrImage.length > 720_000) || (safeQrVerify && safeQrVerify.length > 720_000)) {
     return { ok: false, error: "QR resmi çok büyük." };
+  }
+  if (safeLogo && safeLogo.length > 2_900_000) {
+    return { ok: false, error: "Logo çok büyük." };
   }
 
   const validLangs = ["TR", "EN", "DE", "NL", "FR", "ES", "IT"];
@@ -287,6 +311,7 @@ export async function updateCompany(input: {
       vatId: input.vatId || null,
       ...(input.qrImage !== undefined ? { qrImage: safeQrImage } : {}),
       ...(input.qrVerify !== undefined ? { qrVerify: safeQrVerify } as any : {}),
+      ...(input.logoUrl !== undefined ? { logoUrl: safeLogo } : {}),
       ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
         ? { defaultLanguage: input.defaultLanguage as any }
         : {}),

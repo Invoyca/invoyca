@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { createClient } from "@/lib/supabase/client";
-import { FileText, Clock, CheckCircle2, TrendingUp, Users, Plus, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { FileText, Clock, CheckCircle2, TrendingUp, Users, Plus, ChevronLeft, ChevronRight, X, ArrowRight } from "lucide-react";
+import { DashboardWelcomeCard } from "./DashboardWelcomeCard";
+import { OnboardingChecklist } from "./OnboardingChecklist";
+import { QuickActions } from "./QuickActions";
 
-export default function DashboardClient({ initialInvoices, clientCount = 0 }: { initialInvoices: any[]; clientCount?: number }) {
+export default function DashboardClient({ initialInvoices, clientCount = 0, productCount = 0, companyComplete = false }: { initialInvoices: any[]; clientCount?: number; productCount?: number; companyComplete?: boolean }) {
   const { lang } = useLang();
   const t = (s: string) => appT(lang, s);
   const [name, setName] = useState("");
@@ -90,8 +93,38 @@ export default function DashboardClient({ initialInvoices, clientCount = 0 }: { 
   const recent = invoices.slice(0, 5);
   const hasData = invoices.length > 0;
 
+  // Yeni kullanıcı mı? (üye, henüz faturası yok) → onboarding görünümü
+  const isNewUser = !isGuest && !hasData;
+  const onboardingState = {
+    companyComplete,
+    hasClient: clientCount > 0,
+    hasProduct: productCount > 0,
+    hasInvoice: hasData,
+  };
+
   return (
-    <div>
+    <div className="mx-auto max-w-[1500px]">
+      {isNewUser ? (
+        // ---- YENİ KULLANICI: onboarding çalışma alanı ----
+        <div className="space-y-6">
+          <DashboardWelcomeCard name={name} companyComplete={companyComplete} t={t} />
+
+          {/* Şirket bilgisi eksik uyarısı */}
+          {!companyComplete && (
+            <Link href="/app/settings" className="block rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100/70 transition-colors">
+              <p className="text-sm font-semibold text-amber-900">{t("Şirket bilgilerin eksik")}</p>
+              <p className="text-sm text-amber-800 mt-0.5">{t("PDF faturalarında şirket adı, adres ve ödeme bilgileri görünür. İlk faturadan önce tamamla.")}</p>
+            </Link>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <OnboardingChecklist state={onboardingState} t={t} />
+            <QuickActions t={t} />
+          </div>
+        </div>
+      ) : (
+        // ---- AKTİF KULLANICI / ZİYARETÇİ: operasyon paneli ----
+        <>
       {/* Karşılama */}
       <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white mb-6">
         <h1 className="text-xl font-semibold">
@@ -190,6 +223,8 @@ export default function DashboardClient({ initialInvoices, clientCount = 0 }: { 
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* Metrik detay penceresi — kartlara tıklayınca açılır */}
       {openDetail && (

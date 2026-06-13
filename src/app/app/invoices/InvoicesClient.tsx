@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/lang-context";
 import { appT } from "@/lib/i18n-app";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
-import { Plus, Search, FileText, Check, ChevronDown, Pencil, Trash2 } from "lucide-react";
-import { listInvoices, updateInvoiceStatus, deleteInvoice } from "./actions";
+import { Plus, Search, FileText, Check, ChevronDown, Pencil, Trash2, Copy } from "lucide-react";
+import { listInvoices, updateInvoiceStatus, deleteInvoice, duplicateInvoice } from "./actions";
 import { nextStatuses } from "@/lib/invoice-status";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
@@ -14,6 +15,7 @@ import { useToast } from "@/lib/toast-context";
 
 export default function InvoicesClient({ initialInvoices }: { initialInvoices: any[] }) {
   const { lang } = useLang();
+  const router = useRouter();
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
   const toast = useToast();
@@ -147,6 +149,17 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     else toast.success(L("Ödeme alındı olarak işaretlendi", "Marked as paid"));
   };
 
+  const dupInvoice = async (id: string) => {
+    if (!requireAuth()) return;
+    const res = await duplicateInvoice(id);
+    if (res.ok && res.id) {
+      toast.success(L("Fatura kopyalandı", "Invoice duplicated"));
+      router.push(`/app/invoices/new?id=${res.id}`);
+    } else {
+      toast.error(res.error || L("Kopyalanamadı", "Could not duplicate"));
+    }
+  };
+
   const delInvoice = async (id: string, number: string, status: string) => {
     if (!requireAuth()) return;
     // Ödenmiş fatura: hiç sorma, direkt uyar
@@ -272,7 +285,10 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                 <tbody>
                   {rows.map((inv) => (
                     <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="px-5 py-3 font-medium">{inv.number}</td>
+                      <td className="px-5 py-3 font-medium">
+                        <Link href={`/app/invoices/${inv.id}`} onClick={(e) => { if (!requireAuth()) e.preventDefault(); }}
+                          className="text-blue-600 hover:underline">{inv.number}</Link>
+                      </td>
                       <td className="px-5 py-3">{inv.client?.name || "—"}</td>
                       <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{fmtDate(inv.issueDate)}</td>
                       <td className="px-5 py-3 text-slate-500 hidden lg:table-cell">{fmtDate(inv.dueDate)}</td>
@@ -325,6 +341,10 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
                           className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-500" title={L("Düzenle", "Edit")}>
                           <Pencil className="h-4 w-4" />
                         </Link>
+                        <button onClick={() => dupInvoice(inv.id)}
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600" title={L("Kopyala", "Duplicate")}>
+                          <Copy className="h-4 w-4" />
+                        </button>
                         <button onClick={() => delInvoice(inv.id, inv.number, inv.status)}
                           className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600" title={L("Sil", "Delete")}>
                           <Trash2 className="h-4 w-4" />

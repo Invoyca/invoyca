@@ -6,12 +6,14 @@ import { unitLabel, normalizeUnit } from "./units";
 export type EditorState = {
   sender: { name: string; addr: string; tax: string; vat: string; email: string };
   client: { name: string; addr: string; vat: string; email: string };
-  meta: { no: string; issue: string; due: string; ref: string };
+  meta: { no: string; issue: string; due: string; ref: string; subtitle?: string };
   bank: { name: string; iban: string; swift: string };
   items: LineItem[];
   discount: number;
   currency: string;
   taxMode: TaxMode;
+  notes?: string;   // müşteri notu (serbest)
+  terms?: string;   // ödeme şartları
 };
 
 export function toInvoiceData(s: EditorState, lang: string = "TR"): InvoiceData {
@@ -32,6 +34,13 @@ export function toInvoiceData(s: EditorState, lang: string = "TR"): InvoiceData 
     totalReverse: formatMoney(noVat, s.currency),
     // @ts-ignore — render motoru ek alan olarak okur
     vatAmount: formatMoney(totals.vatTotal, s.currency),
+    // Kullanıcının girdiği serbest alanlar (boşsa render varsayılanı kullanır)
+    // @ts-ignore
+    subtitle: s.meta.subtitle || "",
+    // @ts-ignore
+    userNotes: s.notes || "",
+    // @ts-ignore
+    userTerms: s.terms || "",
   };
 }
 

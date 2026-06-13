@@ -75,10 +75,10 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mb-4">
               <Package className="h-7 w-7 text-slate-400" />
             </div>
-            <p className="font-medium text-slate-900 mb-1">{L("Henüz ürünün yok", "No products yet")}</p>
-            <p className="text-sm text-slate-500 mb-5">{L("Sık kullandığın ürün/hizmetleri ekle, faturada hızlı seç.", "Add products you use often for quick invoicing.")}</p>
+            <p className="font-medium text-slate-900 mb-1">{L("Henüz ürün veya hizmet eklemedin", "No products or services yet")}</p>
+            <p className="text-sm text-slate-500 mb-5 max-w-sm mx-auto leading-relaxed">{L("Sık kullandığın hizmetleri kaydet — danışmanlık, tasarım, saat bazlı iş. Fatura oluştururken birim ve fiyatıyla hazır gelir.", "Save the services you offer — consulting, design, hourly work. They appear ready with unit and price when you create an invoice.")}</p>
             <button onClick={openForm} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium px-4 py-2 hover:bg-blue-700">
-              <Plus className="h-4 w-4" /> {L("Yeni Ürün", "New Product")}
+              <Plus className="h-4 w-4" /> {L("Ürün / Hizmet Ekle", "Add Product / Service")}
             </button>
           </div>
         </Card>

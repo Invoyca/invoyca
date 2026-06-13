@@ -5,6 +5,8 @@ export type SendInvoiceEmailInput = {
   to: string; clientName: string; invoiceNo: string;
   senderName: string; amount: string; lang: string;
   dueDate?: string;
+  subject?: string;        // kullanıcı override ederse
+  customMessage?: string;  // kullanıcı kendi mesajını yazdıysa
   pdfBase64?: string;
   replyTo?: string;
 };
@@ -73,12 +75,19 @@ export async function sendInvoiceEmail(input: SendInvoiceEmailInput) {
 
   const from = process.env.INVOICE_FROM_EMAIL || "Invoyca <onboarding@resend.dev>";
 
+  // Konu: kullanıcı verdiyse onu, yoksa otomatik
+  const subject = input.subject ? esc(input.subject) : SUBJECTS[lang](invoiceNo, senderName);
+  // Gövde: kullanıcı mesaj yazdıysa onu güvenli HTML'e çevir (escape + satır sonu), yoksa otomatik şablon
+  const html = input.customMessage
+    ? `<div style="font-family:system-ui,-apple-system,Arial,sans-serif;color:#1e293b;font-size:15px;line-height:1.6;white-space:pre-wrap">${esc(input.customMessage)}</div>`
+    : buildBody(lang, { client: clientName, no: invoiceNo, amount, due: dueDate, sender: senderName });
+
   return await resend.emails.send({
     from,
     to: input.to,
     replyTo: input.replyTo || undefined,
-    subject: SUBJECTS[lang](invoiceNo, senderName),
-    html: buildBody(lang, { client: clientName, no: invoiceNo, amount, due: dueDate, sender: senderName }),
+    subject,
+    html,
     attachments,
   });
 }

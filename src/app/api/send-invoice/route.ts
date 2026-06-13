@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Oturum bulunamadı" }, { status: 401 });
 
     // Frontend SADECE invoiceId (ve istenirse alıcı override) gönderir
-    const body = (await req.json()) as { invoiceId?: string; toOverride?: string };
+    const body = (await req.json()) as { invoiceId?: string; toOverride?: string; subject?: string; customMessage?: string };
     if (!body?.invoiceId) return NextResponse.json({ error: "invoiceId gerekli" }, { status: 400 });
 
     // 2) Kullanıcının şirketi
@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
       amount: data.total,
       lang,
       dueDate: data.meta?.due || "",
+      subject: body.subject?.trim() || undefined,
+      customMessage: body.customMessage?.trim() || undefined,
       pdfBase64,
       replyTo: company.email || undefined,
     });
@@ -111,6 +113,13 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch { /* log başarısız olsa da e-posta gitti, sessiz geç */ }
+
+    // İşlem geçmişine de yaz (fatura detayındaki "Geçmiş" bölümü için)
+    try {
+      await (prisma as any).auditLog.create({
+        data: { companyId: company.id, action: "invoice.emailed", entityId: invoice.id, detail: to },
+      });
+    } catch { /* sessiz geç */ }
 
     // Fatura durumunu DRAFT ise SENT yap (gönderildi)
     try {

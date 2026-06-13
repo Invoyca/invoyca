@@ -44,6 +44,8 @@ const saveSchema = z.object({
   docType: z.enum(["INVOICE", "QUOTE"]).optional().default("INVOICE"),
   language: z.enum(["TR", "EN", "DE", "NL", "FR", "ES", "IT"]).optional().default("TR"),
   notes: z.string().max(2000).optional(),
+  terms: z.string().max(2000).optional(),
+  subtitle: z.string().max(200).optional(),
 }).refine(
   (d) => {
     // Vade tarihi, düzenleme tarihinden önce olamaz
@@ -100,6 +102,8 @@ export type SaveInvoiceInput = {
   vatTotal: number;
   total: number;
   notes?: string;
+  terms?: string;
+  subtitle?: string;
   docType?: "INVOICE" | "QUOTE";   // teklif mi fatura mı
   language?: string;
 };
@@ -220,6 +224,8 @@ export async function saveInvoice(input: SaveInvoiceInput) {
       vatTotal: serverVat,
       total: serverTotal,
       notes: v.notes ?? null,
+      terms: (v as any).terms ?? null,
+      subtitle: (v as any).subtitle ?? null,
     };
     const itemsCreate = v.items.map((it, i) => ({
       description: it.description, unit: it.unit, quantity: it.quantity,
@@ -291,6 +297,77 @@ export async function listInvoices(docType: "INVOICE" | "QUOTE" = "INVOICE") {
 }
 
 // Teklifi faturaya dönüştür (type: QUOTE → INVOICE)
+// Faturayı kopyala — kalemleriyle birlikte yeni bir TASLAK oluşturur (yeni numara, bugünün tarihi)
+export async function duplicateInvoice(invoiceId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Oturum bulunamadı." };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, error: "Şirket bulunamadı." };
+
+  // Kaynak fatura SADECE bu şirkete aitse gelir (yatay yetki)
+  const src = await prisma.invoice.findFirst({
+    where: { id: invoiceId, companyId: company.id },
+    include: { items: { orderBy: { order: "asc" } } },
+  });
+  if (!src) return { ok: false, error: "Fatura bulunamadı." };
+
+  const year = new Date().getFullYear();
+  try {
+    const newId = await prisma.$transaction(async (tx: any) => {
+      // Yeni numara üret (atomik)
+      const seq = await tx.invoiceSequence.upsert({
+        where: { companyId_year: { companyId: company.id, year } },
+        update: { lastNumber: { increment: 1 } },
+        create: { companyId: company.id, year, lastNumber: 1 },
+      });
+      const number = `${year}-${String(seq.lastNumber).padStart(4, "0")}`;
+
+      const created = await tx.invoice.create({
+        data: {
+          companyId: company.id,
+          clientId: src.clientId,
+          number,
+          type: src.type,
+          status: "DRAFT" as any,
+          issueDate: new Date(),
+          dueDate: null,
+          paidAt: null,
+          currency: src.currency,
+          taxMode: (src as any).taxMode,
+          subtotal: src.subtotal,
+          discount: src.discount,
+          vatTotal: src.vatTotal,
+          total: src.total,
+          notes: (src as any).notes,
+          terms: (src as any).terms,
+          subtitle: (src as any).subtitle,
+          bankName: (src as any).bankName,
+          bankIban: (src as any).bankIban,
+          bankSwift: (src as any).bankSwift,
+          qrMode: (src as any).qrMode,
+          qrImage: (src as any).qrImage,
+          template: (src as any).template,
+          themeColor: (src as any).themeColor,
+          language: (src as any).language,
+          items: {
+            create: src.items.map((it: any) => ({
+              description: it.description, unit: it.unit, quantity: it.quantity,
+              unitPrice: it.unitPrice, vatRate: it.vatRate, amount: it.amount, order: it.order,
+            })),
+          },
+        },
+      });
+      return created.id;
+    });
+    await audit(company.id, "invoice.created", newId, `duplicated from ${src.number}`);
+    return { ok: true, id: newId };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Kopyalanamadı." };
+  }
+}
+
 export async function convertQuoteToInvoice(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -361,6 +438,24 @@ export async function getInvoice(invoiceId: string) {
   });
   if (!invoice) return { ok: false, error: "Fatura bulunamadı.", invoice: null };
   return { ok: true, invoice };
+}
+
+// Bir faturanın işlem geçmişi (AuditLog'dan, en yeni üstte)
+export async function getInvoiceHistory(invoiceId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, events: [] as any[] };
+
+  const company = await prisma.company.findUnique({ where: { userId: user.id } });
+  if (!company) return { ok: false, events: [] as any[] };
+
+  // Sadece bu şirkete ait ve bu faturayla ilgili kayıtlar (yatay yetki)
+  const events = await (prisma as any).auditLog.findMany({
+    where: { companyId: company.id, entityId: invoiceId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  return { ok: true, events };
 }
 
 export async function deleteInvoice(invoiceId: string) {

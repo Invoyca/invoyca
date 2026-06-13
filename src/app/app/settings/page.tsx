@@ -311,15 +311,19 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
 
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
   const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR" });
+  const [logo, setLogo] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    if (info?.company) setForm({
-      name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
-      city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
-      defaultLanguage: info.company.defaultLanguage || "TR",
-    });
+    if (info?.company) {
+      setForm({
+        name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
+        city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
+        defaultLanguage: info.company.defaultLanguage || "TR",
+      });
+      setLogo(info.company.logoUrl || "");
+    }
   }, [info]);
 
   const field = "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30";
@@ -327,9 +331,19 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
 
   const save = async () => {
     setSaving(true); setMsg("");
-    const res = await updateCompany(form);
+    const res = await updateCompany({ ...form, logoUrl: logo });
     setSaving(false);
     setMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || "Hata"));
+  };
+
+  // Logo yükle (base64). 2 MB sınırı, sadece görsel.
+  const onLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) { setMsg(L("Sadece PNG, JPG veya WEBP.", "Only PNG, JPG or WEBP.")); return; }
+    if (file.size > 2 * 1024 * 1024) { setMsg(L("Logo çok büyük (max 2 MB).", "Logo too large (max 2 MB).")); return; }
+    const reader = new FileReader();
+    reader.onload = () => setLogo(String(reader.result));
+    reader.readAsDataURL(file);
   };
 
   const fields: [string, keyof typeof form][] = [
@@ -354,6 +368,27 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
               <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} />
             </div>
           ))}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <label className={lbl}>{L("Logo", "Logo")}</label>
+          <p className="text-xs text-slate-400 mt-0.5 mb-2">{L("Faturalarının üst köşesinde görünür. PNG/JPG, max 2 MB.", "Appears on the top corner of your invoices. PNG/JPG, max 2 MB.")}</p>
+          <div className="flex items-center gap-4">
+            {logo ? (
+              <img src={logo} alt="logo" className="h-14 w-14 rounded-lg border border-slate-200 object-contain bg-white p-1" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-slate-300 text-xs">LOGO</div>
+            )}
+            <div className="flex items-center gap-2">
+              <label className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white text-sm font-medium px-3.5 py-2 hover:bg-slate-50">
+                {logo ? L("Değiştir", "Change") : L("Logo Yükle", "Upload Logo")}
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={onLogoFile} />
+              </label>
+              {logo && (
+                <button onClick={() => setLogo("")} className="text-sm text-slate-400 hover:text-rose-600">{L("Kaldır", "Remove")}</button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-slate-100">
