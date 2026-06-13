@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FilePlus, UserPlus, PackagePlus, Eye } from "lucide-react";
 
 // Hızlı işlemler — kullanıcının en çok yapacağı işlemler kart olarak.
-export function QuickActions({ t, onSample }: { t: (s: string) => string; onSample?: () => void }) {
+export function QuickActions({ t }: { t: (s: string) => string }) {
   const actions = [
     { icon: FilePlus, title: t("Yeni Fatura"), desc: t("Müşteriye hazır PDF fatura oluştur."), href: "/app/invoices/new" },
     { icon: UserPlus, title: t("Müşteri Ekle"), desc: t("Bir kez kaydet, sonraki faturalarında tekrar kullan."), href: "/app/clients" },

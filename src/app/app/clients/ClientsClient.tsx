@@ -10,15 +10,16 @@ import { listClients, createClientRecord, deleteClient, updateClient } from "../
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 import { useToast } from "@/lib/toast-context";
+import type { ClientVM } from "@/lib/view-models";
 import { getCountries } from "@/lib/countries";
 
-export default function ClientsClient({ initialClients }: { initialClients: any[] }) {
+export default function ClientsClient({ initialClients }: { initialClients: ClientVM[] }) {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
   const toast = useToast();
-  const [clients, setClients] = useState<any[]>(initialClients || []);
+  const [clients, setClients] = useState<ClientVM[]>(initialClients || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);

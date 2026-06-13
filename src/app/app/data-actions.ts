@@ -31,7 +31,7 @@ export async function listClients() {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı.", clients: [] };
   const clients = await prisma.client.findMany({
-    where: { companyId: company.id },
+    where: { companyId: company.id, isArchived: false } as any,
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { invoices: true } } },
   });
@@ -115,12 +115,23 @@ export async function deleteClient(id: string) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
   try {
-    const result = await prisma.client.deleteMany({ where: { id, companyId: company.id } });
-    if (result.count === 0) return { ok: false, error: "Müşteri bulunamadı." };
-    return { ok: true };
+    // Müşteri bu şirkete mi ait + faturası var mı?
+    const client = await prisma.client.findFirst({
+      where: { id, companyId: company.id },
+      include: { _count: { select: { invoices: true } } },
+    });
+    if (!client) return { ok: false, error: "Müşteri bulunamadı." };
+
+    // Faturası varsa SİLME — arşivle (geçmiş faturalar korunmalı)
+    if ((client as any)._count?.invoices > 0) {
+      await prisma.client.update({ where: { id }, data: { isArchived: true } as any });
+      return { ok: true, archived: true };
+    }
+    // Faturası yoksa gerçekten sil
+    await prisma.client.delete({ where: { id } });
+    return { ok: true, archived: false };
   } catch (e: any) {
-    // Müşterinin bağlı faturaları varsa ve DB onDelete:SetNull değilse buraya düşebilir
-    return { ok: false, error: "Müşteri silinemedi. Bağlı faturalar olabilir." };
+    return { ok: false, error: "Müşteri silinemedi." };
   }
 }
 
@@ -130,7 +141,7 @@ export async function listProducts() {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı.", products: [] };
   const products = await prisma.product.findMany({
-    where: { companyId: company.id },
+    where: { companyId: company.id, isArchived: false } as any,
     orderBy: { createdAt: "desc" },
   });
   return { ok: true, products };
@@ -192,7 +203,12 @@ export async function updateProduct(id: string, input: {
 export async function deleteProduct(id: string) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
-  const result = await prisma.product.deleteMany({ where: { id, companyId: company.id } });
+  // Ürünü silmek yerine arşivle — geçmiş fatura kalemleri zaten snapshot, ama
+  // kullanıcı yanlışlıkla silerse geri dönüşü olsun.
+  const result = await prisma.product.updateMany({
+    where: { id, companyId: company.id },
+    data: { isArchived: true } as any,
+  });
   if (result.count === 0) return { ok: false, error: "Ürün bulunamadı." };
   return { ok: true };
 }

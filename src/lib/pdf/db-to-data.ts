@@ -24,8 +24,14 @@ export function dbInvoiceToData(invoice: any): InvoiceData {
   const company = invoice.company || {};
   const client = invoice.client || {};
 
-  const senderAddr = [company.address, company.city, company.country].filter(Boolean);
-  const clientAddr = [client.address, client.city, client.country].filter(Boolean);
+  // SNAPSHOT öncelikli: fatura kesildiği andaki bilgi varsa onu kullan (sonradan
+  // şirket/müşteri değişse bile eski fatura sabit kalır). Yoksa relation'a düş (eski faturalar).
+  const senderAddr = invoice.senderAddress
+    ? String(invoice.senderAddress).split("\n").filter(Boolean)
+    : [company.address, company.city, company.country].filter(Boolean);
+  const clientAddr = invoice.clientAddressSnap
+    ? String(invoice.clientAddressSnap).split("\n").filter(Boolean)
+    : [client.address, client.city, client.country].filter(Boolean);
 
   const subtotal = num(invoice.subtotal);
   const vatTotal = num(invoice.vatTotal);
@@ -35,17 +41,17 @@ export function dbInvoiceToData(invoice: any): InvoiceData {
 
   return {
     sender: {
-      name: company.name || "",
+      name: invoice.senderName || company.name || "",
       addr: senderAddr,
-      tax: company.taxId || "",
-      vat: company.vatId || "",
-      email: company.email || "",
+      tax: invoice.senderTaxId || company.taxId || "",
+      vat: invoice.senderVatId || company.vatId || "",
+      email: invoice.senderEmail || company.email || "",
     },
     client: {
-      name: client.name || "",
+      name: invoice.clientNameSnap || client.name || "",
       addr: clientAddr,
-      vat: client.vatId || "",
-      email: client.email || "",
+      vat: invoice.clientVatIdSnap || client.vatId || "",
+      email: invoice.clientEmailSnap || client.email || "",
     },
     meta: {
       no: invoice.number || "",

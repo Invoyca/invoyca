@@ -1,15 +1,15 @@
 // Faturalama/abonelik dönem mantığı.
-// 2026: herkese ÜCRETSIZ SINIRSIZ (lansman promosyonu)
+// 2026: erken erişim — temel özellikler ücretsiz (lansman dönemi)
 // 2027: abonelik başlar (Free/Starter/Pro/Business)
 
-// Aboneliğin başlayacağı tarih. Bu tarihe kadar her şey ücretsiz sınırsız.
+// Aboneliğin başlayacağı tarih. Bu tarihe kadar erken erişim dönemi.
 export const BILLING_START = new Date("2027-01-01T00:00:00Z");
 
 export function isPromoPeriod(now: Date = new Date()): boolean {
   return now < BILLING_START;
 }
 
-// Plan limitleri (2027'de aktif olacak). Promosyon döneminde hepsi sınırsız.
+// Plan limitleri (2027.de aktif olacak). Erken erişim döneminde uygulanmaz.
 export type PlanLimits = { invoicesPerMonth: number | "unlimited"; templates: "all" | number };
 
 export function getLimits(plan: string, now: Date = new Date()): PlanLimits {
@@ -26,11 +26,11 @@ export function getLimits(plan: string, now: Date = new Date()): PlanLimits {
 
 // UI'da gösterilecek promosyon rozeti metni (çok dilli)
 export const PROMO_BADGE: Record<string, string> = {
-  TR: "2026 boyunca ücretsiz ve sınırsız",
-  EN: "Free & unlimited throughout 2026",
-  DE: "2026 kostenlos & unbegrenzt",
-  NL: "Heel 2026 gratis & onbeperkt",
-  FR: "Gratuit et illimité durant 2026",
-  ES: "Gratis e ilimitado durante 2026",
-  IT: "Gratis e illimitato per tutto il 2026",
+  TR: "2026 Erken Erişim — temel özellikler ücretsiz",
+  EN: "2026 Early Access — core features free",
+  DE: "2026 Early Access — Kernfunktionen kostenlos",
+  NL: "2026 Early Access — kernfuncties gratis",
+  FR: "2026 Accès anticipé — fonctions de base gratuites",
+  ES: "2026 Acceso anticipado — funciones básicas gratis",
+  IT: "2026 Accesso anticipato — funzioni base gratuite",
 };

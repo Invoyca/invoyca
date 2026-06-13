@@ -12,15 +12,16 @@ import { nextStatuses } from "@/lib/invoice-status";
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 import { useToast } from "@/lib/toast-context";
+import type { InvoiceListItem, InvoiceStatus } from "@/lib/view-models";
 
-export default function InvoicesClient({ initialInvoices }: { initialInvoices: any[] }) {
+export default function InvoicesClient({ initialInvoices }: { initialInvoices: InvoiceListItem[] }) {
   const { lang } = useLang();
   const router = useRouter();
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
   const toast = useToast();
   const [filter, setFilter] = useState("all");
-  const [invoices, setInvoices] = useState<any[]>(initialInvoices || []);
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>(initialInvoices || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("date_desc");   // sıralama
@@ -70,8 +71,8 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     ({ PAID: "paid", SENT: "sent", OVERDUE: "overdue", DRAFT: "draft", CANCELLED: "draft" }[s] || "draft");
 
   const curSym: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
-  const fmt = (n: number, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString("tr-TR") : "—";
+  const fmt = (n: number | string, cur?: string) => (curSym[cur || "EUR"] || "€") + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtDate = (d: string | Date | null | undefined) => d ? new Date(d).toLocaleDateString("tr-TR") : "—";
 
   // 1) Durum filtresi
   let rows = filter === "all" ? invoices : invoices.filter((i) => i.status === filter);
@@ -123,7 +124,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     totalsByCurrency[c] = (totalsByCurrency[c] || 0) + Number(r.total || 0);
   }
 
-  const changeStatus = async (id: string, status: string) => {
+  const changeStatus = async (id: string, status: InvoiceStatus) => {
     if (!requireAuth()) { setOpenMenu(null); return; }
     setOpenMenu(null);
     // "Ödendi" seçilince ödeme tarihini sor (varsayılan bugün)
@@ -143,7 +144,7 @@ export default function InvoicesClient({ initialInvoices }: { initialInvoices: a
     if (!paidModal) return;
     const { id, date } = paidModal;
     setPaidModal(null);
-    setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status: "PAID", paidAt: date } : i));
+    setInvoices((prev) => prev.map((i) => i.id === id ? { ...i, status: "PAID" as InvoiceStatus, paidAt: date } : i));
     const res = await updateInvoiceStatus(id, "PAID", date);
     if (!res.ok) { toast.error(res.error || "Güncellenemedi"); load(); }
     else toast.success(L("Ödeme alındı olarak işaretlendi", "Marked as paid"));

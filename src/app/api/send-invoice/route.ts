@@ -18,6 +18,9 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
+  let logCompanyId: string | null = null;
+  let logInvoiceId: string | null = null;
+  let logTo: string | null = null;
   try {
     // 1) Oturum
     const supabase = await createClient();
@@ -27,10 +30,18 @@ export async function POST(req: NextRequest) {
     // Frontend SADECE invoiceId (ve istenirse alıcı override) gönderir
     const body = (await req.json()) as { invoiceId?: string; toOverride?: string; subject?: string; customMessage?: string };
     if (!body?.invoiceId) return NextResponse.json({ error: "invoiceId gerekli" }, { status: 400 });
+    // Kullanıcıdan gelen serbest metinleri sınırla (kötüye kullanım / aşırı boyut koruması)
+    if (body.subject && body.subject.length > 200) {
+      return NextResponse.json({ error: "Konu çok uzun (max 200 karakter)." }, { status: 400 });
+    }
+    if (body.customMessage && body.customMessage.length > 10000) {
+      return NextResponse.json({ error: "Mesaj çok uzun (max 10.000 karakter)." }, { status: 400 });
+    }
 
     // 2) Kullanıcının şirketi
     const company = await prisma.company.findUnique({ where: { userId: user.id } });
     if (!company) return NextResponse.json({ error: "Şirket bulunamadı" }, { status: 403 });
+    logCompanyId = company.id;
 
     // 2b) ABUSE KORUMASI: e-posta gönderim limiti (EmailLog üzerinden)
     const now = Date.now();
@@ -54,10 +65,12 @@ export async function POST(req: NextRequest) {
       include: { items: true, client: true, company: true },
     });
     if (!invoice) return NextResponse.json({ error: "Fatura bulunamadı veya yetkiniz yok" }, { status: 404 });
+    logInvoiceId = invoice.id;
 
     // 4) Alıcı e-posta: önce override (kullanıcı kendi girdiyse), yoksa müşterininki
     const to = (body.toOverride || invoice.client?.email || "").trim();
     if (!to) return NextResponse.json({ error: "Müşteri e-postası yok" }, { status: 400 });
+    logTo = to;
     // Geçerli e-posta formatı kontrolü
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
       return NextResponse.json({ error: "Geçersiz alıcı e-posta adresi" }, { status: 400 });
@@ -133,6 +146,21 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, id: result.data?.id });
   } catch (err: any) {
+    // Başarısız gönderimi de logla (yeterli bilgi varsa) — hata takibi için
+    if (logCompanyId) {
+      try {
+        await prisma.emailLog.create({
+          data: {
+            companyId: logCompanyId,
+            invoiceId: logInvoiceId,
+            toEmail: logTo || "",
+            subject: "",
+            status: "failed",
+            error: String(err?.message || "unknown").slice(0, 300),
+          } as any,
+        });
+      } catch { /* log da başarısız olsa sessiz geç */ }
+    }
     return NextResponse.json({ error: err.message || "E-posta gönderilemedi" }, { status: 500 });
   }
 }

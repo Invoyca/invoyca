@@ -9,14 +9,15 @@ import { listProducts, createProduct, deleteProduct, updateProduct } from "../da
 import { useGuest } from "@/lib/guest-context";
 import { useConfirm } from "@/lib/confirm-context";
 import { useToast } from "@/lib/toast-context";
+import type { ProductVM } from "@/lib/view-models";
 
-export default function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
+export default function ProductsClient({ initialProducts }: { initialProducts: ProductVM[] }) {
   const { lang } = useLang();
   const L = (tr: string, _en?: string) => appT(lang, tr);
   const { requireAuth } = useGuest();
   const confirm = useConfirm();
   const toast = useToast();
-  const [products, setProducts] = useState<any[]>(initialProducts || []);
+  const [products, setProducts] = useState<ProductVM[]>(initialProducts || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);

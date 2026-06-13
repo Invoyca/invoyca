@@ -9,11 +9,12 @@ import { useToast } from "@/lib/toast-context";
 import { StatusBadge } from "@/components/ui";
 import { updateInvoiceStatus } from "../actions";
 import { ArrowLeft, Download, Mail, Pencil, CheckCircle2, FileText, Send, Ban } from "lucide-react";
+import type { HistoryEvent } from "@/lib/view-models";
 
 const CUR_SYM: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
 
 // İşlem geçmişi kodlarını insan-okunur metne çevir
-function historyText(action: string, detail: string | null, t: (s: string) => string): string {
+function historyText(action: string, detail: string | null | undefined, t: (s: string) => string): string {
   switch (action) {
     case "invoice.created": return t("Fatura oluşturuldu");
     case "invoice.updated": return t("Fatura güncellendi");
@@ -32,14 +33,14 @@ function historyIcon(action: string) {
   return FileText;
 }
 
-export default function InvoiceDetailClient({ invoice, history }: { invoice: any; history: any[] }) {
+export default function InvoiceDetailClient({ invoice, history }: { invoice: any; history: HistoryEvent[] }) {
   const { lang } = useLang();
   const t = (s: string) => appT(lang, s);
   const router = useRouter();
   const toast = useToast();
   const [status, setStatus] = useState<string>(invoice.status);
   const [busy, setBusy] = useState("");
-  const [events, setEvents] = useState<any[]>(history || []);
+  const [events, setEvents] = useState<HistoryEvent[]>(history || []);
 
   const cur = invoice.currency || "EUR";
   const sym = CUR_SYM[cur] || "€";
@@ -126,7 +127,7 @@ export default function InvoiceDetailClient({ invoice, history }: { invoice: any
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-100 text-sm">
               <div>
                 <p className="text-xs text-slate-400 mb-0.5">{t("Müşteri")}</p>
-                <p className="font-medium text-slate-800">{invoice.client?.name || "—"}</p>
+                <p className="font-medium text-slate-800">{invoice.clientNameSnap || invoice.client?.name || "—"}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-400 mb-0.5">{t("Düzenlenme")}</p>
@@ -220,12 +221,12 @@ export default function InvoiceDetailClient({ invoice, history }: { invoice: any
           </div>
 
           {/* Müşteri kısa bilgi */}
-          {invoice.client && (
+          {(invoice.clientNameSnap || invoice.client) && (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm">
               <h2 className="text-sm font-semibold text-slate-900 mb-2">{t("Müşteri")}</h2>
-              <p className="font-medium text-slate-800">{invoice.client.name}</p>
-              {invoice.client.email && <p className="text-slate-500 mt-0.5">{invoice.client.email}</p>}
-              {invoice.client.country && <p className="text-slate-400 mt-0.5">{invoice.client.country}</p>}
+              <p className="font-medium text-slate-800">{invoice.clientNameSnap || invoice.client?.name}</p>
+              {(invoice.clientEmailSnap || invoice.client?.email) && <p className="text-slate-500 mt-0.5">{invoice.clientEmailSnap || invoice.client?.email}</p>}
+              {(invoice.clientCountrySnap || invoice.client?.country) && <p className="text-slate-400 mt-0.5">{invoice.clientCountrySnap || invoice.client?.country}</p>}
             </div>
           )}
         </div>

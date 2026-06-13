@@ -3,6 +3,7 @@
 // React'te dangerouslySetInnerHTML ile gösterilir (galeri ile aynı çıktı).
 
 import { SAMPLE, TPL_LABELS, THEMES } from "./data";
+import { esc, escDeep } from "./escape";
 
 export type InvoiceData = {
   sender: { name: string; addr: string[]; tax: string; vat: string; email: string };
@@ -34,28 +35,6 @@ export function renderInvoiceHTML(opts: RenderOpts): string {
 
   // Gerçek veri verilmişse onu, yoksa örnek veriyi kullan
   const RAW = opts.data || SAMPLE;
-
-  // XSS koruması: tüm kullanıcı kaynaklı metinler HTML'e basılmadan önce escape edilir.
-  // render.ts string interpolation ile HTML üretir; bu yüzden veriyi BURADA, tek noktada temizliyoruz.
-  const esc = (v: unknown): string =>
-    String(v ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-  // Veri objesini derinlemesine escape'le (string'ler temizlenir, sayı/diğer korunur)
-  const escDeep = (val: any): any => {
-    if (typeof val === "string") return esc(val);
-    if (Array.isArray(val)) return val.map(escDeep);
-    if (val && typeof val === "object") {
-      const out: any = {};
-      for (const k of Object.keys(val)) out[k] = escDeep(val[k]);
-      return out;
-    }
-    return val; // sayı, boolean, null
-  };
 
   const D = escDeep(RAW);
   const SENDER = D.sender;

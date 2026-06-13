@@ -115,6 +115,9 @@ model Company {
   products  Product[]
   invoices  Invoice[]
   recurring Recurring[]
+  sequences InvoiceSequence[]
+  emailLogs EmailLog[]
+  auditLogs AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -153,6 +156,8 @@ model Client {
   phone     String?
   preferredLanguage Language?   // bu müşteriye fatura hangi dilde kesiliyor (hatırlanır)
 
+  isArchived Boolean @default(false)  // silme yerine arşivle (geçmiş faturalar korunur)
+
   invoices  Invoice[]
 
   createdAt DateTime @default(now())
@@ -171,6 +176,8 @@ model Product {
   unitPrice   Decimal   @default(0)
   vatRate     Decimal   @default(20)
   currency    Currency  @default(EUR)
+
+  isArchived Boolean @default(false)  // silme yerine arşivle
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -208,6 +215,20 @@ model Invoice {
   bankIban    String?
   bankSwift   String?
 
+  // GÖNDEREN snapshot'ı (fatura kesildiği andaki şirket bilgisi — şirket sonra değişse bile fatura sabit kalır)
+  senderName    String?
+  senderAddress String?
+  senderTaxId   String?
+  senderVatId   String?
+  senderEmail   String?
+
+  // MÜŞTERİ snapshot'ı (fatura kesildiği andaki müşteri bilgisi — müşteri sonra değişse/silinse bile fatura sabit kalır)
+  clientNameSnap    String?
+  clientAddressSnap String?
+  clientCountrySnap String?
+  clientVatIdSnap   String?
+  clientEmailSnap   String?
+
   notes       String?
   terms       String?       // ödeme şartları (kullanıcı girer)
   subtitle    String?       // fatura alt başlığı (belge başlığının altında)
@@ -220,6 +241,7 @@ model Invoice {
 
   items       InvoiceItem[]
   payments    Payment[]
+  emailLogs   EmailLog[]
 
   // GİB / e-arşiv (Türkiye, opsiyonel)
   gibNo       String?
@@ -301,10 +323,12 @@ model Subscription {
 model InvoiceSequence {
   id        String  @id @default(uuid())
   companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   year      Int
   lastNumber Int    @default(0)
 
   @@unique([companyId, year])
+  @@index([companyId])
 }
 
 // E-posta gönderim kaydı — hangi fatura kime ne zaman gönderildi, başarılı mı.
@@ -312,7 +336,9 @@ model InvoiceSequence {
 model EmailLog {
   id         String   @id @default(uuid())
   companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoiceId  String?
+  invoice    Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
   toEmail    String
   subject    String?
   status     String   @default("sent") // sent | failed
@@ -329,6 +355,7 @@ model EmailLog {
 model AuditLog {
   id        String   @id @default(uuid())
   companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   action    String   // invoice.created | invoice.status_changed | invoice.deleted | invoice.cancelled
   entityId  String?  // ilgili fatura/müşteri id'si
   detail    String?  // serbest metin (ör. "DRAFT -> SENT")

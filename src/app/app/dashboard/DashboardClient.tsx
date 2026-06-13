@@ -9,14 +9,15 @@ import { FileText, Clock, CheckCircle2, TrendingUp, Users, Plus, ChevronLeft, Ch
 import { DashboardWelcomeCard } from "./DashboardWelcomeCard";
 import { OnboardingChecklist } from "./OnboardingChecklist";
 import { QuickActions } from "./QuickActions";
+import type { InvoiceListItem } from "@/lib/view-models";
 
-export default function DashboardClient({ initialInvoices, clientCount = 0, productCount = 0, companyComplete = false }: { initialInvoices: any[]; clientCount?: number; productCount?: number; companyComplete?: boolean }) {
+export default function DashboardClient({ initialInvoices, clientCount = 0, productCount = 0, companyComplete = false }: { initialInvoices: InvoiceListItem[]; clientCount?: number; productCount?: number; companyComplete?: boolean }) {
   const { lang } = useLang();
   const t = (s: string) => appT(lang, s);
   const [name, setName] = useState("");
   const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [invoices, setInvoices] = useState<any[]>(initialInvoices || []);
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>(initialInvoices || []);
   const [curIndex, setCurIndex] = useState(0);   // çoklu para biriminde hangi para birimi gösteriliyor
   const [openDetail, setOpenDetail] = useState<string | null>(null);   // tıklanan kartın detayı
 

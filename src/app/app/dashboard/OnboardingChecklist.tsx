@@ -21,6 +21,22 @@ export function OnboardingChecklist({ state, t }: { state: OnboardingState; t: (
   ];
   const doneCount = steps.filter((s) => s.done).length;
   const pct = Math.round((doneCount / steps.length) * 100);
+  const allDone = doneCount === steps.length;
+
+  // Tüm adımlar bitince: koca listeyi gösterme, sadece küçük bir tamamlandı kartı
+  if (allDone) {
+    return (
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-center gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+          <Check className="h-4 w-4 text-white" strokeWidth={3} />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-emerald-900">{t("Kurulum tamamlandı")}</p>
+          <p className="text-xs text-emerald-700">{t("Her şey hazır. İstediğin zaman yeni fatura oluşturabilirsin.")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
