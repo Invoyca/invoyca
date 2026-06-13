@@ -109,6 +109,7 @@ model Company {
   defaultTemplate String   @default("classic-standard")
   defaultCurrency Currency @default(EUR)
   defaultLanguage Language @default(TR)
+  defaultDueDays  Int      @default(15)  // fatura vadesi varsayılan gün sayısı
 
   clients   Client[]
   products  Product[]

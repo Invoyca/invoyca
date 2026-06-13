@@ -111,7 +111,7 @@ export default function DashboardClient({ initialInvoices, clientCount = 0, prod
 
           {/* Şirket bilgisi eksik uyarısı */}
           {!companyComplete && (
-            <Link href="/app/settings" className="block rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100/70 transition-colors">
+            <Link href="/app/settings?tab=company" className="block rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100/70 transition-colors">
               <p className="text-sm font-semibold text-amber-900">{t("Şirket bilgilerin eksik")}</p>
               <p className="text-sm text-amber-800 mt-0.5">{t("PDF faturalarında şirket adı, adres ve ödeme bilgileri görünür. İlk faturadan önce tamamla.")}</p>
             </Link>

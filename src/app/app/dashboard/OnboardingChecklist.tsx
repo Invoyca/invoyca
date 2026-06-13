@@ -14,7 +14,7 @@ export type OnboardingState = {
 export function OnboardingChecklist({ state, t }: { state: OnboardingState; t: (s: string) => string }) {
   const steps = [
     { done: true, label: t("Hesap oluşturuldu"), href: null },
-    { done: state.companyComplete, label: t("Şirket bilgilerini tamamla"), href: "/app/settings" },
+    { done: state.companyComplete, label: t("Şirket bilgilerini tamamla"), href: "/app/settings?tab=company" },
     { done: state.hasClient, label: t("İlk müşterini ekle"), href: "/app/clients" },
     { done: state.hasProduct, label: t("İlk ürün veya hizmetini ekle"), href: "/app/products" },
     { done: state.hasInvoice, label: t("İlk faturanı oluştur"), href: "/app/invoices/new" },

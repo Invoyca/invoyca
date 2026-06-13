@@ -34,7 +34,7 @@ export function DashboardWelcomeCard({ name, companyComplete, t }: { name: strin
             {t("Yeni Fatura Oluştur")} <ArrowRight className="h-4 w-4" />
           </Link>
           {!companyComplete && (
-            <Link href="/app/settings"
+            <Link href="/app/settings?tab=company"
               className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
               {t("Şirket Bilgilerini Tamamla")}
             </Link>

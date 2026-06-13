@@ -4,6 +4,19 @@ import { Lang } from "./i18n";
 
 // Her giriş: [EN, DE, NL, FR, ES, IT] (TR zaten anahtar)
 const T: Record<string, [string, string, string, string, string, string]> = {
+  // --- Varsayılan vade + form validasyon ---
+  "Varsayılan Ödeme Vadesi": ["Default Payment Due", "Standard-Zahlungsziel", "Standaard betaaltermijn", "Échéance par défaut", "Vencimiento predeterminado", "Scadenza predefinita"],
+  "Yeni faturalarda vade tarihi otomatik bu kadar gün sonrası gelir. Her faturada değiştirebilirsin.": ["New invoices get a due date this many days ahead automatically. You can change it per invoice.", "Neue Rechnungen erhalten automatisch ein Fälligkeitsdatum so viele Tage später. Pro Rechnung änderbar.", "Nieuwe facturen krijgen automatisch een vervaldatum zoveel dagen later. Per factuur aanpasbaar.", "Les nouvelles factures reçoivent automatiquement une échéance après ce nombre de jours. Modifiable par facture.", "Las nuevas facturas reciben automáticamente un vencimiento tras estos días. Modificable por factura.", "Le nuove fatture ricevono automaticamente una scadenza dopo questi giorni. Modificabile per fattura."],
+  "Vade yok": ["No due date", "Kein Fälligkeitsdatum", "Geen vervaldatum", "Aucune échéance", "Sin vencimiento", "Nessuna scadenza"],
+  "7 gün": ["7 days", "7 Tage", "7 dagen", "7 jours", "7 días", "7 giorni"],
+  "14 gün": ["14 days", "14 Tage", "14 dagen", "14 jours", "14 días", "14 giorni"],
+  "15 gün": ["15 days", "15 Tage", "15 dagen", "15 jours", "15 días", "15 giorni"],
+  "30 gün": ["30 days", "30 Tage", "30 dagen", "30 jours", "30 días", "30 giorni"],
+  "45 gün": ["45 days", "45 Tage", "45 dagen", "45 jours", "45 días", "45 giorni"],
+  "60 gün": ["60 days", "60 Tage", "60 dagen", "60 jours", "60 días", "60 giorni"],
+  "En az bir fatura kalemi ekle.": ["Add at least one line item.", "Füge mindestens eine Position hinzu.", "Voeg minstens één regel toe.", "Ajoutez au moins une ligne.", "Añade al menos una línea.", "Aggiungi almeno una riga."],
+  "Müşteri adı gerekli. 'Alıcı (Müşteri)' bölümünü doldur.": ["Client name is required. Fill in the 'Bill To (Client)' section.", "Kundenname erforderlich. Fülle den Abschnitt 'Rechnung an' aus.", "Klantnaam vereist. Vul de sectie 'Factuur aan' in.", "Le nom du client est requis. Remplissez la section « Facturer à ».", "Se requiere el nombre del cliente. Completa la sección 'Facturar a'.", "Nome cliente obbligatorio. Compila la sezione 'Fattura a'."],
+
   // --- AI e-posta önerisi ---
   "AI ile öner": ["Suggest with AI", "Mit KI vorschlagen", "Voorstel met AI", "Suggérer avec l'IA", "Sugerir con IA", "Suggerisci con l'IA"],
   "Yazılıyor...": ["Writing...", "Wird geschrieben...", "Schrijven...", "Rédaction...", "Escribiendo...", "Scrittura..."],

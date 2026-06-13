@@ -221,6 +221,8 @@ export async function getAccountInfo() {
       taxId: company.taxId || "",
       vatId: company.vatId || "",
       defaultLanguage: company.defaultLanguage || "TR",
+      defaultDueDays: (company as any).defaultDueDays ?? 15,
+      logoUrl: (company as any).logoUrl || "",
       qrImage: company.qrImage || "",
       qrVerify: (company as any).qrVerify || "",
     } : null,
@@ -279,7 +281,7 @@ export async function updatePassword(newPassword: string) {
 
 // Şirket bilgilerini güncelle
 export async function updateCompany(input: {
-  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string; qrVerify?: string; logoUrl?: string;
+  name?: string; email?: string; address?: string; city?: string; country?: string; taxId?: string; vatId?: string; defaultLanguage?: string; qrImage?: string; qrVerify?: string; logoUrl?: string; defaultDueDays?: number;
 }) {
   const company = await getCompany();
   if (!company) return { ok: false, error: "Oturum bulunamadı." };
@@ -314,6 +316,9 @@ export async function updateCompany(input: {
       ...(input.logoUrl !== undefined ? { logoUrl: safeLogo } : {}),
       ...(input.defaultLanguage && validLangs.includes(input.defaultLanguage)
         ? { defaultLanguage: input.defaultLanguage as any }
+        : {}),
+      ...(typeof input.defaultDueDays === "number" && input.defaultDueDays >= 0 && input.defaultDueDays <= 365
+        ? { defaultDueDays: Math.round(input.defaultDueDays) }
         : {}),
     } as any,
   });

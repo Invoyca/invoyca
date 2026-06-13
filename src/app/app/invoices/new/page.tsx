@@ -94,6 +94,29 @@ export default function NewInvoicePage() {
       if (r.ok && r.company?.qrImage) setCompanyQr(r.company.qrImage);
       if (r.ok && (r.company as any)?.qrVerify) setCompanyQrVerify((r.company as any).qrVerify);
       if (r.ok && (r.company as any)?.logoUrl) setCompanyLogo((r.company as any).logoUrl);
+      // Gönderen (senin şirketin) bilgisini önizlemeye doldur — örnek veriyi gerçek şirketle değiştir
+      const params0 = new URLSearchParams(window.location.search);
+      if (r.ok && r.company && !params0.get("id")) {
+        const c: any = r.company;
+        const addr = [c.address, c.city, c.country].filter(Boolean).join("\n");
+        setSt((s) => ({ ...s, sender: {
+          name: c.name || s.sender.name,
+          addr: addr || s.sender.addr,
+          tax: c.taxId || "",
+          vat: c.vatId || "",
+          email: c.email || "",
+        } }));
+        // Varsayılan vade: bugün + şirketin defaultDueDays'i (kullanıcı değiştirebilir)
+        const days = typeof c.defaultDueDays === "number" ? c.defaultDueDays : 15;
+        if (days > 0) {
+          const due = new Date();
+          due.setDate(due.getDate() + days);
+          const dd = String(due.getDate()).padStart(2, "0");
+          const mm = String(due.getMonth() + 1).padStart(2, "0");
+          const yy = due.getFullYear();
+          setSt((s) => ({ ...s, meta: { ...s.meta, due: `${dd}.${mm}.${yy}` } }));
+        }
+      }
       if (r.ok && r.company?.defaultLanguage) {
         setCompanyDefaultLang(r.company.defaultLanguage);
         // Düzenleme/müşteri seçimi henüz olmadıysa varsayılanı uygula
@@ -231,6 +254,22 @@ export default function NewInvoicePage() {
   // Dönen invoice id'sini döndürür ki e-posta gönderme gibi işlemler kullanabilsin.
   const save = async (exitAfter = false): Promise<string | null> => {
     if (!requireAuth()) return null;
+
+    // Kayıt öncesi net kontrol — kullanıcıya hangi alanın eksik olduğunu HEMEN söyle
+    if (!st.client.name.trim()) {
+      toast.error(L("Müşteri adı gerekli. 'Alıcı (Müşteri)' bölümünü doldur.", "Client name is required. Fill in the 'Bill To (Client)' section."));
+      return null;
+    }
+    if (st.items.length === 0) {
+      toast.error(L("En az bir fatura kalemi ekle.", "Add at least one line item."));
+      return null;
+    }
+    const emptyItem = st.items.findIndex((it) => !it.description.trim());
+    if (emptyItem >= 0) {
+      toast.error(L(`${emptyItem + 1}. kalemin açıklaması boş. Lütfen doldur.`, `Line ${emptyItem + 1} has no description. Please fill it in.`));
+      return null;
+    }
+
     setBusy("save");
     const res = await saveInvoice({
       id: editId || undefined,

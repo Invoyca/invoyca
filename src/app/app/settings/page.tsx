@@ -15,6 +15,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     getAccountInfo().then((res) => { if (res.ok) setInfo(res); });
+    // URL'de ?tab=company gibi bir parametre varsa o sekmeyi aç (dashboard yönlendirmesi için)
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    if (t && ["account", "company", "bank", "subscription"].includes(t)) setTab(t);
   }, []);
 
   const tabs = [
@@ -310,7 +314,7 @@ function BankTab({ L, info }: { L: (tr: string, en?: string) => string; info: an
 }
 
 function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info: any }) {
-  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR" });
+  const [form, setForm] = useState({ name: "", email: "", address: "", city: "", country: "", taxId: "", vatId: "", defaultLanguage: "TR", defaultDueDays: 15 });
   const [logo, setLogo] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -321,6 +325,7 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
         name: info.company.name || "", email: info.company.email || "", address: info.company.address || "",
         city: info.company.city || "", country: info.company.country || "", taxId: info.company.taxId || "", vatId: info.company.vatId || "",
         defaultLanguage: info.company.defaultLanguage || "TR",
+        defaultDueDays: typeof info.company.defaultDueDays === "number" ? info.company.defaultDueDays : 15,
       });
       setLogo(info.company.logoUrl || "");
     }
@@ -331,7 +336,7 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
 
   const save = async () => {
     setSaving(true); setMsg("");
-    const res = await updateCompany({ ...form, logoUrl: logo });
+    const res = await updateCompany({ ...form, logoUrl: logo, defaultDueDays: form.defaultDueDays });
     setSaving(false);
     setMsg(res.ok ? L("Kaydedildi ✓", "Saved ✓") : (res.error || "Hata"));
   };
@@ -402,6 +407,20 @@ function CompanyTab({ L, info }: { L: (tr: string, en?: string) => string; info:
             <option value="FR">Français</option>
             <option value="ES">Español</option>
             <option value="IT">Italiano</option>
+          </select>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <label className={lbl}>{L("Varsayılan Ödeme Vadesi", "Default Payment Due")}</label>
+          <p className="text-xs text-slate-400 mt-0.5 mb-2">{L("Yeni faturalarda vade tarihi otomatik bu kadar gün sonrası gelir. Her faturada değiştirebilirsin.", "New invoices get a due date this many days ahead automatically. You can change it per invoice.")}</p>
+          <select value={form.defaultDueDays} onChange={(e) => setForm({ ...form, defaultDueDays: Number(e.target.value) })} className={field + " sm:max-w-xs"}>
+            <option value={0}>{L("Vade yok", "No due date")}</option>
+            <option value={7}>{L("7 gün", "7 days")}</option>
+            <option value={14}>{L("14 gün", "14 days")}</option>
+            <option value={15}>{L("15 gün", "15 days")}</option>
+            <option value={30}>{L("30 gün", "30 days")}</option>
+            <option value={45}>{L("45 gün", "45 days")}</option>
+            <option value={60}>{L("60 gün", "60 days")}</option>
           </select>
         </div>
 
